@@ -22,15 +22,15 @@ The server accepts only these templates:
 
 | Field | Controls | Bounds / platform |
 | --- | --- | --- |
-| `sections` | Order, title and visibility | All six IDs exactly once; at least one enabled. Speed dial and Spotify mixes are native-only. Web skips unsupported templates. |
+| `sections` | Order, title and visibility | All six IDs exactly once; at least one enabled. Speed dial is native-only. |
 | `banners` | Announcements with an HTTPS action | Up to 3; target `android`, `tv`, `web`. No HTML/scripts. |
 | `playlists` | Featured YouTube Music playlist cards | Up to 12; browse ID starts with `VL`. Empty artwork is allowed. |
 | `sources` | Admin add-on catalog, including owner pauses | Up to 20. `null` uses the existing usage-dashboard catalog; `[]` removes admin entries. |
-| `links` | GitHub, Discord, web player and TV information | HTTPS. GitHub and Discord domains are restricted. |
+| `links` | GitHub, Discord and TV information | HTTPS. GitHub and Discord domains are restricted. |
 | `network` | Future add-on metadata request timeout | 4–20 seconds overall; existing per-read limits still apply. `retries` controls Android's short 429 retries, 0–2. Web retains its existing cooldown behavior. |
 | `communityPrompts` | Existing monthly invitations | Does not erase the listener's dismissal history. |
 
-Native home sections are `speed-dial`, `quick-picks`, `mixes`, `spotify-mixes`, `featured-playlists`, `recommendations`. Local visibility choices and available listening history still apply. Remote content cannot override a listener's hidden/explicit filters on fetched recommendations. Featured playlists open normally; their tracks go through the usual playlist and playback flow.
+Native home sections are `speed-dial`, `quick-picks`, `mixes`, `featured-playlists`, `recommendations`. The signed list still carries `spotify-mixes`, which this build does not show. Local visibility choices and available listening history still apply. Remote content cannot override a listener's hidden/explicit filters on fetched recommendations. Featured playlists open normally; their tracks go through the usual playlist and playback flow.
 
 Example banner:
 

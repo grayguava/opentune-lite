@@ -188,7 +188,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 20px; }
 
 <section id="start" class="reveal">
   <h2>A small API. No extension runtime.</h2>
-  <p>OpenTune uses the <a href="https://bitchord.kushagrasingh.in/docs">BitChord HTTP add-on contract</a>. Listeners add your service root or <code>manifest.json</code> URL: in the Android app under Settings → Add-ons → Audio add-ons, and in the web player under Settings → Audio sources. No executable package is installed.</p>
+  <p>OpenTune uses the <a href="https://bitchord.kushagrasingh.in/docs">BitChord HTTP add-on contract</a>. Listeners add your service root or <code>manifest.json</code> URL: in the Android app under Settings → Add-ons → Audio add-ons. No executable package is installed.</p>
   <p>The starter is a Cloudflare Worker with a small configurable catalog, CORS support and tests. It starts with an empty catalog; add your own audio URLs and their measured metadata before deploying.</p>
   <div class="code"><button class="copy" type="button">Copy</button><pre><code>cd examples/audio-addon
 node --test worker.test.mjs
@@ -274,7 +274,7 @@ npx wrangler deploy</code></pre></div>
 
 <section id="share" class="reveal">
   <h2>Share the URL, get listed.</h2>
-  <p>Anyone can use your add-on as soon as they paste its manifest URL. To reach every listener, share the URL and source code in the Discord. The OpenTune owner keeps a published catalog that every app and the web player load on their own; sources from it appear as “Added by admin”, and listeners can turn them off or reorder them.</p>
+  <p>Anyone can use your add-on as soon as they paste its manifest URL. To reach every listener, share the URL and source code in the Discord. The OpenTune owner keeps a published catalog that every app loads on its own; sources from it appear as “Added by admin”, and listeners can turn them off or reorder them.</p>
   <div class="cta-band"><div><h3>Build with the community</h3><p>Ask questions, share your manifest, and hear about protocol changes first.</p></div><a class="btn" href="https://discord.gg/6udrCVh5n">Join the Discord ↗</a></div>
 </section>
 

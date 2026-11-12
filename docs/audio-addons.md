@@ -22,15 +22,15 @@ For downloads, choose **Lossless** in Download quality. The same priority order 
 
 ## Platform scope and validation
 
-The client is integrated with the shared Android playback/download engine and phone/TV settings. The desktop JavaFX backend remains unchanged and does not gain FLAC support from this integration. Watch playback shares the engine but has no new add-on editor.
+The client is integrated with the shared Android playback/download engine and phone/TV settings.
 
 `AddonProtocolTest`, `AddonStoreTest`, and `AddonResolverTest` cover URL handling, quality negotiation, cache/cooldown behavior, persistence, priority/fallback, strict matching and provider restrictions. `scripts/probe-audio-addons.py` performs optional live compatibility checks of the three public example services and redacts URLs. Endpoint success does not establish availability for all recordings or verify playback on a physical device.
 
-Protocol reference: [BitChord](https://github.com/kushagrasinghx/BitChord), GPL-3.0. OpenTune's HTTP adapter is implemented here using that documented contract; the browser preview adapts the GPL-3.0 BitChord web player; Android does not run downloaded addon code.
+Protocol reference: [BitChord](https://github.com/kushagrasinghx/BitChord), GPL-3.0. OpenTune's HTTP adapter is implemented here using that documented contract; Android does not run downloaded addon code.
 
 ## Phone-to-TV sign-in
 
-Settings → Account → Sign in with your phone displays a two-minute QR code. Scan it with your signed-in Android phone, open OpenTune, and explicitly approve the target. Both devices must be on the same local network. The session is AES-256-GCM encrypted with a fresh key carried in the QR, sent directly to the TV, accepted once and acknowledged with an authenticated response. The website receives no session. Guest network isolation can block pairing. This is Android phone/TV session pairing, not Google device-code OAuth or a desktop/Wear login implementation.
+Settings → Account → Sign in with your phone displays a two-minute QR code. Scan it with your signed-in Android phone, open OpenTune, and explicitly approve the target. Both devices must be on the same local network. The session is AES-256-GCM encrypted with a fresh key carried in the QR, sent directly to the TV, accepted once and acknowledged with an authenticated response. The website receives no session. Guest network isolation can block pairing. This is Android phone/TV session pairing, not Google device-code OAuth.
 
 ## Decoder validation for the preview
 

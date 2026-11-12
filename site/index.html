@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/Opentune/apple-touch-icon.png?v=20261015">
 <link rel="manifest" href="/Opentune/site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="OpenTune">
-<meta name="description" content="OpenTune is a free, ad-free music player for Android phones and TVs, Windows, macOS, Linux and the browser, with synced lyrics, offline downloads, playlists, radio, podcasts and listening rooms.">
+<meta name="description" content="OpenTune is a free, ad-free music player for Android phones and tablets, with synced lyrics, offline downloads, playlists, radio and podcasts.">
 <meta name="robots" content="index,follow,max-image-preview:large">
 <meta name="theme-color" content="#E5483A">
 <link rel="canonical" href="https://justshivv.github.io/Opentune/">
@@ -27,7 +27,7 @@
 <meta property="og:site_name" content="OpenTune">
 <meta property="og:locale" content="en_US">
 <meta name="twitter:title" content="OpenTune — Free, Open-Source Music Player for Android">
-<meta name="twitter:description" content="OpenTune is a free, ad-free music player for Android phones and TVs, Windows, macOS, Linux and the browser, with synced lyrics, offline downloads, playlists, radio, podcasts and listening rooms.">
+<meta name="twitter:description" content="OpenTune is a free, ad-free music player for Android phones and tablets, with synced lyrics, offline downloads, playlists, radio and podcasts.">
 <link rel="sitemap" type="application/xml" href="sitemap.xml">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://justshivv.github.io/Opentune/img/share-card-v3.jpg">
@@ -42,7 +42,7 @@
   "@id": "https://justshivv.github.io/Opentune/#app",
   "name": "OpenTune",
   "url": "https://justshivv.github.io/Opentune/",
-  "description": "OpenTune is a free, ad-free music player for Android phones and TVs, Windows, macOS, Linux and the browser, with synced lyrics, offline downloads, playlists, radio, podcasts and listening rooms.",
+  "description": "OpenTune is a free, ad-free music player for Android phones and tablets, with synced lyrics, offline downloads, playlists, radio and podcasts.",
   "applicationCategory": "MultimediaApplication",
   "operatingSystem": "Android 8.0 or later",
   "isAccessibleForFree": true,
@@ -444,12 +444,6 @@ h3 { font-size: clamp(27px, 2.6vw, 34px); line-height: 1; font-weight: 750; font
 .step .hint { font-size: 14px; }
 .step code { font-family: var(--mono); font-size: 13.5px; background: var(--raise-2); padding: 2px 6px; border-radius: 6px; }
 .install-cta { margin-top: clamp(32px, 4vw, 48px); }
-.ios { margin-top: clamp(56px, 8vw, 110px); background: var(--ink); color: var(--snow); border-radius: 30px; padding: clamp(26px, 5vw, 64px); display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 28px clamp(28px, 5vw, 72px); align-items: end; --line: var(--night-line); }
-.ios h2 { font-size: clamp(36px, 5vw, 60px); margin-bottom: 18px; }
-.ios p { color: var(--grey-on-night); text-wrap: pretty; }
-.ios .ctas .btn-line { color: var(--snow); }
-.ios-meta { display: grid; gap: 6px; margin-top: 18px; font-size: 14px; color: var(--grey-on-night); }
-.ios-meta code { font: 500 13px/1.5 var(--mono); overflow-wrap: anywhere; color: var(--snow); }
 
 /* ---------- FAQ: crawlable answers, also usable without JavaScript ---------- */
 .faq-grid { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 32px clamp(32px, 6vw, 96px); align-items: start; }
@@ -480,7 +474,7 @@ footer .about p { color: var(--muted); font-size: 14px; max-width: 46ch; margin-
    itself, so nothing waits on a script or a timer to be shown. */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    .block .head h2, .ios h2 { animation: clip-up linear both; animation-timeline: view(); animation-range: entry 5% entry 70%; }
+    .block .head h2 { animation: clip-up linear both; animation-timeline: view(); animation-range: entry 5% entry 70%; }
     .feat .well, .step, .rel { animation: rise-in linear both; animation-timeline: view(); animation-range: entry 0% entry 45%; }
   }
 }
@@ -499,7 +493,7 @@ footer .about p { color: var(--muted); font-size: 14px; max-width: 46ch; margin-
   .nav nav { display: none; }
 }
 @media (max-width: 900px) {
-  .hero-grid, .crate-grid, .ios, .faq-grid { grid-template-columns: minmax(0, 1fr); }
+  .hero-grid, .crate-grid, .faq-grid { grid-template-columns: minmax(0, 1fr); }
   .head.split { grid-template-columns: minmax(0, 1fr); }
   .faq-grid .head { position: static; }
   .stage { padding-block: 24px 8px; }
@@ -526,7 +520,6 @@ footer .about p { color: var(--muted); font-size: 14px; max-width: 46ch; margin-
   .hz span:nth-child(2n) { visibility: hidden; }
   .eq { height: 170px; }
   .nav .gh { display: none; }
-  .nav .ios-btn .sub { display: none; }
   /* Discord stays, as its logo only, so the three nav buttons don't crowd. */
   .nav .dc span { display: none; }
   .nav .dc { padding: 0 11px; }
@@ -557,7 +550,6 @@ footer .about p { color: var(--muted); font-size: 14px; max-width: 46ch; margin-
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <!-- Apple and Android marks, from Simple Icons (CC0), filled rather than stroked. -->
-    <symbol id="i-apple" viewBox="0 0 24 24"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></symbol>
     <symbol id="i-android" viewBox="0 0 24 24"><path d="M18.4395 5.5586c-.675 1.1664-1.352 2.3318-2.0274 3.498-.0366-.0155-.0742-.0286-.1113-.043-1.8249-.6957-3.484-.8-4.42-.787-1.8551.0185-3.3544.4643-4.2597.8203-.084-.1494-1.7526-3.021-2.0215-3.4864a1.1451 1.1451 0 0 0-.1406-.1914c-.3312-.364-.9054-.4859-1.379-.203-.475.282-.7136.9361-.3886 1.5019 1.9466 3.3696-.0966-.2158 1.9473 3.3593.0172.031-.4946.2642-1.3926 1.0177C2.8987 12.176.452 14.772 0 18.9902h24c-.119-1.1108-.3686-2.099-.7461-3.0683-.7438-1.9118-1.8435-3.2928-2.7402-4.1836a12.1048 12.1048 0 0 0-2.1309-1.6875c.6594-1.122 1.312-2.2559 1.9649-3.3848.2077-.3615.1886-.7956-.0079-1.1191a1.1001 1.1001 0 0 0-.8515-.5332c-.5225-.0536-.9392.3128-1.0488.5449zm-.0391 8.461c.3944.5926.324 1.3306-.1563 1.6503-.4799.3197-1.188.0985-1.582-.4941-.3944-.5927-.324-1.3307.1563-1.6504.4727-.315 1.1812-.1086 1.582.4941zM7.207 13.5273c.4803.3197.5506 1.0577.1563 1.6504-.394.5926-1.1038.8138-1.584.4941-.48-.3197-.5503-1.0577-.1563-1.6504.4008-.6021 1.1087-.8106 1.584-.4941z"/></symbol>
     <symbol id="i-discord" viewBox="0 0 24 24"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></symbol>
     <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></symbol>
@@ -571,8 +563,6 @@ footer .about p { color: var(--muted); font-size: 14px; max-width: 46ch; margin-
     <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.3 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10Z"/></symbol>
     <symbol id="i-more" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18" cy="12" r="1.2"/></symbol>
     <symbol id="i-tv" viewBox="0 0 24 24"><rect x="2.5" y="4.5" width="19" height="12.5" rx="2"/><path d="M8.5 20.5h7M12 17v3.5"/></symbol>
-    <symbol id="i-desktop" viewBox="0 0 24 24"><rect x="2.5" y="3.5" width="19" height="13" rx="2"/><path d="M9 20.5h6M12 16.5v4"/></symbol>
-    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.8 5.7 3.8 9s-1.2 6.3-3.8 9c-2.6-2.7-3.8-5.7-3.8-9S9.4 5.7 12 3Z"/></symbol>
     <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4.5v4h4"/></symbol>
   </defs>
 </svg>
@@ -586,7 +576,7 @@ footer .about p { color: var(--muted); font-size: 14px; max-width: 46ch; margin-
       <a href="#live">Features</a>
       <a href="#colour">Colour</a>
       <a href="#screens">Screens</a>
-      <a href="#everywhere">Platforms</a>
+      <a href="#everywhere">Devices</a>
       <a href="#releases">Releases</a>
       <a href="#install">Install</a>
       <a href="#faq">FAQ</a>
@@ -595,7 +585,6 @@ footer .about p { color: var(--muted); font-size: 14px; max-width: 46ch; margin-
       <a class="btn btn-line btn-small dc" href="https://discord.gg/6udrCVh5n" target="_blank" rel="noopener" aria-label="Join the Discord"><svg class="logo-ico"><use href="#i-discord"/></svg><span>Discord</span></a>
       <a class="btn btn-line btn-small gh" href="https://github.com/justshivv/Opentune" target="_blank" rel="noopener"><svg class="line-ico"><use href="#i-star"/></svg>Star<span class="sub" id="stars-nav" hidden></span></a>
       <a data-latest-apk class="btn btn-small dl" href="https://github.com/justshivv/Opentune/releases/latest" target="_blank" rel="noopener"><svg class="logo-ico"><use href="#i-android"/></svg>Android</a>
-      <a class="btn btn-line btn-small ios-btn" href="#iphone"><svg class="logo-ico"><use href="#i-apple"/></svg>iOS<span class="sub">early</span></a>
     </div>
   </div>
   <i class="readline" id="readline" aria-hidden="true"></i>
@@ -607,11 +596,9 @@ footer .about p { color: var(--muted); font-size: 14px; max-width: 46ch; margin-
       <div class="hero-copy">
         <a class="badge fade-in" style="--d:.05s" href="#releases"><b id="ver-badge">Latest</b><span id="ver-note">See what's new in the latest release</span></a>
         <h1><span class="hl"><span>Every song.</span></span><span class="hl" style="--i:1"><span>No ads.</span></span><span class="hl" style="--i:2"><span><mark>No account.</mark></span></span></h1>
-        <p class="lede fade-in" style="--d:.35s">OpenTune is a free, open-source music player for Android phones and TVs, Windows, macOS, Linux and the browser, with an early version for iPhone. It plays the YouTube Music catalogue with word-synced lyrics, live radio, podcasts and rooms where friends listen in step.</p>
+        <p class="lede fade-in" style="--d:.35s">OpenTune is a free, open-source music player for Android phones and tablets. It plays the YouTube Music catalogue with word-synced lyrics, live radio and podcasts.</p>
         <div class="ctas fade-in" style="--d:.45s">
           <a data-latest-apk class="btn btn-ink" id="dl-hero" href="https://github.com/justshivv/Opentune/releases/latest" target="_blank" rel="noopener"><svg class="logo-ico"><use href="#i-android"/></svg>Download for Android<span class="sub" id="dl-size" hidden></span></a>
-          <a class="btn btn-line" href="#everywhere"><svg class="line-ico"><use href="#i-desktop"/></svg>Desktop, TV and web</a>
-          <a class="btn btn-line" href="#iphone"><svg class="logo-ico"><use href="#i-apple"/></svg>iPhone and iPad<span class="sub">early</span></a>
         </div>
         <ul class="fine fade-in" style="--d:.55s"><li>Android 8.0 or newer</li><li>No sign-in needed</li><li>GPL-3.0</li><li><a href="https://github.com/justshivv/Opentune" target="_blank" rel="noopener"><svg class="line-ico"><use href="#i-code"/></svg>Source on GitHub</a></li></ul>
       </div>
@@ -827,8 +814,8 @@ footer .about p { color: var(--muted); font-size: 14px; max-width: 46ch; margin-
   <section class="block t-night" id="everywhere">
     <div class="wrap">
       <header class="head split">
-        <h2>Phone, TV, computer or browser.</h2>
-        <p>One player, the same lyrics, library and listening rooms, wherever you are. All of them are free and open source.</p>
+        <h2>One app, for your phone.</h2>
+        <p>The same lyrics, library and listening history wherever you play it. It is free and open source.</p>
       </header>
       <div class="platforms">
         <article class="platform">
@@ -837,32 +824,6 @@ footer .about p { color: var(--muted); font-size: 14px; max-width: 46ch; margin-
           <p>The full app: downloads, Android Auto, widgets, USB DACs, the equalizer and every player design.</p>
           <p class="hint">Android 8.0 or newer.</p>
           <div class="ctas"><a data-latest-apk class="btn btn-tint btn-small" href="https://github.com/justshivv/Opentune/releases/latest" target="_blank" rel="noopener"><svg class="logo-ico"><use href="#i-android"/></svg>Download the APK</a></div>
-        </article>
-        <article class="platform">
-          <svg class="p-ico" aria-hidden="true"><use href="#i-tv"/></svg>
-          <h3>Android TV and Google TV</h3>
-          <p>The same APK opens a layout made for the TV, driven by the remote: the arrows go where you expect and seek through the song. Sign in by scanning a code with your phone instead of typing on the TV.</p>
-          <p class="hint">Install the universal APK with Downloader or any file manager on the TV; OpenTune joins the home screen's apps.</p>
-          <div class="ctas"><a data-latest-apk class="btn btn-line btn-small" href="https://github.com/justshivv/Opentune/releases/latest" target="_blank" rel="noopener"><svg class="line-ico"><use href="#i-download"/></svg>APK for the TV</a></div>
-        </article>
-        <article class="platform">
-          <svg class="p-ico" aria-hidden="true"><use href="#i-desktop"/></svg>
-          <h3>Windows, macOS and Linux</h3>
-          <p>A desktop app with a sidebar, synced lyrics beside the page, the queue, Discord status and Last.fm scrobbling. On Windows 11 it draws its own title bar over Mica.</p>
-          <p class="hint">Not signed by Apple or Microsoft yet, so the first launch shows a warning. On a Mac, right-click the app and choose Open.</p>
-          <div class="ctas">
-            <a data-desktop="windows" class="btn btn-tint btn-small" href="https://github.com/justshivv/Opentune/releases/latest" target="_blank" rel="noopener">Windows</a>
-            <a data-desktop="mac" class="btn btn-line btn-small" href="https://github.com/justshivv/Opentune/releases/latest" target="_blank" rel="noopener">macOS</a>
-            <a data-desktop="linux" class="btn btn-line btn-small" href="https://github.com/justshivv/Opentune/releases/latest" target="_blank" rel="noopener">Linux</a>
-          </div>
-          <p class="hint other-builds" id="desktop-more">Also as an .msi, a portable .zip, a .deb and an .rpm on <a href="https://github.com/justshivv/Opentune/releases/latest" target="_blank" rel="noopener">GitHub Releases</a>.</p>
-        </article>
-        <article class="platform">
-          <svg class="p-ico" aria-hidden="true"><use href="#i-globe"/></svg>
-          <h3>Web player</h3>
-          <p>Nothing to install but a small browser extension, which plays the music and connects YouTube Music, Spotify and Discord. Lyrics and add-ons work without it.</p>
-          <p class="hint">Chrome, Edge, Brave and Firefox on a computer.</p>
-          <div class="ctas"><a class="btn btn-tint btn-small" href="player/"><svg class="line-ico"><use href="#i-globe"/></svg>Open the web player</a></div>
         </article>
       </div>
     </div>
@@ -915,24 +876,6 @@ footer .about p { color: var(--muted); font-size: 14px; max-width: 46ch; margin-
         <a data-latest-apk class="btn btn-ink" href="https://github.com/justshivv/Opentune/releases/latest" target="_blank" rel="noopener"><svg class="logo-ico"><use href="#i-android"/></svg>Download for Android</a>
         <a class="btn btn-line" href="https://github.com/justshivv/Opentune/releases" target="_blank" rel="noopener">All releases</a>
       </div>
-
-      <div class="ios" id="iphone">
-        <div>
-          <h2>An early iOS version.</h2>
-          <p>Apple doesn't allow apps like OpenTune on the App Store, so it installs through SideStore or AltStore, which sign it with your own Apple ID. Setting one of them up needs a computer once. After that, OpenTune installs, updates and re-signs itself on the phone. Add the OpenTune source and install it from there. iOS 16 or newer.</p>
-        </div>
-        <div>
-          <div class="ctas">
-            <a class="btn btn-tint" href="sidestore://source?url=https://justshivv.github.io/Opentune/ios/source.json"><svg class="line-ico"><use href="#i-download"/></svg>Add to SideStore</a>
-            <a class="btn btn-line" href="altstore://source?url=https://justshivv.github.io/Opentune/ios/source.json">Add to AltStore</a>
-            <a class="btn btn-line" href="https://github.com/justshivv/Opentune/releases/download/ios/OpenTune-iOS.ipa">Download the .ipa</a>
-          </div>
-          <div class="ios-meta">
-            <span id="ios-ver" hidden></span>
-            <span>Source: <code>https://justshivv.github.io/Opentune/ios/source.json</code></span>
-          </div>
-        </div>
-      </div>
     </div>
   </section>
 
@@ -943,7 +886,7 @@ footer .about p { color: var(--muted); font-size: 14px; max-width: 46ch; margin-
         <details><summary>Is OpenTune free and ad-free?</summary><p>Yes. OpenTune is free, open-source software under GPL-3.0, with no in-app ads or subscription. Its source code is available on <a href="https://github.com/justshivv/Opentune">GitHub</a>.</p></details>
         <details><summary>Do I need an account?</summary><p>No account is required for basic listening. You can optionally sign in to connect your YouTube Music library or configure supported services.</p></details>
         <details><summary>Can I listen offline?</summary><p>You can download supported songs in the app and play your own device files. Downloaded music can be managed from the song menu or playlist download controls.</p></details>
-        <details><summary>Can I use OpenTune on a computer or a TV?</summary><p>Yes. There's a desktop app for Windows, macOS and Linux, a <a href="player/">web player</a> that runs in Chrome, Edge, Brave or Firefox with a small extension, and the Android app opens a TV layout on Android TV and Google TV. See <a href="#everywhere">every platform</a>.</p></details>
+        <details><summary>Does OpenTune run on a TV?</summary><p>No. This build is for Android phones and tablets. There is no Android TV app, and no browser or desktop app either.</p></details>
         <details><summary>Which Android phones are supported?</summary><p>OpenTune requires Android 8.0 or newer. Use the universal APK if you are unsure which processor your phone has. Installation instructions are in the <a href="#install">install guide</a>.</p></details>
         <details><summary>Where can I download official releases?</summary><p>Use the signed APKs on <a href="https://github.com/justshivv/Opentune/releases/latest">OpenTune’s GitHub Releases page</a>. GitHub-compatible clients such as Obtainium can follow that repository. Other store listings will be linked here when available.</p></details>
         <details><summary>What usage information is collected?</summary><p>Optional usage counting sends a random installation identifier, app version and daily play totals. You can turn it off in Settings → About. See the <a href="privacy/">privacy policy</a> for app, website and connected-service details.</p></details>
@@ -971,7 +914,7 @@ footer .about p { color: var(--muted); font-size: 14px; max-width: 46ch; margin-
       <a class="brand" href="#top"><img src="img/opentune-logo.svg" width="30" height="30" alt="" aria-hidden="true">OpenTune</a>
       <p>Free software under GPL-3.0. OpenTune isn't affiliated with or endorsed by YouTube, Google, Spotify or any artist or label shown. Covers are shown to illustrate the app.</p>
     </div>
-    <div><h4>Product</h4><ul><li><a href="#live">Features</a></li><li><a href="#colour">Colour from the cover</a></li><li><a href="#releases">Releases</a></li><li><a href="#install">Install guide</a></li><li><a href="#everywhere">Desktop, TV and web</a></li><li><a href="#faq">FAQ</a></li><li><a href="player/">Web player</a><a href="addons/">Build audio add-ons</a><a href="privacy/">Privacy policy</a></li></ul></div>
+    <div><h4>Product</h4><ul><li><a href="#live">Features</a></li><li><a href="#colour">Colour from the cover</a></li><li><a href="#releases">Releases</a></li><li><a href="#install">Install guide</a></li><li><a href="#everywhere">Phone</a></li><li><a href="#faq">FAQ</a></li><li><a href="addons/">Build audio add-ons</a><a href="privacy/">Privacy policy</a></li></ul></div>
     <div><h4>Project</h4><ul><li><a href="https://github.com/justshivv/Opentune" target="_blank" rel="noopener">Source on GitHub</a></li><li><a href="https://github.com/justshivv/Opentune/releases" target="_blank" rel="noopener">All releases</a></li><li><a href="https://github.com/justshivv/Opentune/blob/main/LICENSE" target="_blank" rel="noopener">GPL-3.0 license</a></li></ul></div>
     <div><h4>Support</h4><ul><li><a href="https://discord.gg/6udrCVh5n" target="_blank" rel="noopener">Community on Discord</a></li><li><a href="https://github.com/justshivv/Opentune/issues" target="_blank" rel="noopener">Report a problem</a></li><li><a href="https://github.com/justshivv/Opentune/issues/new" target="_blank" rel="noopener">Ask for a feature</a></li></ul></div>
   </div>
@@ -1348,7 +1291,7 @@ footer .about p { color: var(--muted); font-size: 14px; max-width: 46ch; margin-
   const FALLBACK = [{
     tag_name: "v0.2.0", name: "OpenTune v0.2.0", published_at: "2026-10-06T17:43:48Z", html_url: "https://github.com/justshivv/Opentune/releases/tag/v0.2.0",
     assets: [{ name: "OpenTune-v0.2.0-arm64-v8a.apk", size: 9779415, download_count: null, browser_download_url: "https://github.com/justshivv/Opentune/releases/download/v0.2.0/OpenTune-v0.2.0-arm64-v8a.apk" }],
-    highlights: ["Listen together over encrypted rooms, with guests kept in step by tiny speed changes", "Five player button designs, five dock animations, seven player layouts", "Live radio near you, podcasts, and lyrics that follow the song word by word"],
+    highlights: ["Five player button designs, five dock animations, seven player layouts", "Live radio near you, podcasts, and lyrics that follow the song word by word"],
   }];
   const ago = (iso) => { const d = (Date.now() - new Date(iso)) / 864e5; return d < 1 ? "today" : d < 2 ? "yesterday" : d < 30 ? Math.floor(d) + " days ago" : Math.floor(d / 30) + " months ago"; };
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -1384,14 +1327,6 @@ footer .about p { color: var(--muted); font-size: 14px; max-width: 46ch; margin-
         document.querySelectorAll("[data-latest-apk]").forEach((link) => {
           link.href = apkUrl || LATEST_PAGE;
         });
-        // The desktop buttons go straight to this release's files once it has them.
-        const file = (re) => (rel.assets || []).find((a) => re.test(a.name));
-        const desktop = { windows: file(/windows-x64-setup\.exe$/) || file(/\.msi$/), mac: file(/macos-[^.]+\.dmg$/) || file(/\.dmg$/), linux: file(/\.AppImage$/) };
-        document.querySelectorAll("[data-desktop]").forEach((link) => {
-          const a = desktop[link.dataset.desktop];
-          link.href = a ? a.browser_download_url : (rel.html_url || LATEST_PAGE);
-          if (a && a.size && !link.querySelector(".sub")) link.insertAdjacentHTML("beforeend", ' <span class="sub">' + mb(a.size) + '</span>');
-        });
         const size = $("dl-size");
         size.hidden = !(apkUrl && apk.size);
         if (apkUrl && apk.size) size.textContent = mb(apk.size);
@@ -1418,15 +1353,6 @@ footer .about p { color: var(--muted); font-size: 14px; max-width: 46ch; margin-
     });
   fetch("https://api.github.com/repos/justshivv/Opentune").then((r) => r.ok ? r.json() : Promise.reject(r.status))
     .then((repo) => { if (repo.stargazers_count > 0) { const s = $("stars-nav"); s.textContent = repo.stargazers_count.toLocaleString("en-US"); s.hidden = false; } }).catch(() => {});
-
-  // ios/source.json is written at deploy time too, once an iPhone build exists.
-  getJson("ios/source.json", { cache: "no-cache" }).then((src) => {
-    const v = src && src.apps && src.apps[0] && src.apps[0].versions && src.apps[0].versions[0];
-    if (!v || !v.version) return;
-    const el = $("ios-ver");
-    el.textContent = "Current build: " + v.version + (v.size ? " · " + mb(v.size) : "") + " · iOS " + String(v.minOSVersion || "16.0").replace(/\.0$/, "") + " or newer";
-    el.hidden = false;
-  }).catch(() => {});
 
   /* ===== contribution calendar ===== */
   // A year of days from GitHub's contribution graph, by week, newest on the right.

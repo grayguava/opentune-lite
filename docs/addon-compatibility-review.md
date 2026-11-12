@@ -43,7 +43,4 @@ never reached OpenTune's upgrade engine. Regression coverage exercises the exact
 response shape, misleading codec labels, invalid media, duration mismatch,
 streaming-only policy, and the existing delayed-better-candidate path.
 
-The web player already probes direct stream bytes before classifying FLAC and
-does not have this Android codec gate. Browser playback still depends on CDN
-CORS and codec support. No first-party verification or public-source access
-policy is changed.
+No first-party verification or public-source access policy is changed.

@@ -19,7 +19,6 @@
   <img src="https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white" alt="Android 8.0+">
   <img src="https://img.shields.io/badge/Kotlin-Compose-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin and Jetpack Compose">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="GPL-3.0"></a>
-  <a href="https://justshivv.github.io/Opentune/usage/"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fopentune-usage.create-a-new-site-with-sites.workers.dev%2Fv1%2Fbadge%3Flabel%3Dactive%2520this%2520month&cacheSeconds=300" alt="Active installations this month"></a>
 </p>
 
 [![Get it on Orion Store](https://raw.githubusercontent.com/RookieEnough/Orion-Store/refs/heads/main/assets/orion-badge.png)](https://rookieenough.github.io/Orion-Data/redirect.html?id=opentune&icon=https%3A%2F%2Fjustshivv.github.io%2FOpentune%2Ficon-512.png)
@@ -35,7 +34,7 @@ Built with Kotlin, Jetpack Compose and Media3. Android 8.0 and newer.
 Questions, ideas or bug reports: join the
 [Discord](https://discord.gg/6udrCVh5n).
 
-Build-owner setup and current Last.fm, Discord and extension-update limits are
+Build-owner setup and current Last.fm and Discord limits are
 documented in [service integrations](docs/service-integrations.md).
 
 ## See it
@@ -54,7 +53,6 @@ documented in [service integrations](docs/service-integrations.md).
   </tr>
   <tr>
     <td><img src="docs/screenshots/04-radio.jpg" alt="Live radio near you"></td>
-    <td><img src="docs/screenshots/05-together.jpg" alt="Listen together room"></td>
     <td><img src="docs/screenshots/06-podcasts.jpg" alt="Podcasts"></td>
   </tr>
 </table>
@@ -71,104 +69,6 @@ documented in [service integrations](docs/service-integrations.md).
 
 Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
 
-### iPhone and iPad
-
-**Requires iOS/iPadOS 16 or newer. An Android APK cannot be installed on an iPhone.**
-OpenTune's native iOS build is an `.ipa`. It is not currently on the App Store or TestFlight.
-
-**Recommended: SideStore, or classic AltStore (not AltStore PAL)**
-
-1. On a Windows PC or Mac, follow the official [SideStore setup guide](https://sidestore.io)
-   or [classic AltStore installation guide](https://altstore.io). Complete that setup first,
-   including its required pairing, background refresh or companion software. Classic
-   AltStore needs AltServer available for refresh; SideStore has its own pairing/VPN setup.
-2. On your iPhone/iPad, open the installed SideStore or classic AltStore app. Go to
-   **Sources → Add source (+)** and paste this exact URL:
-
-   ```text
-   https://justshivv.github.io/Opentune/ios/source.json
-   ```
-
-3. Open the new OpenTune source, choose **OpenTune**, and tap **Install**. Let the
-   installer sign the app with your Apple ID. Enter Apple credentials only into the
-   installer you chose, never into an OpenTune issue, chat or website form.
-4. If iOS asks, enable **Settings → Privacy & Security → Developer Mode**, restart,
-   and confirm. If it reports an untrusted developer, open **Settings → General →
-   VPN & Device Management**, select your developer profile and choose **Trust**.
-   These prompts depend on the installer and iOS version.
-5. Open OpenTune from the Home Screen. Keep the same installer/source for updates.
-   With a free Apple ID the app normally needs re-signing every **7 days**:
-   enable the installer's refresh setup and check its expiry date. Background refresh
-   is not guaranteed, so refresh manually in the installer before expiry if needed.
-
-**Alternative: install the IPA with a computer**
-
-1. Download [OpenTune-iOS.ipa](https://github.com/justshivv/Opentune/releases/download/ios/OpenTune-iOS.ipa)
-   and install [Sideloadly](https://sideloadly.io) on your PC or Mac.
-2. Connect and unlock your iPhone/iPad, tap **Trust this computer**, choose that device
-   in Sideloadly, select the IPA, then follow its signing/install instructions.
-3. Complete the Developer Mode/Trust prompts above if shown. Use the same Apple ID
-   and installation method when updating; follow Sideloadly's refresh instructions.
-
-**Common problems**
-
-- **“Lacks marketplaceID”**: you are using AltStore PAL. Use SideStore or classic
-  AltStore installed through AltServer; PAL is a different distribution system.
-- **The file downloads but nothing installs**: Safari cannot install an IPA directly.
-  Import it into your configured installer, or use the source URL above.
-- **The app stops opening after a week**: refresh/re-sign it through the same installer.
-  Avoid deleting it first, because deleting the app also deletes its local data.
-- **Signing/device limit error**: free Apple accounts have signing and active-app limits.
-  Follow your installer's guidance to deactivate another app or wait for a signing slot.
-
-Without sideloading, you can also open the [web player](https://justshivv.github.io/Opentune/player/)
-from Safari and choose **Share → Add to Home Screen**. This installs the web app,
-not the native IPA. Safari on iOS cannot run our Chrome/Firefox session extension,
-so extension-dependent playback and account features are unavailable there.
-
-The native iOS build currently includes Home, search with recent searches,
-artist/album/playlist browsing, a player with synced lyrics and queue editing,
-shuffle, repeat (off, all, one), playback speed with or without a change of pitch,
-a sleep timer that fades out, background audio, lock-screen controls, AirPlay,
-likes, history, your own playlists, albums and playlists saved with the heart, and
-downloads for listening offline (one song, or Download all on an album or playlist).
-It still has less than Android: no equalizer, no sign-in, no add-on sources and
-lyrics from LRCLIB only.
-
-### Android TV
-
-The phone APK runs on Android TV too, and shows up in the TV's row of
-apps. You drive it with the remote, and the screen stays on while music
-plays.
-
-Typing a password with a remote is no fun, so you sign the TV in from
-your phone instead:
-
-1. Install the same APK on the TV, from the
-   [releases](https://github.com/justshivv/Opentune/releases) page.
-2. On the TV, open Settings → Account and choose Sign in with your phone.
-3. Scan the QR code with a phone that has OpenTune, on the same Wi-Fi,
-   and approve sharing your YouTube Music session. The code expires after
-   two minutes.
-
-The phone and the TV each keep their own local library.
-
-### Web player (preview)
-
-There's a player you open in a browser on a computer, written in React.
-You can browse, search and listen there. It plays YouTube Music through a
-companion browser extension, so you install that as well; it works in
-Chrome and Firefox. The extension isn't in the browser stores yet, so you
-load a preview package in developer mode. Your library stays in that
-browser.
-
-Open it at
-[justshivv.github.io/Opentune/player](https://justshivv.github.io/Opentune/player/).
-
-It's a preview, so not everything from the Android app is there. Audio
-add-ons work for direct FLAC over CORS-enabled media, and the audio stays
-on your own connection with no hosted proxy.
-
 ## Highlights
 
 - **No ads in the app, no account, no server.** Signing in is optional and
@@ -176,16 +76,9 @@ on your own connection with no hosted proxy.
 - **Best audio by default**, with crossfade, loudness levelling, a 15-band
   equalizer and AutoEq correction for 8,000+ headphones.
 - **Synced lyrics**, lit word by word, that also work offline with downloads.
-- **Listen together**: share a room code and friends hear the same song,
-  in step, on their own phones.
 - **Live radio** from 50,000+ stations, nearest first.
-- **Cast** to Chromecasts, smart TVs and network speakers on your Wi-Fi.
-- **On the web and the TV too.** A browser player (preview, with a
-  companion extension) and an Android TV app you sign in by scanning a
-  code from your phone.
 - **Name that song**: hold the phone up and it tells you what's playing.
-- **Podcasts**, downloads, Android Auto, a home-screen widget and imports
-  from Spotify and YouTube playlists.
+- **Podcasts**, downloads, Android Auto and a home-screen widget.
 
 ## Features
 
@@ -275,13 +168,11 @@ on your own connection with no hosted proxy.
   each feel different under your finger (a riffle, a loop closing, a
   swell) and move in their own way as they change.
 - **Pick who recommends.** Autoplay and Home's "Because you played" can
-  follow YouTube Music's radio, Spotify's recommendations or JioSaavn's
-  (Settings → Playback → Recommendations). Spotify's picks come from the
-  "Recommended" list on its public song pages, after ListenBrainz's public
-  lookup finds the song there; JioSaavn's come from its public
-  recommendations. No account or key is needed. Only song names are read,
-  each one is found on YouTube Music and plays from there, and when a
-  service doesn't know a song, YouTube Music's radio takes over.
+  follow YouTube Music's radio or JioSaavn's (Settings → Playback →
+  Recommendations). JioSaavn's picks come from its public recommendations.
+  No account or key is needed. Only song names are read, each one is found
+  on YouTube Music and plays from there, and when a service doesn't know a
+  song, YouTube Music's radio takes over.
 - **Sound tools.** A 15-band equalizer (ISO 25 Hz to 16 kHz) with presets,
   tone and balance, bass boost,
   stereo widening, skip silence, USB DAC preference, optional 32-bit float
@@ -291,15 +182,6 @@ on your own connection with no hosted proxy.
   measurements and their parametric correction runs ahead of your own EQ,
   so you start from a neutral sound.
 - **Sleep timer.** Stop after 15 to 90 minutes, or at the end of the song.
-- **Cast to a TV or speaker.** The Play on button in the player finds
-  Chromecasts (and TVs and speakers with Chromecast built in) and DLNA
-  renderers (most smart TVs, many network speakers, Kodi, VLC) on the same
-  Wi-Fi. No Google libraries are involved: OpenTune speaks the Cast
-  protocol and DLNA itself. The phone serves each song to the device from
-  a small web server of its own, so downloads, songs on the phone and
-  streams all cast. The queue, autoplay, the notification and every button
-  keep working as usual; the device follows, and its volume is in the same
-  sheet.
 - **What's this song?** From Home or the search bar, a page listens
   through the microphone and names the song playing nearby. The phone
   turns a few seconds of sound into an audio fingerprint (the method
@@ -334,14 +216,6 @@ on your own connection with no hosted proxy.
   frequency when the name carries one. Stations the directory lacks can be
   added by stream address, or suggested to Radio Browser. The song on air shows in the player and notification when
   the station sends it. Favourite stations are in Android Auto too.
-- **Listen together.** Start a room and share its code; friends who join
-  hear what you play, in step, each phone streaming the music itself. Guests
-  can add songs to the room's queue and chat, and the host can let everyone
-  play, pause, seek and skip. Pausing without control pauses just for you;
-  "Catch up" puts you back in step. Rooms run over public Nostr relays with
-  no account or server: messages are encrypted with a key from the room
-  code and sent as ephemeral events that relays don't keep. Invites open
-  with an `opentune://together/<code>` link or by typing the code.
 - **Picks up where you left off.** The queue, song and position come back
   at launch, paused, without fetching anything until you press play.
 - **Home-screen widget.** Cover, title and artist, with previous,
@@ -355,41 +229,6 @@ on your own connection with no hosted proxy.
   OpenTune"), and tap a song to play its list from there. Sideloaded
   builds show up in Android Auto once "Unknown sources" is turned on in
   Android Auto's developer settings.
-- **Android TV.** The same APK shows up in the TV's row of apps. The remote
-  moves between rows and buttons with a clear highlight, OK opens or plays,
-  and left and right on the seek bar skip through the song. The screen stays
-  on while music plays.
-- **Wear OS.** A separate watch app (`wear/`) that plays on the watch
-  itself, over its Wi-Fi or LTE and Bluetooth headphones, with no phone
-  needed. Search by voice or keyboard, play your liked and recent songs on
-  the watch, skip, like, see what's up next, and turn the crown for volume.
-  It asks for headphones rather than playing from the watch's speaker.
-- **Desktop (early).** A Windows, macOS and Linux app (`desktop/`, run it
-  with `./gradlew :desktop:run`; CI builds an MSI, DMG and DEB). It has
-  Home (moods and genres, a speed dial and daily mixes made from what you
-  play there, quick picks, then YouTube Music's rows page after page, new
-  releases and the charts), a Library with your year so far, shortcuts, your
-  playlists, your mixes, this month's top songs and artists and what you
-  played last, search with recent searches, albums, playlists, artists and
-  podcasts, a queue that carries on with YouTube Music's up-next, synced
-  lyrics from the phone's sources (lit word by word, with a per-song source
-  and offset), your own playlists, liked and recent songs, your own
-  Subsonic server, the 15-band equalizer and its presets, speed,
-  balance, shuffle, repeat and a sleep timer. It's laid out like BitChord's
-  desktop app: an icon rail down the left, the player floating as a pill
-  over the foot of the page, and a column on the right with Now playing
-  (the cover, a lyrics preview and the artist), the full lyrics or the
-  queue. Artist pages open on Apple Music's photo of the artist with their
-  handwritten signature over it, and there's a New tab for new releases
-  and the charts. YouTube songs
-  play YouTube's Opus stream (about 160 kbps) through a bundled FFmpeg,
-  falling back to AAC; YouTube's player code runs on GraalJS; and the
-  library (liked songs, playlists and the full play history) is kept in
-  SQLite. It uses the phone app's code for YouTube Music, lyrics, Subsonic
-  and settings as-is, but finds streams with NewPipe only, so some songs
-  don't play yet. Signing in to YouTube Music isn't there. On Linux, songs
-  from your own server and JioSaavn still play through JavaFX, which needs
-  the system's FFmpeg libraries (libavcodec).
 - **Opens YouTube links.** music.youtube.com, youtube.com and youtu.be
   links, or links shared to the app, open in OpenTune.
 
@@ -438,43 +277,13 @@ on your own connection with no hosted proxy.
   of YouTube's smaller cover or a video frame. A cover is only taken when
   the title, artist and length (within 3 s) match.
 - **Animated covers** (optional): when Apple Music has a moving cover for
-  the album, it loops silently in the player's cover. With Spotify
-  connected (you sign in on Spotify's own page inside the app), a song's
-  Canvas loops behind the player. Both can be limited to Wi-Fi.
-- **Spotify playlists in Library**: once Spotify is connected, every
-  playlist in your Spotify library (and Liked Songs) shows up in Library
-  with a Spotify tag. Each song is found on YouTube Music, and the copies
-  follow changes on Spotify every few hours or when you tap to check.
-- **Spotify suggestions made for you**: with Spotify as the recommender
-  and Spotify connected, autoplay uses Spotify's song radio for your
-  account. Each pick is matched on YouTube Music to the same length (within
-  3 s), songs played in the last three hours are skipped, and artists in
-  your playlists and likes move a little nearer the front.
+  the album, it loops silently in the player's cover. They can be limited
+  to Wi-Fi.
 - **Your listening, where it counts**: signed in to YouTube Music, plays
   go into your YouTube Music history; Last.fm and ListenBrainz (optional)
-  get them as scrobbles. With Spotify connected, songs you like are saved
-  to your Spotify Liked Songs too, and Home shows Spotify's mixes made for
-  you (Daily Mixes, Discover Weekly, Release Radar), found on YouTube
-  Music. Plays aren't sent to Spotify, since the music streams from
-  YouTube Music, not Spotify.
+  get them as scrobbles.
 - **Last.fm scrobbling** (optional), with your own free Last.fm API key.
   The password is only used once to get a session and isn't stored.
-- **Import playlists.** Settings › Import a playlist takes:
-  - a **YouTube Music or YouTube playlist link**, read in full however long
-    it is, and saved as a playlist on the phone (or played straight away);
-  - a **Spotify playlist, album or song link**, pasted or shared to
-    OpenTune from the Spotify app, with no sign-in. Each song is looked up
-    on YouTube Music and the closest catalogue match kept, with misses
-    listed. A song link plays straight away. Without signing in, Spotify
-    only shows a playlist's first 100 songs;
-  - **Export from Spotify**, for every song of any playlist or your Liked
-    Songs: [Exportify](https://exportify.app) opens inside OpenTune, you
-    sign in with Spotify there and tap Export (or Export All), and the
-    playlist comes straight back ready to import, with no file to find.
-    A CSV from Exportify, TuneMyMusic, Soundiiz and others can also be
-    picked from the phone; columns are found by their headers.
-
-  Nothing streams from Spotify.
 - **New-release alerts.** Follow an artist from their page (no account
   needed) and a notification tells you when they put out an album or
   single. Checked twice a day.
@@ -671,37 +480,9 @@ that the upstream master was never transcoded. See the
 [source review](docs/audio-source-review.md) for current limitations.
 
 OpenTune does not decrypt Deezer streams. Animated covers use the token
-Apple Music's web player ships in its own page, and Spotify Canvas uses the
-web player's token for your own Spotify sign-in, as do the Spotify
-playlists in Library and the personal Spotify suggestions; Spotify's
-terms don't allow that use, so it stays off
-until you connect Spotify yourself.
+Apple Music's web player ships in its own page.
 
 Not built yet: lyric translation and an in-app language setting.
-
-## Usage counts
-
-The new usage system uses a random installation ID, version, activity dates (India time) and
-daily play totals. IDs survive app updates and are excluded from backups and device
-transfers. Reinstalling or clearing app data creates a new ID. The server deduplicates
-installations and merges cumulative play totals, so upload retries do not inflate counts.
-No hardware identifiers, accounts, song names or listening history are sent. Turn it off
-under Settings > About > Count this phone in usage numbers. Debug builds never count.
-
-The badge above and `GET /v1/public` expose only aggregate counts (total installations
-and daily, weekly and monthly active installations) with no sign-in; `GET /v1/badge`
-returns the same as a [Shields endpoint](https://shields.io/badges/endpoint-badge), so
-the README count refreshes itself. The full breakdown — versions, plays, downloads and
-per-day active numbers — stays behind the owner login on the usage dashboard. These are
-measured anonymous reports, not fraud-proof head counts, and there is no "active right
-now": the finest granularity is a calendar day.
-
-The website separately reports unique browsers requesting APKs and GitHub's raw APK
-download events. Neither means unique people or completed installs. Historical Abacus
-counters cannot be converted into unique installations. The free-tier
-[Worker and D1 backend](usage-api/README.md) needs deployment; until its URL is configured,
-the dashboard shows unique counts as unavailable. Up to 30 days of pending reports retry
-during subsequent app use.
 
 ## Building
 
@@ -738,18 +519,14 @@ already on the phone, and a CI runner's debug key changes from run to run.
 ## Project layout
 
 ```
-app/src/main/java/com/opentune/
+core/src/main/java/com/opentune/
   data/innertube/   Innertube client and parser, StreamResolver (engine switch),
                     InnerTubeXResolver, PoToken WebView
   data/             account, downloads, library, history, lyrics, loudness, settings
   playback/         PlaybackService (ExoPlayer, cache, loudness, upgrade, sleep timer),
                     Crossfade, DSP
+app/src/main/java/com/opentune/
   ui/               Compose screens: home, explore, search, library, player, settings
-ios/
-  OpenTuneCore/     Swift package: YouTube Music client and parsers, LRCLIB lyrics,
-                    likes and history (Foundation only; `swift test` runs on Linux too)
-  OpenTune/         SwiftUI app: screens, AVPlayer playback, lock screen, AirPlay
-  project.yml       XcodeGen project (`xcodegen generate`, then open in Xcode)
 docs/               README banner, screenshots and the 40-second video
 ```
 

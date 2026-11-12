@@ -56,24 +56,14 @@ under CC BY-NC-SA 4.0), and radio stations from the
 The QR code on a Listen together invite is made with
 [ZXing](https://github.com/zxing/zxing) (`com.google.zxing:core`), by the
 ZXing authors, under the Apache License 2.0.
-On computers, YouTube's Opus stream and other formats are decoded by
-[FFmpeg](https://ffmpeg.org) (LGPL 2.1 or later), through Bytedeco's
-[JavaCV](https://github.com/bytedeco/javacv) and
-[JavaCPP Presets](https://github.com/bytedeco/javacpp-presets) (Apache
-License 2.0 and GPLv2 with the Classpath exception).
 
-## BitChord browser player and audio compatibility fixes
-
-The `web/` preview adapts the existing React/WXT browser player from
-[kushagrasinghx/BitChord](https://github.com/kushagrasinghx/BitChord), commit
-`edc1e6f36febf71a118e649411d2fc21b70ead45`, licensed GPL-3.0. Its research notes
-are preserved in `web/docs/`; OpenTune branding, addon integration, host/path
-restrictions and build configuration were added here. The original license
-applies to the derived files; OpenTune is also GPL-3.0.
+## Audio compatibility fixes
 
 `LosslessAudioPolicy` adapts BitChord's Samsung FLAC decoder exclusion and
 STREAMINFO measurement approach from `AudioOutputPolicy.kt` and
-`PlaybackService.kt` at the same commit. It excludes affected Samsung vendor
+`PlaybackService.kt` at commit
+`edc1e6f36febf71a118e649411d2fc21b70ead45` of
+[kushagrasinghx/BitChord](https://github.com/kushagrasinghx/BitChord),
+licensed GPL-3.0. It excludes affected Samsung vendor
 FLAC decoders and reads actual FLAC metadata rather than treating float PCM
-as proof of a hi-res master. No proprietary SF Pro font files are bundled in
-the browser preview; it uses DM Sans and system fallbacks.
+as proof of a hi-res master.
