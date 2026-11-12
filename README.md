@@ -82,17 +82,8 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
 
 ### Listening
 
-- **Lossless audio from add-ons you choose.** Add a BitChord-compatible HTTPS
-  service or manifest URL in **Settings → Audio → Audio add-ons**. Enable sources
-  and put them in your preferred order. Max quality starts music through the
-  usual fast sources, then checks add-ons in the background. The first matching
-  lossless result wins. **Lossless below Max** enables those checks at other
-  playback qualities. Max downloads also try eligible add-ons that allow direct
-  file downloads. Signal Path reports the source and detected audio format;
-  availability and actual precision depend on the recording and service.
-  JioSaavn remains a lossy 320 kbps option with YouTube fallback. Network policy
-  and output restrictions still apply. See [audio add-ons](docs/audio-addons.md)
-  for setup, supported transports and platform limits.
+- **JioSaavn renditions.** An optional 320 kbps route, with YouTube Music as the
+  fallback. Signal Path reports the source and detected audio format.
 
 - **Two stream engines that switch on their own.**
   InnerTubeX leads and
@@ -471,10 +462,9 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
   styles, pure black, color from artwork, and reduced motion and blur.
 
 YouTube's audio is lossy, so there's no lossless or Dolby Atmos stream
-option from YouTube. Lossless can come from your own music server or the
-optional community sources described above. The optional JioSaavn route
-remains lossy. Source availability varies, and a FLAC header does not prove
-that the upstream master was never transcoded. See the
+option from YouTube. Lossless can come from your own music server, which
+serves the files as they are stored. The optional JioSaavn route remains
+lossy. Source availability varies. See the
 [source review](docs/audio-source-review.md) for current limitations.
 
 OpenTune does not decrypt Deezer streams. Animated covers use the token

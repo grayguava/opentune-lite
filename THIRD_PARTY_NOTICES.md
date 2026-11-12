@@ -13,25 +13,6 @@ OpenTune adapts these in `ui/player/EchoMotion.kt`, `PlayerButtons.kt`
 and `ui/PageMotion.kt`, with its own palette, pause/lifecycle
 handling and reduced-motion behavior. See [Echo motion](docs/echo-motion.md).
 
-The earlier community lossless integration was adapted from
-[Spotui](https://github.com/Spotui/Spotui/tree/main/app/src/main/java/com/music/spotui/lossless)
-under GPLv3, with Qobuz relay protocol references from
-[Meld](https://github.com/FrancescoGrazioso/Meld) (Metrolist Project, GPLv3).
-Its fixed provider registry, relay and SpotiFLAC verification implementation have
-been removed; FLAC validation and rendition-cache behavior remain in `data/lossless/`.
-
-The HTTP add-on client in `data/addons/` implements the documented
-[BitChord add-on protocol](https://bitchord.kushagrasingh.in/docs), informed by
-[BitChord's source](https://github.com/kushagrasinghx/BitChord) under GPLv3.
-OpenTune supplies its own settings, persistence, strict catalog matching,
-transport validation and ordered lookup integration. No executable extension
-packages are bundled.
-
-The JioSaavn URL decoding and
-conditional 320 kbps rendition selection follow
-[BitChord's JioSaavnService](https://github.com/kushagrasinghx/BitChord/blob/main/app/src/main/java/com/music/bitchord/data/jiosaavn/JioSaavnService.kt)
-(GPLv3). OpenTune adds conservative catalog matching and byte/size verification.
-
 The Innertube client, response parser and YouTube stream resolver under
 `data/innertube/` are adapted from
 [BitChord](https://github.com/kushagrasinghx/BitChord), used under its
@@ -59,7 +40,7 @@ ZXing authors, under the Apache License 2.0.
 
 ## Audio compatibility fixes
 
-`LosslessAudioPolicy` adapts BitChord's Samsung FLAC decoder exclusion and
+`FlacInfo` adapts BitChord's Samsung FLAC decoder exclusion and
 STREAMINFO measurement approach from `AudioOutputPolicy.kt` and
 `PlaybackService.kt` at commit
 `edc1e6f36febf71a118e649411d2fc21b70ead45` of

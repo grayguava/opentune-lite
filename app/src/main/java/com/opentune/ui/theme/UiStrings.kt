@@ -141,8 +141,6 @@ private fun resourceFor(text: String): Int? = when (text) {
         "Loudness" -> R.string.ui_3efdeb9e9b0d
         "Sound" -> R.string.ui_46124e023603
         "Output" -> R.string.ui_b2439bcb8dee
-        "Lossless streaming" -> R.string.ui_68319ba84a79
-        "Unmetered networks only" -> R.string.ui_75f473969744
         "Layout" -> R.string.ui_a511909161e1
         "Cover art" -> R.string.ui_aff791fbf4bc
         "Controls" -> R.string.ui_799c26913574

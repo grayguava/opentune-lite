@@ -4,6 +4,7 @@ import android.util.Log
 import okhttp3.ConnectionPool
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.ResponseBody
 import okio.Buffer
 import okio.BufferedSource
@@ -135,4 +136,22 @@ object Http {
         .addInterceptor(namedForWikimedia)
         .apply { if (USAGE_LOGGING_ENABLED) addNetworkInterceptor(usageInterceptor) }
         .build()
+
+    /**
+     * A GET whose answer is read as text, bounded so an endless or enormous
+     * body cannot use up memory. Null when the request fails or answers with
+     * something too big to be what the caller asked for.
+     */
+    fun text(url: String, headers: Map<String, String> = emptyMap(), limit: Long = 1_048_576): String? = try {
+        val request = Request.Builder().url(url).apply { headers.forEach { (k, v) -> header(k, v) } }.build()
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) null
+            else response.body?.source()?.let { source ->
+                source.request(limit + 1)
+                if (source.buffer.size > limit) null else source.readUtf8()
+            }
+        }
+    } catch (_: Exception) {
+        null
+    }
 }

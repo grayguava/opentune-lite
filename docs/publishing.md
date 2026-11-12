@@ -37,7 +37,7 @@ The first command validates listing lengths and exports metadata under `build/st
 
 ## F-Droid review still required
 
-- The app uses YouTube Music/JioSaavn and other external services (`NonFreeNet`). Optional usage counting is enabled by default and uses a random installation identifier (`Tracking`); both are disclosed in the draft metadata.
+- The app uses YouTube Music/JioSaavn and other external services (`NonFreeNet`). Nothing is counted or reported to the project's own servers.
 - The build uses JitPack dependencies, including InnerTubeX and NewPipeExtractor. F-Droid maintainers must verify source provenance and scanner compatibility, potentially requiring source-library recipes. No scanner exclusions or prebuilt-binary exceptions are added here.
 - The recipe pins the exported source commit and disables automatic version updates until a maintainer validates the build. Run `fdroid lint` and `fdroid build com.opentune` in an F-Droid build environment, resolve findings, then enable tag-based updates with the maintainer.
 - The build currently requires JDK 21, Gradle 8.11.1 and Android compile SDK 37. Confirm these are supported by the chosen F-Droid builder.

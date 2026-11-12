@@ -16,7 +16,6 @@ import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import com.opentune.data.Http
 import com.opentune.data.innertube.StreamResolver
-import com.opentune.data.lossless.ExternalStreams
 import java.io.IOException
 import kotlinx.coroutines.runBlocking
 
@@ -36,12 +35,7 @@ internal class SongSources(context: Context) {
     // minted it, so a separate HTTP stack here risks a 403 on playback.
     // No fixed User-Agent: [resolveTrack] sends the minting client's own.
     private val refusing = RefusalReportingDataSource.Factory(OkHttpDataSource.Factory(Http.client))
-    // An add-on's file that answers HTTP 429 is waited on and asked again, and one that
-    // refuses its link gets a new link from the add-on, rather than the song falling back.
-    private val http = DataSource.Factory {
-        RenewingDataSource(refusing.createDataSource(), renew = ExternalStreams::refreshLinkFor, patient = ExternalStreams::isAddonLink)
-    }
-    private val resolving = ResolvingDataSource.Factory(http, ::resolveTrack)
+    private val resolving = ResolvingDataSource.Factory(refusing, ::resolveTrack)
 
     val cached: CacheDataSource.Factory = CacheDataSource.Factory()
         .setCache(AudioCache.get(context))
@@ -62,9 +56,7 @@ internal fun resolveTrack(dataSpec: DataSpec): DataSpec {
     val videoId = videoIdOf(dataSpec.uri) ?: return dataSpec
     val url = try {
         runBlocking {
-            val losslessKey = externalStreamKeyOf(dataSpec.uri)
             when {
-                losslessKey != null -> ExternalStreams.resolve(videoId, losslessKey)
                 isUpgradedUri(dataSpec.uri) -> StreamResolver.resolveUpgrade(videoId)
                 else -> StreamResolver.resolve(videoId)
             }
@@ -77,7 +69,7 @@ internal fun resolveTrack(dataSpec: DataSpec): DataSpec {
     // googlevideo expects the media request to look like the client that
     // minted the URL; these are also the headers StreamResolver probed with.
     return dataSpec.withUri(url.toUri())
-        .withAdditionalHeaders(if (externalStreamKeyOf(dataSpec.uri) != null) emptyMap() else StreamResolver.mediaHeadersFor(url))
+        .withAdditionalHeaders(StreamResolver.mediaHeadersFor(url))
 }
 
 /**

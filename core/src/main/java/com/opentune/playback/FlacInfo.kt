@@ -2,25 +2,25 @@ package com.opentune.playback
 
 import androidx.media3.common.Format
 import androidx.media3.common.MimeTypes
+import java.util.Locale
 
-/** Based on BitChord AudioOutputPolicy / FLAC measurements (GPL-3.0, see notices). */
-@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-object LosslessAudioPolicy {
-    fun unsafeFlacDecoder(name: String): Boolean = name.lowercase(java.util.Locale.ROOT).let {
+/**
+ * What a FLAC stream really is: the bit depth, sample rate and channel count
+ * read from its STREAMINFO block, which the decoder reports far less
+ * precisely. Also the few vendor decoders that cannot be trusted with FLAC.
+ */
+internal object FlacInfo {
+    data class Info(val rate: Int, val channels: Int, val bits: Int, val durationMs: Long = 0)
+
+    /** A vendor decoder that mishandles FLAC: some Samsung builds do. */
+    fun unsafeDecoder(name: String): Boolean = name.lowercase(Locale.ROOT).let {
         it == "c2.sec.flac.decoder" || (it.startsWith("omx.sec.") && it.contains("flac"))
     }
-    data class Info(val rate: Int, val channels: Int, val bits: Int, val durationMs: Long = 0)
-    fun mp4StreamInfo(data: ByteArray): Info? {
-        for (i in 4 until data.size - 42) {
-            if (data[i] == 'd'.code.toByte() && data[i+1] == 'f'.code.toByte() && data[i+2] == 'L'.code.toByte() && data[i+3] == 'a'.code.toByte()) {
-                streamInfo(data.copyOfRange(i + 8, data.size))?.let { return it }
-            }
-        }
-        return null
-    }
-    fun streamInfo(format: Format): Info? = if (format.sampleMimeType == MimeTypes.AUDIO_FLAC)
-        format.initializationData.firstNotNullOfOrNull(::streamInfo) else null
-    fun streamInfo(data: ByteArray): Info? {
+
+    fun of(format: Format): Info? = if (format.sampleMimeType == MimeTypes.AUDIO_FLAC)
+        format.initializationData.firstNotNullOfOrNull(::of) else null
+
+    fun of(data: ByteArray): Info? {
         fun b(i: Int) = data[i].toInt() and 255
         fun header(i: Int) = data.size >= i + 4 && b(i) and 127 == 0 && b(i + 1) == 0 && b(i + 2) == 0 && b(i + 3) == 34
         val body = when {

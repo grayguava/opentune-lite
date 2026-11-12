@@ -1,7 +1,7 @@
 package com.opentune.data.metadata
 
 import com.opentune.core.BuildConfig
-import com.opentune.data.lossless.LosslessHttp
+import com.opentune.data.Http
 import com.opentune.data.model.Song
 import java.text.Normalizer
 import java.util.Locale
@@ -47,7 +47,7 @@ object TrackMetadataRepository {
         val url = "https://musicbrainz.org/ws/2/recording/".toHttpUrl().newBuilder()
             .addQueryParameter("query", query).addQueryParameter("fmt", "json")
             .addQueryParameter("limit", "10").build()
-        val response = MusicBrainzRequests.politely { LosslessHttp.text(url.toString(), headers) }
+        val response = MusicBrainzRequests.politely { Http.text(url.toString(), headers) }
         val match = select(Json.parseToJsonElement(response).jsonObject, song, durationMs)
         cache[key] = match
         match

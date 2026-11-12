@@ -127,11 +127,9 @@ fun SearchScreen(
     val live by vm.live.collectAsState()
     val results by vm.results.collectAsState()
     val recent by AppSettings.recentSearches.collectAsState()
-    val recentAddon by AppSettings.recentAddonSearches.collectAsState()
     val source by vm.source.collectAsState()
     val library by vm.library.collectAsState()
     val libraryLists by vm.libraryLists.collectAsState()
-    val addons by vm.addons.collectAsState()
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val focus = LocalFocusManager.current
     var focused by remember { mutableStateOf(false) }
@@ -153,15 +151,6 @@ fun SearchScreen(
         if (source == SearchSource.YOUTUBE) vm.submit(q) else { vm.onQueryChange(q); vm.remember(q) }
     }
 
-    // An add-on's track plays as the same song from YouTube Music, started on the add-on's stream.
-    val playHit: (AddonHit) -> Unit = { hit ->
-        focus.clearFocus()
-        vm.remember(query)
-        scope.launch {
-            val song = vm.songFor(hit)
-            if (song != null) onPlay(song) else com.opentune.data.Pills.error("Couldn't find \"${hit.track.title}\" to play")
-        }
-    }
 
     // Back to Explore: the bar lets go and empties.
     val leave = {
@@ -214,11 +203,6 @@ fun SearchScreen(
         when {
             !searching -> explore?.invoke()
             source == SearchSource.LIBRARY -> LibraryResults(query, library, libraryLists, contentPadding, currentVideoId, isPlaying, { focus.clearFocus(); onPlay(it) }, onPlayNext, onAddToQueue, { focus.clearFocus(); onOpenList(it) })
-            source == SearchSource.ADDONS -> AddonResults(
-                query, addons, recentAddon, contentPadding,
-                onPick = { vm.onQueryChange(it) },
-                onPlay = playHit,
-            )
             submitted == null || submitted != query.trim() -> Typing(
                 query = query,
                 suggestions = suggestions,
@@ -628,83 +612,6 @@ private fun LibraryListRow(list: LibraryList, onClick: () -> Unit) {
         Column(Modifier.weight(1f).padding(start = 14.dp)) {
             Text(list.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(list.subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-    }
-}
-
-/** What your add-ons found, each with its own cover, quality and length; and the searches made here before. */
-@Composable
-private fun AddonResults(
-    query: String,
-    found: com.opentune.data.model.UiState<List<AddonHit>>?,
-    recent: List<String>,
-    contentPadding: PaddingValues,
-    onPick: (String) -> Unit,
-    onPlay: (AddonHit) -> Unit,
-) {
-    LazyColumn(contentPadding = contentPadding, modifier = Modifier.fillMaxSize()) {
-        if (query.isBlank() || found == null) {
-            if (recent.isEmpty()) {
-                item { SourceHint("Search every enabled add-on at once. The song you pick starts on that add-on's stream.") }
-            } else {
-                item {
-                    Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("Recent searches", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                        TextButton(onClick = AppSettings::clearRecentAddonSearches) { Text("Clear all") }
-                    }
-                }
-                items(recent, key = { "ar:$it" }) { q ->
-                    QueryRow(q, Icons.Filled.History, onClick = { onPick(q) }) {
-                        IconButton(onClick = { AppSettings.removeRecentAddonSearch(q) }) { Icon(Icons.Filled.Close, "Remove") }
-                    }
-                }
-            }
-            return@LazyColumn
-        }
-        when (found) {
-            is com.opentune.data.model.UiState.Loading -> items(6, key = { "ap$it" }) {
-                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    com.opentune.ui.components.Placeholder(Modifier.size(56.dp), RoundedCornerShape(10.dp))
-                    Spacer(Modifier.width(14.dp))
-                    com.opentune.ui.components.Placeholder(Modifier.weight(1f).height(18.dp), RoundedCornerShape(6.dp))
-                }
-            }
-            is com.opentune.data.model.UiState.Error -> item { SourceHint(found.message) }
-            is com.opentune.data.model.UiState.Success ->
-                if (found.data.isEmpty()) item { SourceHint("None of your add-ons has \"${query.trim()}\".") }
-                else items(found.data, key = { "ah:${it.addon.key}:${it.track.id}" }) { hit -> AddonRow(hit, onClick = { onPlay(hit) }) }
-        }
-    }
-}
-
-@Composable
-internal fun AddonRow(hit: AddonHit, onClick: () -> Unit) {
-    val t = hit.track
-    val colors = MaterialTheme.colorScheme
-    val codec = t.format.lowercase()
-    val quality = if (codec.isBlank() || codec in setOf("flac", "alac", "wav", "pcm")) "Lossless" else codec.uppercase()
-    Row(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        com.opentune.ui.components.Artwork(t.artwork, Modifier.size(56.dp), RoundedCornerShape(10.dp))
-        Column(Modifier.weight(1f).padding(start = 14.dp)) {
-            Text(t.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = colors.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.GraphicEq, null, Modifier.size(14.dp), tint = colors.onSurfaceVariant)
-                Text(
-                    listOf(quality, t.artist.ifBlank { hit.manifest.name }).joinToString(" · "),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(start = 4.dp),
-                )
-            }
-        }
-        if (t.durationMs > 0) {
-            val secs = t.durationMs / 1000
-            Text("%d:%02d".format(secs / 60, secs % 60), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, modifier = Modifier.padding(start = 10.dp))
         }
     }
 }

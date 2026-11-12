@@ -39,10 +39,6 @@ object Core {
             }
         })
         AppSettings.init(app)
-        com.opentune.data.config.RemoteConfig.init(app)
-        com.opentune.data.addons.AddonStore.init(app)
-        com.opentune.data.addons.AddonOutput.init(app)
-        com.opentune.data.addons.AddonStore.onChanged = com.opentune.data.lossless.ExternalStreams::retryLookups
         History.init(app)
         com.opentune.data.history.ListenedCollections.init(app)
         com.opentune.data.covers.ArtistPhotos.init(app)
@@ -53,7 +49,6 @@ object Core {
         Subsonic.init(app)
         ListenBrainz.init(app)
         com.opentune.data.radio.Radio.init(app)
-        com.opentune.data.addons.AddonRefreshWorker.schedule(app)
         com.opentune.data.releases.NewReleases.init(app)
         com.opentune.data.UpdateCheck.init(app)
         com.opentune.data.UpdateLock.init(app)

@@ -104,7 +104,6 @@ fun HomeScreen(
     onOpenSpeedDial: () -> Unit = {},
 ) {
     val platform = "android"
-    val runtime by com.opentune.data.config.RemoteConfig.state.collectAsState()
     val playback by AppSettings.playback.collectAsState()
     val loader = rememberLoader("home:${playback.recommender.name}") { MusicRepository.home() }
     val state by loader.state.collectAsState()
@@ -287,15 +286,12 @@ fun HomeScreen(
                 }
             }
             item(key = "festival") { FestivalCard() }
-            itemsIndexed(runtime.banners.filter { platform in it.platforms }, key = { _, banner -> "remote-banner:${banner.id}" }) { _, banner ->
-                RemoteBannerCard(banner)
-            }
-            for (section in runtime.sections.filter { it.enabled }) when (section.id) {
+            for (section in HOME_SECTIONS) when (section) {
                 "speed-dial" -> if (ui.speedDial && speedDial.size >= SPEED_DIAL_MIN) item(key = "speed-dial") {
                     SpeedDialSection(speedDial,
                         strapline = feed.speedDial?.subtitle?.takeIf { it.isNotBlank() } ?: account?.name?.substringBefore(' ').orEmpty(),
                         avatarUrl = account?.thumbnailUrl, onItemClick = onItemClick, onOpenAll = onOpenSpeedDial,
-                        title = runtime.title(section.id, "Speed dial"))
+                        title = "Speed dial")
                 }
                 "quick-picks" -> item(key = "quick-picks") {
                     val historyAction: @Composable () -> Unit = {
@@ -303,7 +299,7 @@ fun HomeScreen(
                             Icon(Icons.Rounded.History, "Recently played", Modifier.size(22.dp))
                         }
                     }
-                    val title = runtime.title(section.id, "Quick picks")
+                    val title = "Quick picks"
                     val picks = freshPicks ?: feed.quickPicks
                     if ((refreshing || picksPending) && freshPicks == null) SongRowPlaceholder()
                     else if (picks != null) QuickPicks(picks.copy(title = title, subtitle = ""), onItemClick, historyAction)
@@ -312,12 +308,7 @@ fun HomeScreen(
                 "mixes" -> if (mixes.isNotEmpty()) item(key = "mixes") {
                     val seededOnly = mixes.all { it.id.startsWith("seed:") }
                     MixesShelf(mixes, actions, if (seededOnly) "From the artists you follow, until you've played more" else MIXES_LINE,
-                        title = runtime.title(section.id, "Made for you today"))
-                }
-                "featured-playlists" -> if (runtime.playlists.isNotEmpty()) item(key = "featured-playlists") {
-                    HomeShelfView(HomeShelf(runtime.title(section.id, "From the community"), runtime.playlists.map {
-                        ShelfItem(it.title, "OpenTune picks", it.artwork, null, it.browseId)
-                    }), onItemClick, songRows = false, covers = covers, coverKey = "featured-playlists")
+                        title = "Made for you today")
                 }
                 "recommendations" -> {
                     when (val s = state) {
@@ -326,8 +317,7 @@ fun HomeScreen(
                             ErrorState(s.message, onRetry = { loader.reload() }, modifier = Modifier.padding(top = 24.dp))
                         }
                         is UiState.Success -> {
-                            if (section.title.isNotBlank()) item(key = "recommendations-title") { SectionHeader(section.title) }
-                            itemsIndexed(feed.cards, key = { i, shelf -> "shelf:$i:${shelf.title}" }, contentType = { _, _ -> "cards" }) { i, shelf ->
+                            itemsIndexed(feed.cards, key = { i, shelf -> "shelf:$i:${shelf.title}" }, contentType = { _, _ -> "recommendations" }) { i, shelf ->
                                 HomeShelfView(shelf, onItemClick, songRows = false, covers = covers, coverKey = "shelf:$i")
                             }
                         }
@@ -406,6 +396,9 @@ internal data class HomeSections(val quickPicks: HomeShelf?, val cards: List<Hom
 
 /** Fewer picks than this and Speed dial isn't shown: there's too little to go on yet. */
 private const val SPEED_DIAL_MIN = 3
+
+/** The shelves Home shows, in order. */
+private val HOME_SECTIONS = listOf("speed-dial", "quick-picks", "mixes", "recommendations")
 
 /**
  * One track list, then collections and varied card shelves. Keep every recommendation.

@@ -1,6 +1,6 @@
 package com.opentune.data.metadata
 
-import com.opentune.data.lossless.LosslessHttp
+import com.opentune.data.Http
 import com.opentune.data.model.Song
 import java.text.Normalizer
 import java.time.Instant
@@ -73,7 +73,7 @@ object AppleTrackMetadataRepository {
                 .addQueryParameter("term", "${song.title} ${song.artist}")
                 .addQueryParameter("country", store).addQueryParameter("media", "music")
                 .addQueryParameter("entity", "song").addQueryParameter("limit", "25").build()
-            val response = try { LosslessHttp.text(url.toString()) }
+            val response = try { Http.text(url.toString()) }
                 finally { lastRequest = System.nanoTime() / 1_000_000 }
             val found = candidates(Json.parseToJsonElement(response).jsonObject, song, durationMs)
             track = track ?: single(found)

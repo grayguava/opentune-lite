@@ -1,6 +1,5 @@
 package com.opentune.playback
 
-import com.opentune.data.lossless.ExternalStreams
 import com.opentune.data.model.durationMillis
 import kotlinx.coroutines.ensureActive
 
@@ -146,42 +145,17 @@ class PlaybackService : MediaLibraryService() {
             override fun createMediaSource(mediaItem: MediaItem): MediaSource {
                 val input = mediaItem.localConfiguration?.uri ?: return sources.createMediaSource(mediaItem)
                 if (videoIdOf(input) == null) return sources.createMediaSource(mediaItem)
-                val addonKey = externalStreamKeyOf(input)
-                val addon = addonKey?.let { ExternalStreams.get(mediaItem.mediaId, it) }?.takeIf { it.addonId != null }
-                if (addon != null) {
-                    val http = androidx.media3.datasource.okhttp.OkHttpDataSource.Factory(com.opentune.data.addons.AddonHttp.mediaClient)
-                    val plain = androidx.media3.datasource.DefaultDataSource.Factory(context, http)
-                    // A link that won't open (expired, refused) is swapped for a new one from the same
-                    // add-on and opened again, so the song stays on its FLAC instead of falling back.
-                    val renewing = androidx.media3.datasource.DataSource.Factory {
-                        RenewingDataSource(plain.createDataSource(), renew = { failed -> ExternalStreams.refreshLink(mediaItem.mediaId, addon.key, failed) })
-                    }
-                    val resolving = androidx.media3.datasource.ResolvingDataSource.Factory(renewing) { spec ->
-                        // Re-check enablement/output before each manifest or segment request.
-                        val resolved = ExternalStreams.resolve(mediaItem.mediaId, addon.key)
-                        if (externalStreamKeyOf(spec.uri) != null) spec.withUri(android.net.Uri.parse(resolved)) else spec
-                    }
-                    // Kept in the song cache under the add-on stream's own address (not the
-                    // short-lived URL it resolves to), so an upgrade can be fetched ahead
-                    // by a silent player and then played from what's already here.
-                    val data = androidx.media3.datasource.cache.CacheDataSource.Factory()
-                        .setCache(AudioCache.get(context))
-                        .setUpstreamDataSourceFactory(resolving)
-                        .setFlags(androidx.media3.datasource.cache.CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
-                    return DefaultMediaSourceFactory(data).createMediaSource(mediaItem.buildUpon().setMimeType(addon.mimeType).build())
-                }
                 val uri = withoutStartup(input)
                 val id = videoIdOf(uri) ?: return sources.createMediaSource(mediaItem)
-                if (!isYouTubeId(id) || Podcasts.isEpisode(id) || externalStreamKeyOf(uri) != null ||
+                if (!isYouTubeId(id) || Podcasts.isEpisode(id) ||
                     uri.getQueryParameter("fallback") == "youtube") return sources.createMediaSource(mediaItem)
                 val token = java.util.UUID.randomUUID().toString()
                 val tagged = uri.buildUpon().appendQueryParameter("startup", token).build()
                 val selection = StartupSelection(mediaItem.toSong(), uri)
-                // Selection wraps the cache, so external audio never enters a YouTube cache entry.
                 val choosing = ResolvingDataSource.Factory(cached) { spec ->
                     startupSelections[token] = selection
                     val resolved = runBlocking { selection.resolve(spec) }
-                    scope.launch { updateExternalStats(); applyLoudness() }
+                    scope.launch { applyLoudness() }
                     resolved
                 }
                 return DefaultMediaSourceFactory(SchemeRoutingDataSource.Factory(choosing, direct))
@@ -190,8 +164,8 @@ class PlaybackService : MediaLibraryService() {
         }
 
         // The main player and the bridge decode the same way: the bridge used to
-        // take the phone's default FLAC decoder, which some phones can't play
-        // add-on FLAC with, so the swap to it failed and the song stayed on YouTube.
+        // take the phone's default FLAC decoder, which some phones can't play,
+        // so the swap to it failed and the song stayed silent.
         fun renderersFor(effects: DspAudioProcessor, exclusive: Boolean) = object : DefaultRenderersFactory(context) {
             init {
                 setEnableDecoderFallback(true)
@@ -199,7 +173,7 @@ class PlaybackService : MediaLibraryService() {
                     val selector = if (mime == "audio/flac") androidx.media3.exoplayer.mediacodec.MediaCodecSelector.PREFER_SOFTWARE
                         else androidx.media3.exoplayer.mediacodec.MediaCodecSelector.DEFAULT
                     selector.getDecoderInfos(mime, secure, tunneling).filterNot {
-                        mime == "audio/flac" && LosslessAudioPolicy.unsafeFlacDecoder(it.name)
+                        mime == "audio/flac" && FlacInfo.unsafeDecoder(it.name)
                     }
                 }
             }
@@ -327,18 +301,8 @@ class PlaybackService : MediaLibraryService() {
         }
         scope.launch { trackListening(player) }
         scope.launch {
-            AppSettings.playback.map { listOf(it.losslessStreaming, it.losslessUnmeteredOnly, it.losslessHiRes, it.jioSaavnQuality, it.qobuzRelayUrl, it.wifiQuality, it.mobileQuality) }
-                .distinctUntilChanged().collect {
-                    val item = player.currentMediaItem
-                    val uri = item?.localConfiguration?.uri?.let(::selectedUri)
-                    if (item != null && uri != null) {
-                        val rendition = externalStreamKeyOf(uri)?.let { ExternalStreams.get(item.mediaId, it) }
-                        if (rendition != null && !ExternalStreams.allowed(rendition.lossless)) {
-                            swapToUpgrade(player, item.mediaId, youtubeFallbackUri(item.mediaId))
-                        }
-                    }
-                    scheduleUpgrade()
-                }
+            AppSettings.playback.map { listOf(it.wifiQuality, it.mobileQuality) }
+                .distinctUntilChanged().collect { scheduleUpgrade() }
         }
         scope.launch {
             AppSettings.playback.map { Triple(it.loudnessNormalization, it.normalizeOnSpeaker, it.volumeLevel) }.distinctUntilChanged().collect { applyLoudness() }
@@ -358,48 +322,8 @@ class PlaybackService : MediaLibraryService() {
             AppSettings.playback.map { it.systemEffects }.distinctUntilChanged().collect { openEffectSession(player.audioSessionId) }
         }
         crossfade = Crossfade(context, scope, sources, player).also { it.start() }
-        scope.launch {
-            com.opentune.data.addons.AddonStore.revision.collect { revision ->
-                // Searched again at once, the misses forgotten, but quietly: not as if asked from the menu.
-                // A song already on a verified FLAC from an add-on still allowed is left on it: asking
-                // every add-on again moments after they answered only got them rate limiting.
-                if (revision > 0 && !playingAllowedLossless()) scheduleUpgrade(force = true, asked = false, quiet = true)
-            }
-        }
         scope.launch { PlaybackRequests.upgrade.collect { scheduleUpgrade(force = true) } }
         scope.launch { guardQuality() }
-        // A stream picked in Search's Add-ons tab that came in after its song had started.
-        scope.launch {
-            PlaybackRequests.picked.collect { id ->
-                val player = mediaSession?.player as? ExoPlayer ?: return@collect
-                if (player.currentMediaItem?.mediaId != id) return@collect
-                val rendition = ExternalStreams.cached(id)?.takeIf { it.picked } ?: return@collect
-                val uri = player.currentMediaItem?.localConfiguration?.uri ?: return@collect
-                if (externalStreamKeyOf(selectedUri(uri)) == rendition.key) return@collect
-                upgradeJob?.cancel()
-                swapToUpgrade(player, id, externalStreamUri(id, rendition.key))
-            }
-        }
-        // A higher-quality FLAC from an add-on that answered after the search had picked one:
-        // once any switch already under way is done, the song moves onto it the same seamless way.
-        scope.launch {
-            ExternalStreams.improved.collect { id ->
-                val player = mediaSession?.player as? ExoPlayer ?: return@collect
-                if (player.currentMediaItem?.mediaId != id) return@collect
-                upgradeJob?.join()
-                if (player.currentMediaItem?.mediaId != id) return@collect
-                val better = ExternalStreams.cached(id)?.takeIf { it.lossless && ExternalStreams.allowed(true) } ?: return@collect
-                val playing = player.currentMediaItem?.localConfiguration?.uri ?: return@collect
-                val existing = externalStreamKeyOf(selectedUri(playing))?.let { ExternalStreams.get(id, it) }
-                if (existing?.key == better.key) return@collect
-                if (existing?.lossless == true && com.opentune.data.addons.AddonResolver.qualityScore(better.bits, better.sampleRate) <=
-                    com.opentune.data.addons.AddonResolver.qualityScore(existing.bits, existing.sampleRate)) return@collect
-                if (player.duration > 0 && player.duration - player.currentPosition < UPGRADE_MIN_REMAINING_MS) return@collect
-                // Not asked for from the menu: "upgrading" goes once it's done, not left up from the last ask.
-                upgradeAsked = false
-                if (swapToUpgrade(player, id, externalStreamUri(id, better.key), quiet = true)) updateExternalStats()
-            }
-        }
 
         audioManager = getSystemService(AudioManager::class.java)?.also { am ->
             BitPerfectUsb.init(am)
@@ -592,7 +516,6 @@ class PlaybackService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
-        ExternalStreams.playing(null, null)
         (mediaSession?.player as? ExoPlayer)?.takeIf { it.mediaItemCount > 0 }?.let { p ->
             QueueStore.save(QueueStore.Saved((0 until p.mediaItemCount).map { SongRef.of(p.getMediaItemAt(it).toSong()) }, p.currentMediaItemIndex, p.currentPosition))
         }
@@ -793,8 +716,6 @@ class PlaybackService : MediaLibraryService() {
         override fun onEvents(player: Player, events: Player.Events) {
             if (events.contains(Player.EVENT_TIMELINE_CHANGED)) {
                 for (i in 0 until player.mediaItemCount) sessionIds += player.getMediaItemAt(i).mediaId
-                // Songs added after the current one started (radio, Play next) get readied too.
-                prefetchAhead()
             }
             if (events.containsAny(
                     Player.EVENT_MEDIA_ITEM_TRANSITION,
@@ -829,7 +750,6 @@ class PlaybackService : MediaLibraryService() {
             if (!swap) updateExternalStats()
             applyLoudness()
             if (!swap) scheduleUpgrade()
-            if (!swap) prefetchAhead()
             // After this callback, not inside it: the queue changes under it otherwise.
             if (!swap) scope.launch(Dispatchers.Main) { dropPlayedHandQueued() }
             // Nothing but a blend or a swap turns the main player down; outside
@@ -886,23 +806,6 @@ class PlaybackService : MediaLibraryService() {
             val format = tracks.groups.firstOrNull { it.type == C.TRACK_TYPE_AUDIO && it.isSelected }
                 ?.let { g -> (0 until g.length).firstOrNull(g::isTrackSelected)?.let(g::getTrackFormat) } ?: return
             val item = mediaSession?.player?.currentMediaItem
-            val rendition = item?.localConfiguration?.uri?.let(::externalStreamKeyOf)?.let { ExternalStreams.get(item.mediaId, it) }
-            // During a replacement the tracks callback can still describe the old AAC/Opus
-            // period. awaitUpgradeReady owns validation until the new decoder is ready.
-            if (!swapRamping && swappingTo != item?.mediaId && rendition?.addonId != null && format.sampleMimeType != null &&
-                format.sampleMimeType !in setOf("audio/flac", "audio/alac", "audio/raw")) {
-                val rejectedItem = item ?: return
-                val rejectedUri = rejectedItem.localConfiguration?.uri
-                scope.launch {
-                    val active = mediaSession?.player as? ExoPlayer ?: return@launch
-                    if (swapRamping || swappingTo == rejectedItem.mediaId || active.currentMediaItem?.localConfiguration?.uri != rejectedUri) return@launch
-                    val codec = active.audioFormat?.sampleMimeType ?: return@launch
-                    if (active.playbackState != Player.STATE_READY || upgradeFormatReady(true, codec)) return@launch
-                    recover(PlaybackException("Add-on returned a lossy track for a lossless request", null,
-                        PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED))
-                }
-                return
-            }
             // The DAC follows the song's rate by itself: it's set as each song's output opens.
         }
 
@@ -931,9 +834,7 @@ class PlaybackService : MediaLibraryService() {
 
         override fun onPlayerError(error: PlaybackException) {
             val item = mediaSession?.player?.currentMediaItem
-            val external = item?.localConfiguration?.uri?.let(::externalStreamKeyOf) != null
-            if (external) Log.e(TAG, "External playback failed: ${error.errorCodeName}")
-            else Log.e(TAG, "Playback error on ${item?.mediaId}: ${error.errorCodeName}", error)
+            Log.e(TAG, "Playback error on ${item?.mediaId}: ${error.errorCodeName}", error)
             recover(error)
         }
     }
@@ -1108,13 +1009,11 @@ class PlaybackService : MediaLibraryService() {
         val id = player.currentMediaItem?.mediaId
         val rawUri = player.currentMediaItem?.localConfiguration?.uri
         val pendingSelection = rawUri?.let(::startupToken)?.let { startupSelections[it]?.selected == null } == true
-        val lossless = rawUri?.let(::selectedUri)?.let(::externalStreamKeyOf) != null
-        // YouTube's gain belongs to its own master, not the external FLAC.
-        val db = if (lossless) null else id?.let { StreamResolver.loudnessDbFor(it) ?: Downloads.loudnessFor(it) }
+        val db = id?.let { StreamResolver.loudnessDbFor(it) ?: Downloads.loudnessFor(it) }
         // A track playing from the cache never resolved, so its figure may not
         // be known yet. Look it up once, a moment in, then apply it.
         loudnessRetry?.cancel()
-        if (!lossless && !pendingSelection && db == null && id != null && isYouTubeId(id) && AppSettings.playback.value.loudnessNormalization) {
+        if (!pendingSelection && db == null && id != null && isYouTubeId(id) && AppSettings.playback.value.loudnessNormalization) {
             loudnessRetry = scope.launch {
                 delay(LOUDNESS_RETRY_MS)
                 withContext(Dispatchers.IO) { runCatching { StreamResolver.resolve(id) } }
@@ -1189,41 +1088,28 @@ class PlaybackService : MediaLibraryService() {
     private var swappingTo: String? = null
 
     /**
-     * As each song starts, looks for a better stream (a verified FLAC from the
-     * add-ons, JioSaavn, or [StreamResolver.findUpgrade]) and swaps to it in
-     * place once the song is sounding with a little buffered, so the search
-     * runs alongside the start rather than after it. Also run from the
-     * player's menu.
+     * As each song starts, looks for a better stream of it ([StreamResolver.findUpgrade])
+     * and swaps to it in place once the song is sounding with a little buffered, so the
+     * search runs alongside the start rather than after it. Also run from the player's menu.
      */
     private fun scheduleUpgrade(
         force: Boolean = false,
-        /** Asked for from the menu: "upgrading" shows and the outcome is told. A forced search after the add-ons change isn't. */
+        /** Asked for from the menu: "upgrading" shows and the outcome is told. */
         asked: Boolean = force,
-        /** Another go at a song already tried: it works in the background, without "upgrading". */
-        quiet: Boolean = false,
     ) {
         upgradeJob?.cancel()
         NerdStats.onUpgrade(null)
-        if (!force && !AppSettings.playback.value.qualityUpgrade && !ExternalStreams.allowed()) return
+        if (!force && !AppSettings.playback.value.qualityUpgrade) return
         val player = mediaSession?.player as? ExoPlayer ?: return
         val item = player.currentMediaItem ?: return
         val uri = item.localConfiguration?.uri ?: return
         val id = videoIdOf(uri) ?: return
-        fun alreadyExternal(): Boolean {
-            val key = externalStreamKeyOf(selectedUri(uri)) ?: return false
-            // Only a stream known to be lossless: one no longer on record used to count too,
-            // and its song was never upgraded.
-            return ExternalStreams.get(id, key)?.lossless == true
-        }
-        if (alreadyExternal() && !force) return
-        // The search and its handoff are one upgrade; don't hide the pending FLAC
-        // lookup merely because the intermediate JioSaavn handoff completed.
         upgradeAsked = asked
-        if (asked || (!quiet && ExternalStreams.allowed(true))) NerdStats.onUpgrade(id)
+        if (asked) NerdStats.onUpgrade(id)
         // Asked for from the menu: say how it went, whatever the outcome.
         fun tell(message: String) { if (asked) PlaybackRequests.report(message) }
         fun swapped(ok: Boolean) = tell(
-            if (ok) "Switched to ${ExternalStreams.selectionDetail(id) ?: NerdStats.externalSource.value ?: "a better stream"}"
+            if (ok) "Switched to a better stream"
             else "The better stream didn't load in time, so this one keeps playing",
         )
         /**
@@ -1245,82 +1131,7 @@ class PlaybackService : MediaLibraryService() {
                     true
                 } != true) return@launch
             }
-            if (alreadyExternal() && !force) return@launch
-            val duration = player.duration.takeIf { it > 0 } ?: item.toSong().durationMillis()
-            // The FLAC search (every add-on at once) and JioSaavn go out together, and
-            // whichever answers first is acted on. JioSaavn usually does and is played
-            // while the FLAC is still being verified; a verified FLAC then takes over,
-            // so a lossy stream found first never keeps a lossless one from playing,
-            // and a FLAC found first doesn't wait for JioSaavn at all.
-            val flac = if (Podcasts.isEpisode(id)) null else async {
-                ExternalStreams.find(item.toSong(), duration, force = force,
-                    beforePlayback = AppSettings.effectiveAudioQuality == com.opentune.data.settings.AudioQuality.MAX,
-                    losslessOnly = true)
-            }
-            // A slow startup lookup can finish here without delaying audible playback.
-            val saavnSearch = if (!Podcasts.isEpisode(id) && externalStreamKeyOf(selectedUri(uri)) == null)
-                async { ExternalStreams.findJioSaavn(item.toSong(), duration) } else null
-            val flacFirst = flac != null && saavnSearch != null && kotlinx.coroutines.selects.select {
-                flac.onAwait { it != null }
-                saavnSearch.onAwait { false }
-            }
-            val saavn = if (flacFirst) { saavnSearch?.cancel(); null } else saavnSearch?.await()
-            // Give a near-ready FLAC the short grace period already used on main.
-            // YouTube continues playing; a later FLAC can still supersede silent JioSaavn preparation.
-            if (saavn != null && flac != null && !flac.isCompleted) kotlinx.coroutines.withTimeoutOrNull(SAAVN_HOLD_MS) { flac.join() }
-            kotlinx.coroutines.currentCoroutineContext().ensureActive()
-            if (player.currentMediaItem?.localConfiguration?.uri != uri) { flac?.cancel(); return@launch }
-            // JioSaavn plays unless a FLAC is already here to play instead; a FLAC search that
-            // finished with nothing is exactly when JioSaavn is wanted.
-            val flacReady = flac != null && flac.isCompleted && flac.getCompleted() != null
-            if (saavn != null && !saavn.lossless && ExternalStreams.allowed(false) && !flacReady) {
-                started()
-                val left = player.duration - player.currentPosition
-                if (player.duration > 0 && left < UPGRADE_MIN_REMAINING_MS) { flac?.cancel(); tell("Too close to the end of the song to switch"); return@launch }
-                if (player.currentMediaItem?.localConfiguration?.uri == uri) swapToUpgrade(player, id, externalStreamUri(id, saavn.key),
-                    superseded = { flac != null && flac.isCompleted && !flac.isCancelled && flac.getCompleted() != null }, quiet = quiet)
-            }
-            var lossless = flac?.await()
-            // Came back empty only because add-ons erred (an HTTP 404 or 502, no answer):
-            // those add-ons alone are asked again within seconds, the ones that answered
-            // left be, and in the background, without "upgrading" coming back each time.
-            var retries = 0
-            while (lossless == null && flac != null && retries < LOSSLESS_RETRY_MS.size && ExternalStreams.missWasTransient(id)) {
-                val wait = LOSSLESS_RETRY_MS[retries++]
-                if (!asked) NerdStats.onUpgrade(null)
-                delay(wait)
-                if (player.currentMediaItem?.mediaId != id) return@launch
-                if (player.duration > 0 && player.duration - player.currentPosition < UPGRADE_MIN_REMAINING_MS + wait) break
-                lossless = ExternalStreams.find(item.toSong(), duration, beforePlayback = AppSettings.effectiveAudioQuality == com.opentune.data.settings.AudioQuality.MAX,
-                    losslessOnly = true)
-            }
-            // A FLAC is in hand, but some add-ons erred: they're asked again meanwhile, and a
-            // better file from one of them takes over through [ExternalStreams.improved].
-            if (lossless != null) retryErredAddons(item.toSong(), duration)
-            kotlinx.coroutines.currentCoroutineContext().ensureActive()
-            // Still this song, maybe now on the JioSaavn stream switched to above.
-            if (player.currentMediaItem?.mediaId != id) return@launch
             val playing = player.currentMediaItem?.localConfiguration?.uri ?: return@launch
-            updateExternalStats()
-            if (lossless != null && ExternalStreams.allowed(lossless.lossless)) {
-                val existing = externalStreamKeyOf(selectedUri(playing))?.let { ExternalStreams.get(id, it) }
-                if (existing?.lossless == true && com.opentune.data.addons.AddonResolver.qualityScore(lossless.bits, lossless.sampleRate) <=
-                    com.opentune.data.addons.AddonResolver.qualityScore(existing.bits, existing.sampleRate)) { tell("Already playing the best quality there is for this song"); return@launch }
-                // The FLAC bridge prepares its own buffer while the current stream
-                // plays. Do not wait up to six seconds for the lossy buffer first.
-                if (player.currentMediaItem?.mediaId != id) return@launch
-                val left = player.duration - player.currentPosition
-                if (player.duration > 0 && left < UPGRADE_MIN_REMAINING_MS) { tell("Too close to the end of the song to switch"); return@launch }
-                val candidates = ExternalStreams.alternatives(id).ifEmpty { listOf(lossless) }
-                val ok = swapToBestAnswering(player, id, candidates, existing, quiet = quiet || (retries > 0 && !asked))
-                if (!ok && player.currentMediaItem?.mediaId == id) {
-                    ExternalStreams.swapFailed(id, swapNotes.map { (provider, why) -> "$provider: $why" })
-                    updateExternalStats()
-                }
-                swapped(ok)
-                return@launch
-            }
-            if (externalStreamKeyOf(selectedUri(playing)) != null) { tell("Already playing the best quality there is for this song"); return@launch }
             if (isUpgradedUri(playing)) { tell("Already playing the best quality there is for this song"); return@launch }
             if (!force && !AppSettings.playback.value.qualityUpgrade) return@launch
             val found = withContext(Dispatchers.IO) { runCatching { StreamResolver.findUpgrade(id, force) }.getOrDefault(false) }
@@ -1363,229 +1174,16 @@ class PlaybackService : MediaLibraryService() {
             if (player.duration > 0 && player.duration - player.currentPosition < UPGRADE_MIN_REMAINING_MS + GUARD_EVERY_MS) continue
             if (tries >= GUARD_TRIES) continue
             val uri = selectedUri(raw)
-            val playing = externalStreamKeyOf(uri)?.let { ExternalStreams.get(id, it) }
-            fun score(r: ExternalStreams.Rendition) = com.opentune.data.addons.AddonResolver.qualityScore(r.bits, r.sampleRate)
-            val better = ExternalStreams.alternatives(id).filter { playing?.lossless != true || score(it) > score(playing) }
-            val known = better.isNotEmpty()
-            // A verified stream needs a handoff, not another catalog search or its retry backoff.
-            if (player.currentPosition < if (known) UPGRADE_SETTLE_MS else GUARD_SETTLE_MS) continue
-            if (now - lastAt < if (known) VERIFIED_RETRY_GAP_MS else GUARD_GAP_MS) continue
-            val wanted = when {
-                ExternalStreams.allowed(true) && playing?.lossless == true -> better.isNotEmpty()
-                ExternalStreams.allowed(true) -> better.isNotEmpty() || ExternalStreams.missWasTransient(id) || !ExternalStreams.losslessSearched(id)
-                ExternalStreams.allowed(false) -> playing == null && !isUpgradedUri(uri) && ExternalStreams.saavnFor(id) != null
-                else -> false
-            }
-            if (!wanted) continue
+            // Already on YouTube's better stream: nothing to do.
+            if (isUpgradedUri(uri)) continue
+            if (player.currentPosition < GUARD_SETTLE_MS) continue
+            if (now - lastAt < GUARD_GAP_MS) continue
             tries++
             lastAt = now
-            Log.d(TAG, "Quality check for $id: ${if (better.isNotEmpty()) "a better verified stream is known" else "its search came to nothing"}; upgrading again (try $tries)")
-            if (known) {
-                upgradeAsked = false
-                val job = scope.launch {
-                    val switched = swapToBestAnswering(player, id, better, playing, quiet = true)
-                    if (!switched && player.currentMediaItem?.mediaId == id) {
-                        ExternalStreams.swapFailed(id, swapNotes.map { (provider, why) -> "$provider: $why" })
-                    }
-                    updateExternalStats()
-                }
-                upgradeJob = job
-                job.invokeOnCompletion { if (upgradeJob === job) NerdStats.onUpgrade(null) }
-            } else scheduleUpgrade(quiet = true)
+            Log.d(TAG, "Quality check for $id: upgrading again (try $tries)")
+            scheduleUpgrade()
         }
     }
-
-    /** Whether the song playing is on a verified lossless file that may still be played. */
-    private fun playingAllowedLossless(): Boolean {
-        val item = mediaSession?.player?.currentMediaItem ?: return false
-        val key = item.localConfiguration?.uri?.let(::selectedUri)?.let(::externalStreamKeyOf) ?: return false
-        val rendition = ExternalStreams.get(item.mediaId, key) ?: return false
-        return rendition.lossless && ExternalStreams.allowed(true) && runCatching { ExternalStreams.resolve(item.mediaId, key) }.isSuccess
-    }
-
-    /** The background re-asking of add-ons that erred, for the song it's for; see [retryErredAddons]. */
-    private var erredRetry: Pair<String, kotlinx.coroutines.Job>? = null
-
-    /**
-     * While [song] plays on the file found, the add-ons that erred in its search are
-     * asked again, alone, a few times a little apart, in the background: a better file
-     * from one of them is switched to through [ExternalStreams.improved].
-     */
-    private fun retryErredAddons(song: com.opentune.data.model.Song, duration: Long) {
-        if (!ExternalStreams.hasErred(song.videoId)) return
-        if (erredRetry?.let { it.first == song.videoId && it.second.isActive } == true) return
-        erredRetry?.second?.cancel()
-        erredRetry = song.videoId to scope.launch {
-            for (wait in ERRED_RETRY_MS) {
-                delay(wait)
-                val player = mediaSession?.player as? ExoPlayer ?: return@launch
-                if (player.currentMediaItem?.mediaId != song.videoId) return@launch
-                if (player.duration > 0 && player.duration - player.currentPosition < UPGRADE_MIN_REMAINING_MS) return@launch
-                val asked = runCatching { withContext(Dispatchers.IO) { ExternalStreams.retryErred(song, duration) } }.getOrDefault(true)
-                if (!asked) return@launch
-            }
-        }
-    }
-
-    /**
-     * Finds the better sources for the next [PREFETCH_AHEAD] songs while this
-     * one plays: JioSaavn first, a quick answer that lets the song start on it
-     * at once, then the lossless one, so each starts on the best found (or
-     * swaps to it as soon as it's sounding) instead of waiting for a lookup
-     * after it's begun. Only what's on for this network; local, server and
-     * downloaded songs are left alone.
-     */
-    private fun prefetchAhead() {
-        val lossless = ExternalStreams.allowed(true)
-        val saavn = ExternalStreams.allowed(false)
-        if (!lossless && !saavn) return
-        val player = mediaSession?.player as? ExoPlayer ?: return
-        val from = player.currentMediaItemIndex
-        val ahead = (1..PREFETCH_AHEAD).mapNotNull { i -> (from + i).takeIf { it in 0 until player.mediaItemCount } }
-            .map { player.getMediaItemAt(it) }
-            .filter { item ->
-                val id = item.mediaId
-                val uri = item.localConfiguration?.uri
-                isYouTubeId(id) && !Podcasts.isEpisode(id) && uri?.scheme != "file"
-            }
-        val ids = ahead.map { it.mediaId }.distinct()
-        // A song still ahead keeps the lookup it has: each skip used to cancel them all and ask
-        // every add-on again, so skipping a few in a row readied none, and the add-ons, asked
-        // the same over and over, began answering with errors.
-        // The song just skipped to keeps its own too: its upgrade waits on that same search.
-        val current = player.currentMediaItem?.mediaId
-        aheadJobs.keys.filterNot { it in ids || it == current }.forEach { aheadJobs.remove(it)?.cancel() }
-        val fresh = ahead.filter { aheadJobs[it.mediaId]?.isActive != true }.distinctBy { it.mediaId }
-        if (fresh.isEmpty()) return
-        // The FLAC search for the nearest few only: each one asks every add-on and reads the
-        // start of each file it verifies, and five songs' worth at once had the file servers
-        // answering HTTP 429 by the time a song came to play.
-        val near = ahead.take(PREFETCH_LOSSLESS_AHEAD).map { it.mediaId }.toSet()
-        fresh.forEach { item ->
-            aheadJobs[item.mediaId] = scope.launch(Dispatchers.IO) {
-                // Skipping through: a song passed by within a moment is never looked up.
-                delay(PREFETCH_SETTLE_MS)
-                aheadSlots.withPermit { readyAhead(item.toSong(), saavn, lossless && item.mediaId in near) }
-            }
-        }
-    }
-
-    /** The lookups for the songs ahead, by video id; a couple at a time, see [aheadSlots]. */
-    private val aheadJobs = java.util.concurrent.ConcurrentHashMap<String, kotlinx.coroutines.Job>()
-    private val aheadSlots = kotlinx.coroutines.sync.Semaphore(PREFETCH_AT_ONCE)
-
-    /**
-     * Gets [song] ready to start in its best quality: JioSaavn first, quick to
-     * answer, then the verified lossless files. Their files aren't read again
-     * here: the search read each one's start to verify it, and reading it once
-     * more for every song ahead only used up the file servers' patience.
-     */
-    private suspend fun readyAhead(song: com.opentune.data.model.Song, saavn: Boolean, lossless: Boolean) {
-        suspend fun attempt(block: suspend () -> Unit) = try { block() } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (_: Exception) {}
-        if (saavn) attempt { ExternalStreams.findJioSaavn(song, song.durationMillis()) }
-        if (lossless) attempt { ExternalStreams.find(song, song.durationMillis(), beforePlayback = true, losslessOnly = true) }
-    }
-
-    /**
-     * Moves [id] onto the best of [candidates] (verified files of the same
-     * recording) that actually serves its audio. All of them are pinged at
-     * once; the song moves onto the best that has answered, and again onto a
-     * better one that answers after, so a source that verified but won't
-     * hand over its stream never keeps another from playing. A file whose
-     * stream doesn't load is passed over for the next. True if it moved at all.
-     */
-    private suspend fun swapToBestAnswering(
-        player: ExoPlayer,
-        id: String,
-        candidates: List<ExternalStreams.Rendition>,
-        current: ExternalStreams.Rendition?,
-        quiet: Boolean = false,
-    ): Boolean {
-        // A verified file whose stream didn't load in time often does a few seconds later, once
-        // its server has it ready: tried again soon, in the background, rather than left till the next song.
-        swapNotes.clear()
-        repeat(SWAP_ROUNDS) { round ->
-            if (round > 0) {
-                if (!upgradeAsked) NerdStats.onUpgrade(null)
-                delay(SWAP_ROUND_GAP_MS)
-                if (player.currentMediaItem?.mediaId != id) return false
-                if (player.duration > 0 && player.duration - player.currentPosition < UPGRADE_MIN_REMAINING_MS) return false
-            }
-            if (swapRound(player, id, candidates, current, quiet || round > 0)) return true
-        }
-        return false
-    }
-
-    private suspend fun swapRound(
-        player: ExoPlayer,
-        id: String,
-        candidates: List<ExternalStreams.Rendition>,
-        current: ExternalStreams.Rendition?,
-        quiet: Boolean,
-    ): Boolean = kotlinx.coroutines.coroutineScope {
-        fun score(r: ExternalStreams.Rendition) = com.opentune.data.addons.AddonResolver.qualityScore(r.bits, r.sampleRate)
-        var playing = if (current?.lossless == true) score(current) else -1L
-        val upgrades = candidates.filter { score(it) > playing || current?.lossless != true }
-        if (upgrades.isEmpty()) return@coroutineScope false
-        val answers = kotlinx.coroutines.channels.Channel<ExternalStreams.Rendition?>(kotlinx.coroutines.channels.Channel.UNLIMITED)
-        val pings = upgrades.map { r ->
-            launch(Dispatchers.IO) {
-                // Verified moments ago, its server is known to answer: loaded at once, not read again first.
-                val failure = if (ExternalStreams.verifiedRecently(r)) null else pingFailure(ExternalStreams.urlOf(r))
-                if (failure != null) swapNotes[r.provider] = failure
-                answers.send(r.takeIf { failure == null })
-            }
-        }
-        var waiting = pings.size
-        var moved = false
-        val pending = mutableListOf<ExternalStreams.Rendition>()
-        fun take(r: ExternalStreams.Rendition?) { waiting--; if (r != null) pending += r }
-        try {
-            while (true) {
-                if (pending.isEmpty()) {
-                    if (waiting == 0) break
-                    take(answers.receive())
-                }
-                // Whatever else has answered meanwhile is weighed too: the best of them goes first.
-                while (true) {
-                    val more = answers.tryReceive()
-                    if (!more.isSuccess) break
-                    take(more.getOrNull())
-                }
-                val best = pending.maxByOrNull(::score) ?: continue
-                pending.remove(best)
-                if (moved && score(best) <= playing) { pending.clear(); continue }
-                if (player.currentMediaItem?.mediaId != id) break
-                if (player.duration > 0 && player.duration - player.currentPosition < UPGRADE_MIN_REMAINING_MS) break
-                if (swapToUpgrade(player, id, externalStreamUri(id, best.key), quiet = quiet)) {
-                    moved = true
-                    playing = score(best)
-                    updateExternalStats()
-                    pending.removeAll { score(it) <= playing }
-                } else {
-                    swapNotes[best.provider] = loadFailure ?: "its stream didn't load"
-                    Log.w(TAG, "${best.provider}'s stream for $id didn't load (${swapNotes[best.provider]}); trying the next verified source")
-                }
-            }
-        } finally {
-            pings.forEach { it.cancel() }
-        }
-        moved
-    }
-
-    /** Why [url] couldn't be read from, or null when its start came back. */
-    private suspend fun pingFailure(url: String): String? = try {
-        when (kotlinx.coroutines.withTimeoutOrNull(PING_LIMIT_MS) { com.opentune.data.addons.AddonHttp.bytes(url, PING_BYTES, true).isNotEmpty() }) {
-            true -> null
-            false -> "its file came back empty"
-            null -> "its server didn't answer in ${PING_LIMIT_MS / 1000} s"
-        }
-    } catch (e: kotlinx.coroutines.CancellationException) { throw e }
-    catch (e: com.opentune.data.addons.AddonHttp.Failure) { "its server answered HTTP ${e.status}" }
-    catch (_: Exception) { "its server couldn't be reached" }
-
-    /** Why each verified source a switch tried didn't take, by provider, for the pipeline report. */
-    private val swapNotes = java.util.concurrent.ConcurrentHashMap<String, String>()
 
     /** Why the last stream [prebuffer] or the bridge tried didn't load. */
     private var loadFailure: String? = null
@@ -1671,7 +1269,7 @@ class PlaybackService : MediaLibraryService() {
         if (!quiet) NerdStats.onUpgrade(id)
         return try {
             // Done: a note from an earlier try that it couldn't be is no longer true.
-            switchStream(player, id, uri, superseded).also { if (it) ExternalStreams.swapSucceeded(id) }
+            switchStream(player, id, uri, superseded)
         } finally {
             if (!upgradeAsked && upgradeJob?.isActive != true) NerdStats.onUpgrade(null)
         }
@@ -1682,14 +1280,14 @@ class PlaybackService : MediaLibraryService() {
 
     /** What [uri] plays, for the log: the external source's label, or YouTube's better stream. */
     private fun streamName(id: String, uri: android.net.Uri): String =
-        externalStreamKeyOf(uri)?.let { ExternalStreams.get(id, it)?.label } ?: "YouTube's better stream"
+        "YouTube's better stream"
 
     private suspend fun switchStream(player: ExoPlayer, id: String, uri: android.net.Uri, superseded: () -> Boolean): Boolean {
         Log.d(TAG, "Switching $id to ${streamName(id, uri)}${if (player.isPlaying) "" else " (not playing yet, so without the bridge)"}")
         val index = player.currentMediaItemIndex
         val item = player.currentMediaItem?.takeIf { it.mediaId == id } ?: return false
         item.localConfiguration?.uri?.let(::selectedUri)?.let { beforeSwap = id to it }
-        val next = item.buildUpon().setUri(uri).setMimeType(externalStreamKeyOf(uri)?.let { ExternalStreams.get(id, it)?.mimeType }).build()
+        val next = item.buildUpon().setUri(uri).build()
         loadFailure = null
         return performUpgradeHandoff(
             bridge = {
@@ -1749,7 +1347,6 @@ class PlaybackService : MediaLibraryService() {
     private suspend fun awaitUpgradeReady(player: ExoPlayer, next: MediaItem): Boolean =
         kotlinx.coroutines.withTimeoutOrNull(BRIDGE_CATCH_UP_MS) {
             val uri = next.localConfiguration?.uri
-            val lossless = uri?.let(::externalStreamKeyOf)?.let { ExternalStreams.get(next.mediaId, it)?.lossless } == true
             while (true) {
                 if (player.currentMediaItem?.mediaId != next.mediaId ||
                     player.currentMediaItem?.localConfiguration?.uri != uri || player.playerError != null ||
@@ -1931,17 +1528,10 @@ class PlaybackService : MediaLibraryService() {
     private fun updateExternalStats() {
         val item = mediaSession?.player?.currentMediaItem
         val uri = item?.localConfiguration?.uri?.let(::selectedUri)
-        val key = uri?.let(::externalStreamKeyOf)
-        val rendition = if (item != null && key != null) ExternalStreams.get(item.mediaId, key) else null
-        // The lookup label can say "lossless requested" long after decoding starts.
-        // Stats describe the playing source; codec/quality come from the decoder.
-        ExternalStreams.playing(item?.mediaId, key)
-        NerdStats.onExternalSource(rendition?.provider)
         val downloaded = item?.let { com.opentune.data.download.Downloads.entryNow(it.mediaId) }
             ?.takeIf { uri?.scheme == "file" && it.path == uri.path }
         val provider = when {
             item == null -> "No track selected"
-            rendition != null -> rendition.provider
             uri?.let(::startupToken) != null -> "Loading audio…"
             LocalMusic.isLocal(item.mediaId) -> "Local file"
             Radio.isRadio(item.mediaId) -> "Internet radio"
@@ -1949,11 +1539,9 @@ class PlaybackService : MediaLibraryService() {
             uri?.scheme == "file" -> downloaded?.source?.let { "$it · downloaded" } ?: "Downloaded file"
             else -> StreamResolver.engineFor(item.mediaId, uri?.let(::isUpgradedUri) == true)?.let { "YouTube · $it" } ?: "YouTube · cached stream or resolving"
         }
-        NerdStats.onPlaybackSource(NerdStats.Source(provider, rendition?.bits ?: downloaded?.bits, rendition?.sampleRate ?: downloaded?.sampleRate,
-            rendition?.kbps ?: if (rendition == null && item != null && uri?.let(::videoIdOf) != null)
-                StreamResolver.bitrateFor(item.mediaId, isUpgradedUri(uri)) else null,
-            selectionDetail = if (item != null && uri?.let(::videoIdOf) != null && uri.let(::startupToken) == null)
-                ExternalStreams.selectionDetail(item.mediaId) else null, mediaId = item?.mediaId))
+        NerdStats.onPlaybackSource(NerdStats.Source(provider, downloaded?.bits, downloaded?.sampleRate,
+            if (item != null && uri?.let(::videoIdOf) != null) StreamResolver.bitrateFor(item.mediaId, isUpgradedUri(uri)) else null,
+            selectionDetail = null, mediaId = item?.mediaId))
     }
 
     // ---- Latency -----------------------------------------------------------------
@@ -1997,12 +1585,6 @@ class PlaybackService : MediaLibraryService() {
         val previousJob = warmJob
         warmJob = scope.launch(Dispatchers.IO) {
             previousJob?.join()
-            // Prepare the preferred source independently of YouTube URL warm-up.
-            if (AppSettings.effectiveAudioQuality == com.opentune.data.settings.AudioQuality.MAX) launch {
-                for (song in songs) kotlinx.coroutines.withTimeoutOrNull(3_000) {
-                    ExternalStreams.findJioSaavn(song, song.durationMillis())
-                }
-            }
             // One at a time: these compete with the playing track for bandwidth.
             for (id in ids) {
                 runCatching { StreamResolver.resolve(id) }
@@ -2323,7 +1905,7 @@ class PlaybackService : MediaLibraryService() {
         val player = mediaSession?.player as? ExoPlayer ?: return
         val item = player.currentMediaItem ?: return
         val uri = item.localConfiguration?.uri ?: return
-        if (!isUpgradedUri(uri) && externalStreamKeyOf(uri) == null) return
+        if (!isUpgradedUri(uri)) return
         // Only mid-song: the start and a seek buffer by design.
         if (player.currentPosition < STALL_MIN_POSITION_MS) return
         val at = player.currentPosition
@@ -2334,7 +1916,6 @@ class PlaybackService : MediaLibraryService() {
             Log.w(TAG, "Better stream for ${item.mediaId} stalled for ${STALL_FALLBACK_MS}ms at ${at}ms; back to the one before it")
             StreamResolver.dropUpgrade(item.mediaId)
             val stalled = selectedUri(uri)
-            externalStreamKeyOf(stalled)?.let { ExternalStreams.failed(item.mediaId, it) }
             val index = player.currentMediaItemIndex
             swappingTo = item.mediaId
             player.replaceMediaItem(index, item.buildUpon().setUri(fallbackUri(item.mediaId, stalled)).setMimeType(null).build())
@@ -2351,16 +1932,12 @@ class PlaybackService : MediaLibraryService() {
     private var beforeSwap: Pair<String, android.net.Uri>? = null
 
     /**
-     * Where [mediaId] goes when its better stream [failed] or stalled: back to the stream it
-     * played before the switch (a lower FLAC, or JioSaavn), else JioSaavn while it has the
-     * song, and YouTube's own only when there's neither. It went straight to YouTube when
-     * JioSaavn's link was more than a few minutes old.
+     * Where [mediaId] goes when its better stream [failed] or stalled: back to the
+     * stream it played before the switch, else YouTube's own.
      */
     private fun fallbackUri(mediaId: String, failed: android.net.Uri?): android.net.Uri {
         beforeSwap?.takeIf { it.first == mediaId }?.second?.takeIf { it != failed }
-            ?.let(::externalStreamKeyOf)?.takeIf { ExternalStreams.get(mediaId, it) != null }
-            ?.let { return externalStreamUri(mediaId, it) }
-        ExternalStreams.saavnFor(mediaId)?.let { return externalStreamUri(mediaId, it.key) }
+            ?.let { return it }
         return youtubeFallbackUri(mediaId)
     }
 
@@ -2438,10 +2015,9 @@ class PlaybackService : MediaLibraryService() {
             }
             return
         }
-        if (uri != null && (isUpgradedUri(uri) || externalStreamKeyOf(uri) != null)) {
+        if (uri != null && isUpgradedUri(uri)) {
             Log.w(TAG, "Upgraded stream for $mediaId failed (${error.errorCodeName}); back to the one before it")
             StreamResolver.dropUpgrade(mediaId)
-            externalStreamKeyOf(uri)?.let { ExternalStreams.failed(mediaId, it) }
             val index = player.currentMediaItemIndex
             val position = player.currentPosition
             swappingTo = mediaId

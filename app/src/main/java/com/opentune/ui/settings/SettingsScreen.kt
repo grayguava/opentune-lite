@@ -458,8 +458,6 @@ private fun settingsSections(
     val lib by AppSettings.library.collectAsState()
     val metered = remember { AppSettings.onMeteredNetwork() }
     var qualityDialog by remember { mutableStateOf<Boolean?>(null) } // true = Wi-Fi, false = mobile
-    var audioAddons by remember { mutableStateOf(false) }
-    if (audioAddons) AudioAddonsSheet { audioAddons = false }
     var folderDialog by remember { mutableStateOf(false) }
     var cacheBytes by remember { mutableLongStateOf(0L) }
     var message by remember { mutableStateOf<String?>(null) }
@@ -652,7 +650,7 @@ private fun settingsSections(
             title = "Download quality",
             options = AudioQuality.entries,
             selected = lib.downloadQuality,
-            label = { "${it.label} · ${if (it == AudioQuality.MAX) "Lossless from add-ons when available; YouTube fallback" else it.summary}" },
+            label = { "${it.label} · ${it.summary}" },
             onSelect = { q -> AppSettings.updateLibrary { it.copy(downloadQuality = q) } },
             onDismiss = { downloadQualityDialog = false },
         )
@@ -748,15 +746,6 @@ private fun settingsSections(
                             modifier = Modifier.padding(top = 8.dp),
                         )
                     })
-                },
-                Entry("Lossless streaming", "flac lossless addons") {
-                    ToggleRow("Lossless at other quality levels", pb.losslessStreaming, { v -> AppSettings.updatePlayback { it.copy(losslessStreaming = v) } }, summary = "Also check your audio add-ons after playback starts at other quality levels. Lossless checks them automatically in your chosen order.", icon = Icons.Rounded.HighQuality)
-                },
-                Entry("Unmetered networks only", "flac saavn mobile wifi data") {
-                    ToggleRow("Unmetered networks only", pb.losslessUnmeteredOnly, { v -> AppSettings.updatePlayback { it.copy(losslessUnmeteredOnly = v) } }, summary = "When on, mobile data uses YouTube even with Lossless selected. Turn off to try FLAC and JioSaavn on mobile data", icon = Icons.Rounded.Wifi)
-                },
-                Entry("Audio add-ons", "source URL manifest order priority lossless flac high res") {
-                    SettingRow("Audio add-ons", icon = Icons.Rounded.HighQuality, summary = "Add service URLs and choose source priority", onClick = { audioAddons = true })
                 },
                 Entry("Bit-perfect USB output", "dac exclusive mode usb audio player pro hiby passthrough hi-fi audiophile mixer bypass sample rate switching") {
                     val usb by BitPerfectUsb.status.collectAsState()

@@ -17,7 +17,7 @@ class ArtistCreditMediaItemTest {
 
     @Test fun repairingCreditsPreservesSelectedFlacAndQueueExtras() {
         val item = MediaItem.Builder().setMediaId(credit.videoId)
-            .setUri(externalStreamUri(credit.videoId, "verified-flac")).setMimeType("audio/flac")
+            .setUri(streamUri(credit.videoId, upgraded = true)).setMimeType("audio/flac")
             .setMediaMetadata(MediaMetadata.Builder().setTitle("Song").setArtist("Various Artist")
                 .setExtras(Bundle().apply { putString("artistId", "compilation-artist"); putString("queue-marker", "keep") }).build())
             .build()

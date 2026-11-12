@@ -196,8 +196,6 @@ fun AppRoot(vm: PlayerViewModel) {
                 if (com.opentune.data.settings.AppSettings.ui.value.checkForUpdates && update == null) {
                     update = com.opentune.data.UpdateCheck.checkIfDue(appContext)
                 }
-                com.opentune.data.config.RemoteConfig.refresh()
-                com.opentune.data.addons.AddonRefresh.refresh()
                 kotlinx.coroutines.delay(5 * 60 * 1000L)
             }
         }
@@ -219,9 +217,8 @@ fun AppRoot(vm: PlayerViewModel) {
         askStar = invite != null
     }
     val starCard: @Composable () -> Unit = {
-        val runtime by com.opentune.data.config.RemoteConfig.state.collectAsState()
         androidx.compose.animation.AnimatedVisibility(
-            visible = askStar && runtime.communityPrompts && !playerOpen && update == null && whatsNew.isEmpty(),
+            visible = askStar && !playerOpen && update == null && whatsNew.isEmpty(),
             enter = androidx.compose.animation.slideInVertically(spring(dampingRatio = 0.8f, stiffness = 300f)) { it } + fadeIn(),
             exit = androidx.compose.animation.slideOutVertically(tween(220)) { it } + fadeOut(tween(180)),
         ) {

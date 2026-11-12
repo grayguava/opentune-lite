@@ -91,9 +91,6 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         // The process may have started in the background, offline (after an update, say).
         AccountStore.ensureProfile()
-        lifecycleScope.launchWhenStarted {
-            com.opentune.data.addons.AddonRefresh.refresh()
-        }
         // Whether this version is still allowed to run (UpdateLock), at most once an hour.
         lifecycleScope.launch { com.opentune.data.UpdateLock.refresh(this@MainActivity) }
         // Playlist changes that couldn't reach YouTube Music last time try again.

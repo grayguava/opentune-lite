@@ -169,7 +169,7 @@ class PlayerConnection(private val context: Context) {
                 .firstOrNull { it.type == C.TRACK_TYPE_AUDIO && it.isSelected }
                 ?.let { group -> (0 until group.length).firstOrNull { group.isTrackSelected(it) }?.let(group::getTrackFormat) }
             _audioFormat.value = format?.let {
-                val flac = LosslessAudioPolicy.streamInfo(it)
+                val flac = FlacInfo.of(it)
                 AudioFormatInfo(
                     codec = (it.codecs ?: it.sampleMimeType?.substringAfter('/'))?.uppercase(),
                     bitrateKbps = it.bitrate.takeIf { b -> b > 0 }?.div(1000),

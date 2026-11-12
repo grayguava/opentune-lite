@@ -1,6 +1,6 @@
 # Audio source review
 
-> Historical review of the former provider integration. The current add-on branch replaces the SpotiFLAC/Qobuz relay system and its startup policy; see [Audio add-ons](audio-addons.md) for current behavior.
+> Historical review of the former provider integration, kept for the record. That integration and its startup policy are gone; this build plays YouTube Music, with JioSaavn renditions and your own music server as the other sources.
 
 Reviewed 2026-10-09 against the repositories' then-current default branches. This is a source-capability review, not a listening test or a claim that every backend works in every country. READMEs and repository trees were checked for all 30 clients; the relevant provider implementations were examined for the strongest alternative-source candidates.
 

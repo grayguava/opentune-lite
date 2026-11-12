@@ -22,7 +22,7 @@ enum class AudioQuality(val label: String, val summary: String, val maxKbps: Int
     LOW("Low", "About 64 kbps", 64),
     NORMAL("Normal", "About 128 kbps", 128),
     HIGH("High", "Opus up to 160 kbps", 160),
-    MAX("Lossless", "Best available lossless from add-ons, with a lossy fallback", Int.MAX_VALUE),
+    MAX("Best", "The best YouTube gives you, AAC 256 with Premium", 256),
 }
 
 @Serializable
@@ -312,13 +312,6 @@ data class PlaybackSettings(
     val streamDownloadsOnline: Boolean = true,
     /** Swap to a clearly better stream mid-song when one turns up. */
     val qualityUpgrade: Boolean = true,
-    /** Community FLAC lookup runs after playback starts. Downloads remain YouTube audio. */
-    val losslessStreaming: Boolean = false,
-    val losslessUnmeteredOnly: Boolean = false,
-    val losslessHiRes: Boolean = false,
-    val jioSaavnQuality: Boolean = false,
-    /** Optional base URL implementing Meld's /api/get-music and /api/download-music protocol. */
-    val qobuzRelayUrl: String = "",
     /** Overlap the end of a song with the start of the next; 0 is off. */
     val crossfadeSeconds: Int = 0,
     /** Bit-perfect output to a USB DAC (Android 14+): no mixing, effects or resampling. */
@@ -700,8 +693,6 @@ data class SettingsState(
     val library: LibrarySettings = LibrarySettings(),
     val lyrics: LyricsSettings = LyricsSettings(),
     val recentSearches: List<String> = emptyList(),
-    /** Searches made in Search's Add-ons tab, kept apart from the YouTube ones. */
-    val recentAddonSearches: List<String> = emptyList(),
 )
 
 /** Accent choices offered when Material You is off. */
@@ -750,8 +741,6 @@ object AppSettings {
     val lyrics: StateFlow<LyricsSettings> = _lyrics.asStateFlow()
     private val _recentSearches = MutableStateFlow<List<String>>(emptyList())
     val recentSearches: StateFlow<List<String>> = _recentSearches.asStateFlow()
-    private val _recentAddonSearches = MutableStateFlow<List<String>>(emptyList())
-    val recentAddonSearches: StateFlow<List<String>> = _recentAddonSearches.asStateFlow()
 
     /** Read by StreamResolver on every resolve: the ceiling for the network in use. */
     val effectiveAudioQuality: AudioQuality
@@ -792,7 +781,6 @@ object AppSettings {
         _library.value = s.library
         _lyrics.value = s.lyrics
         _recentSearches.value = s.recentSearches
-        _recentAddonSearches.value = s.recentAddonSearches
     }
 
     private fun update(transform: (SettingsState) -> SettingsState) {
@@ -828,14 +816,6 @@ object AppSettings {
     fun removeRecentSearch(query: String) = update { it.copy(recentSearches = it.recentSearches - query) }
 
     fun clearRecentSearches() = update { it.copy(recentSearches = emptyList()) }
-
-    fun addRecentAddonSearch(query: String) = update { s ->
-        s.copy(recentAddonSearches = (listOf(query) + s.recentAddonSearches.filterNot { it.equals(query, true) }).take(MAX_RECENT))
-    }
-
-    fun removeRecentAddonSearch(query: String) = update { it.copy(recentAddonSearches = it.recentAddonSearches - query) }
-
-    fun clearRecentAddonSearches() = update { it.copy(recentAddonSearches = emptyList()) }
 
     fun exportJson(): JsonElement = json.encodeToJsonElement(SettingsState.serializer(), _state.value)
 

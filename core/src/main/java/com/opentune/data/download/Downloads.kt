@@ -82,9 +82,6 @@ data class DownloadEntry(
     val sampleRate: Int? = null,
     /** The copy in the Music folder, when Export compatible downloads made one. */
     val exportUri: String? = null,
-    /** Keep the requested quality across Wi-Fi waits and process restarts; never persist signed URLs. */
-    val preferLossless: Boolean = false,
-    val preferredRenditionKey: String? = null,
 )
 
 /**
@@ -167,12 +164,10 @@ object Downloads {
         if (!com.opentune.data.isYouTubeId(song.videoId)) return
         val existing = _entries.value[song.videoId]
         if (existing?.state == DownloadState.DONE || existing?.state == DownloadState.DOWNLOADING || existing?.state == DownloadState.QUEUED) return
-        val preferred = com.opentune.data.lossless.ExternalStreams.downloadPreference(song.videoId)
-        schedule(context, SongRef.of(song), preferred != null || existing?.preferLossless == true,
-            preferred?.key ?: existing?.preferredRenditionKey)
+        schedule(context, SongRef.of(song))
     }
 
-    private fun schedule(context: Context, song: SongRef, preferLossless: Boolean = false, preferredKey: String? = null) {
+    private fun schedule(context: Context, song: SongRef) {
         val wifiOnly = AppSettings.library.value.downloadWifiOnly
         val request = OneTimeWorkRequestBuilder<DownloadWorker>()
             .setInputData(workDataOf(DownloadWorker.KEY_ID to song.videoId))
@@ -183,7 +178,7 @@ object Downloads {
             .setBackoffCriteria(androidx.work.BackoffPolicy.EXPONENTIAL, 15, java.util.concurrent.TimeUnit.SECONDS)
             .addTag(TAG)
             .build()
-        put(song.videoId) { DownloadEntry(song, workId = request.id.toString(), preferLossless = preferLossless, preferredRenditionKey = preferredKey) }
+        put(song.videoId) { DownloadEntry(song, workId = request.id.toString()) }
         WorkManager.getInstance(context).enqueueUniqueWork(workName(song.videoId), ExistingWorkPolicy.REPLACE, request)
     }
 
@@ -193,7 +188,7 @@ object Downloads {
      * left the songs already waiting still waiting for Wi-Fi.
      */
     fun requeueWaiting(context: Context) {
-        _entries.value.values.filter { it.state == DownloadState.QUEUED }.forEach { schedule(context, it.song, it.preferLossless, it.preferredRenditionKey) }
+        _entries.value.values.filter { it.state == DownloadState.QUEUED }.forEach { schedule(context, it.song) }
     }
 
     /** Downloads wait because only Wi-Fi is allowed and the phone is on mobile data (or another metered network). */
@@ -261,8 +256,7 @@ object Downloads {
     fun retry(context: Context, videoId: String) {
         val e = _entries.value[videoId]?.takeIf { it.state == DownloadState.FAILED } ?: return
         remove(context, videoId)
-        val preferred = com.opentune.data.lossless.ExternalStreams.downloadPreference(videoId)
-        schedule(context, e.song, e.preferLossless || preferred != null, preferred?.key ?: e.preferredRenditionKey)
+        schedule(context, e.song)
     }
 
     /** Reject stale callbacks from removed/replaced workers atomically. */
@@ -309,8 +303,6 @@ class DownloadWorker(context: Context, params: WorkerParameters) : CoroutineWork
         }
         val jobDir = File(Downloads.directory(), "$id.${this.id}")
         publish { it.copy(state = DownloadState.DOWNLOADING, error = null) }
-        var addon: com.opentune.data.addons.AddonStream? = null
-        var fromSaavn = false
         return try {
             val maxKbps = AppSettings.library.value.downloadQuality.maxKbps
             val exporting = AppSettings.library.value.exportDownloads && DownloadExport.supported
@@ -318,64 +310,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) : CoroutineWork
             // A playlist queues every song at once; a few at a time each get the
             // bandwidth, and YouTube isn't asked for dozens of streams together.
             val target = songsAtOnce.withPermit {
-                // Lossless: every add-on that allows downloads and has this recording verified,
-                // best file first; one that won't hand its file over is passed over for the
-                // next, and with none that works the song comes from the normal stream.
-                val preferred = entry.preferredRenditionKey?.let {
-                    com.opentune.data.lossless.ExternalStreams.get(id, it)
-                } ?: com.opentune.data.lossless.ExternalStreams.downloadPreference(id)
-                if (LosslessDownloads.shouldTry(maxKbps, entry.preferLossless, preferred)) {
-                    suspend fun save(candidate: com.opentune.data.addons.AddonStream, holdFailure: Boolean = true): File? {
-                        val file = File(dir, "$id.${candidate.extension}")
-                        try {
-                            fetch(candidate.url, File(dir, "$id.part"), file, entry.song.title, candidate) { p -> publish { it.copy(progress = p) } }
-                            addon = candidate
-                            return file
-                        } catch (e: CancellationException) {
-                            throw e
-                        } catch (e: Exception) {
-                            com.opentune.data.addons.AddonResolver.failed(candidate.addonId, id, hold = holdFailure)
-                            Log.w(TAG, "${candidate.provider} wouldn't hand over $id (${e.javaClass.simpleName}: ${e.message}); trying the next source")
-                            publish { it.copy(progress = 0f) }
-                            return null
-                        }
-                    }
-                    // Reuse the already verified file first, avoiding another catalogue lookup.
-                    LosslessDownloads.direct(preferred)?.let { save(it, holdFailure = false) }?.let { return@withPermit it }
-                    val duration = com.opentune.data.lossless.CatalogMetadata.duration(entry.song.toSong(), parseDuration(entry.song.durationText))
-                    val candidates = com.opentune.data.addons.AddonResolver
-                        .resolveAll(entry.song.toSong(), duration, download = true)
-                        .filter { it.extension != null }
-                    for (candidate in candidates) save(candidate)?.let { return@withPermit it }
-                }
-                // No lossless file: JioSaavn's 320 kbps next, before YouTube's own stream,
-                // when JioSaavn is on and the download quality reaches that far.
-                if (maxKbps >= SAAVN_KBPS && AppSettings.playback.value.jioSaavnQuality) {
-                    val song = entry.song.toSong()
-                    val duration = com.opentune.data.lossless.CatalogMetadata.duration(song, parseDuration(entry.song.durationText))
-                    val url = try {
-                        if (duration > 0) com.opentune.data.lossless.JioSaavnSource.resolve(song, duration) else null
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Log.w(TAG, "JioSaavn lookup for $id failed (${e.javaClass.simpleName}: ${e.message}); using YouTube")
-                        null
-                    }
-                    if (url != null) {
-                        val file = File(dir, "$id.m4a")
-                        try {
-                            fetch(url, File(dir, "$id.part"), file, entry.song.title) { p -> publish { it.copy(progress = p) } }
-                            fromSaavn = true
-                            return@withPermit file
-                        } catch (e: CancellationException) {
-                            throw e
-                        } catch (e: Exception) {
-                            Log.w(TAG, "JioSaavn wouldn't hand over $id (${e.javaClass.simpleName}: ${e.message}); using YouTube")
-                            publish { it.copy(progress = 0f) }
-                        }
-                    }
-                }
-                // Last, YouTube's stream. Exported copies have to be AAC in MP4: the Music folder refuses WebM.
+                // YouTube's own stream. Exported copies have to be AAC in MP4: the Music folder refuses WebM.
                 val stream = StreamResolver.resolveForDownload(id, maxKbps, requireM4a = exporting)
                 File(dir, "$id.${stream.downloadExtension}").also { target ->
                     fetch(stream.url, File(dir, "$id.part"), target, entry.song.title) { p ->
@@ -387,8 +322,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) : CoroutineWork
             publish {
                 it.copy(
                     state = DownloadState.DONE, progress = 1f, path = target.path, artPath = art?.path,
-                    bytes = target.length(), loudnessDb = if (addon == null && !fromSaavn) StreamResolver.loudnessDbFor(id) else null,
-                    source = addon?.provider ?: if (fromSaavn) "JioSaavn · 320 kbps" else null, bits = addon?.bits, sampleRate = addon?.sampleRate,
+                    bytes = target.length(), loudnessDb = StreamResolver.loudnessDbFor(id),
                 )
             }
             // A copy in the Music folder for other apps, when asked for and the format allows.
@@ -421,23 +355,12 @@ class DownloadWorker(context: Context, params: WorkerParameters) : CoroutineWork
     }
 
     /** The audio, in ranges (see [RangedFetch]), then moved into place. */
-    private suspend fun fetch(url: String, part: File, target: File, title: String, addon: com.opentune.data.addons.AddonStream? = null, onProgress: (Float) -> Unit) {
-        fun permitted() {
-            if (addon != null) {
-                val current = com.opentune.data.addons.AddonStore.addons.value.firstOrNull { it.key == addon.addonId }
-                check(current != null && current.manifest.downloads && com.opentune.data.addons.AddonStore.usable(current)) { "Add-on disabled or download permission changed." }
-            }
-        }
-        permitted()
-        RangedFetch.fetch(if (addon == null) Http.client else com.opentune.data.addons.AddonHttp.mediaClient, url,
-            if (addon == null) StreamResolver.mediaHeadersFor(url) else emptyMap(), part,
-            maxBytes = if (addon == null) Long.MAX_VALUE else 512L * 1024 * 1024) { p ->
-            permitted()
+    private suspend fun fetch(url: String, part: File, target: File, title: String, onProgress: (Float) -> Unit) {
+        RangedFetch.fetch(Http.client, url, StreamResolver.mediaHeadersFor(url), part, maxBytes = Long.MAX_VALUE) { p ->
             onProgress(p)
             runCatching { setForegroundAsync(foregroundInfo(title, p)) }
         }
-        permitted()
-        DownloadAudio.validate(part, addon)
+        DownloadAudio.validate(part)
         if (!part.renameTo(target)) throw IOException("Couldn't save the file")
     }
 
@@ -481,8 +404,6 @@ class DownloadWorker(context: Context, params: WorkerParameters) : CoroutineWork
         private const val CHANNEL = "downloads"
         private const val NOTIFICATION_ID = 4120
         private const val MAX_ATTEMPTS = 3
-        /** JioSaavn's quality: a download quality below it goes straight to YouTube. */
-        private const val SAAVN_KBPS = 320
         /** Songs downloading at once, across the whole queue. */
         private val songsAtOnce = Semaphore(3)
     }
