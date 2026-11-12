@@ -5,7 +5,7 @@ const base = new URL(process.env.ADDON_URL);
 assert.equal(base.protocol, 'https:');
 assert.match(base.hostname, /^opentune-lossless-addon\.[a-z0-9-]+\.workers\.dev$/);
 async function get(path) {
-  const response = await fetch(new URL(path, base), { signal: AbortSignal.timeout(20000), headers: { Origin: 'https://justshivv.github.io' } });
+  const response = await fetch(new URL(path, base), { signal: AbortSignal.timeout(20000), headers: { Origin: 'https://grayguava.github.io' } });
   const body = await response.json();
   return { response, body };
 }
@@ -36,7 +36,7 @@ report.security.fakeEnrollment = fake.status;
 report.security.challengeReplay = replay.status;
 const browserKey = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({ format: 'jwk' });
 const pairingResponse = await fetch(new URL('/auth/web/start', base), { method: 'POST',
-  headers: { 'Content-Type': 'application/json', Origin: 'https://justshivv.github.io' }, body: JSON.stringify({ key: browserKey }), signal: AbortSignal.timeout(20000) });
+  headers: { 'Content-Type': 'application/json', Origin: 'https://grayguava.github.io' }, body: JSON.stringify({ key: browserKey }), signal: AbortSignal.timeout(20000) });
 assert.equal(pairingResponse.status, 200);
 const pairing = await pairingResponse.json();
 assert.match(pairing.id, /^[A-Za-z0-9_-]{43}$/);
@@ -71,7 +71,7 @@ if (policy.body.mode === 'strict') {
     for (const route of ['search?q=295&quality=best', 'stream/untrusted-id?quality=best']) {
       for (const agent of ['BitChord/v1.8.1', 'OpenTune/verified-addon-v1']) {
         const r = await fetch(new URL(`/${source}/${route}`, base), { signal: AbortSignal.timeout(20000), headers: {
-          'User-Agent': agent, Origin: 'https://justshivv.github.io', Authorization: 'Bearer ' + 'a'.repeat(43),
+          'User-Agent': agent, Origin: 'https://grayguava.github.io', Authorization: 'Bearer ' + 'a'.repeat(43),
         } });
         assert.equal(r.status, 401, `${source}/${route}: app names and copied bearer values must not authorize access`);
         await r.body?.cancel();

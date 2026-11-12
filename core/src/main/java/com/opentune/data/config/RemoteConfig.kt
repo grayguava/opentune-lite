@@ -26,8 +26,7 @@ data class AppConfig(
     val sections: List<RemoteSection> = RemoteConfigProtocol.sectionIds.map { RemoteSection(it) },
     val banners: List<RemoteBanner> = emptyList(), val playlists: List<RemotePlaylist> = emptyList(),
     val sources: List<RemoteSource>? = null,
-    val github: String = "https://github.com/justshivv/Opentune", val discord: String = "https://discord.gg/6udrCVh5n",
-    val tv: String = "https://justshivv.github.io/Opentune/",
+    val github: String = "https://github.com/grayguava/opentune-lite", val discord: String = "https://discord.gg/6udrCVh5n",
     val timeoutMs: Long = 8000, val retries: Int = 2, val communityPrompts: Boolean = true,
 ) {
     fun title(id: String, fallback: String) = sections.firstOrNull { it.id == id }?.title?.ifBlank { fallback } ?: fallback
@@ -89,7 +88,7 @@ object RemoteConfigProtocol {
         val github = url(links.getString("github")); val discord = url(links.getString("discord"))
         require(com.opentune.data.addons.AddonProtocol.url(github).host == "github.com")
         require(com.opentune.data.addons.AddonProtocol.url(discord).host in setOf("discord.gg", "discord.com"))
-        return AppConfig(revision, expires, sections, banners, playlists, sources, github, discord, url(links.getString("tv")), timeout, retries, data.getBoolean("communityPrompts"))
+        return AppConfig(revision, expires, sections, banners, playlists, sources, github, discord, timeout, retries, data.getBoolean("communityPrompts"))
     }
 }
 

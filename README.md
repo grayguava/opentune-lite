@@ -3,9 +3,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/justshivv/Opentune/releases/latest"><b>Download the latest APK</b></a>
+  <a href="https://github.com/grayguava/opentune-lite/releases/latest"><b>Download the latest APK</b></a>
   &nbsp;·&nbsp;
-  <a href="https://justshivv.github.io/Opentune/">Website</a>
+  <a href="https://grayguava.github.io/opentune-lite/">Website</a>
   &nbsp;·&nbsp;
   <a href="https://discord.gg/6udrCVh5n">Discord</a>
   &nbsp;·&nbsp;
@@ -15,13 +15,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/justshivv/Opentune/actions/workflows/ci.yml"><img src="https://github.com/justshivv/Opentune/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/grayguava/opentune-lite/actions/workflows/ci.yml"><img src="https://github.com/grayguava/opentune-lite/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white" alt="Android 8.0+">
   <img src="https://img.shields.io/badge/Kotlin-Compose-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin and Jetpack Compose">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="GPL-3.0"></a>
 </p>
-
-[![Get it on Orion Store](https://raw.githubusercontent.com/RookieEnough/Orion-Store/refs/heads/main/assets/orion-badge.png)](https://rookieenough.github.io/Orion-Data/redirect.html?id=opentune&icon=https%3A%2F%2Fjustshivv.github.io%2FOpentune%2Ficon-512.png)
 
 # OpenTune
 
@@ -59,7 +57,7 @@ documented in [service integrations](docs/service-integrations.md).
 
 ## Install
 
-1. Open the [latest release](https://github.com/justshivv/Opentune/releases/latest)
+1. Open the [latest release](https://github.com/grayguava/opentune-lite/releases/latest)
    and download the APK for your phone. `arm64-v8a` fits almost every phone
    from the last several years; `universal` runs on anything.
 2. Open the file and allow your browser or file manager to install apps

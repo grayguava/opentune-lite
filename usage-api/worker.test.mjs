@@ -223,7 +223,7 @@ test('anonymous reporting remains write-only and compatible',async()=>{
 });
 
 test('GitHub Pages login returns a bearer session without third-party cookies',async()=>{
-  const origin='https://justshivv.github.io';
+  const origin='https://grayguava.github.io';
   const request=new Request('https://example.test/auth/login',{method:'POST',headers:{Origin:origin,Accept:'application/json','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({username:'owner',password:loginEnv.USAGE_ADMIN_PASSWORD})});
   const login=await worker.fetch(request,loginEnv);
   assert.equal(login.status,200);assert.equal(login.headers.get('set-cookie'),null);assert.equal(login.headers.get('Access-Control-Allow-Origin'),origin);

@@ -5,7 +5,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-BASE = 'https://justshivv.github.io/Opentune/'
+BASE = 'https://grayguava.github.io/opentune-lite/'
 ROOT = Path(__file__).resolve().parents[1]
 
 class Metadata(HTMLParser):
