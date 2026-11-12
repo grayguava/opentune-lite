@@ -204,7 +204,6 @@ fun AddSongsSheet(playlistId: String, onDismiss: () -> Unit) {
     val playlists by LibraryStore.playlists.collectAsState()
     val playlist = playlists.firstOrNull { it.id == playlistId }
     val inList = playlist?.songs?.map { it.videoId }?.toSet().orEmpty()
-    val progress by com.opentune.data.spotify.SpotifyPlaylistWrites.progress.collectAsState()
     val records by History.records.collectAsState()
     val recent = remember(records) { History.recents(records, 20) }
     var query by remember { mutableStateOf("") }
@@ -265,8 +264,7 @@ fun AddSongsSheet(playlistId: String, onDismiss: () -> Unit) {
                 androidx.compose.material3.TextButton(onClick = { attempt++ }) { Text("Retry search") }
             }
             list.forEach { song ->
-                AddRow(song, song.videoId in inList,
-                    progress[com.opentune.data.spotify.SpotifyPlaylistWrites.SaveKey(playlistId, song.videoId)]) {
+                AddRow(song, song.videoId in inList) {
                     LibraryStore.addToPlaylist(playlistId, song)
                 }
             }
@@ -276,14 +274,14 @@ fun AddSongsSheet(playlistId: String, onDismiss: () -> Unit) {
 }
 
 @Composable
-internal fun AddRow(song: Song, added: Boolean, progress: com.opentune.data.spotify.SpotifyPlaylistWrites.SaveProgress? = null, onAdd: () -> Unit) {
+internal fun AddRow(song: Song, added: Boolean, onAdd: () -> Unit) {
     val haptics = rememberHaptics()
     val pop by animateFloatAsState(if (added) 1f else 0f, tween(260), label = "added")
     Row(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .clickable(enabled = !added && progress?.busy != true) { haptics.press(); onAdd() }
+            .clickable(enabled = !added) { haptics.press(); onAdd() }
             .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

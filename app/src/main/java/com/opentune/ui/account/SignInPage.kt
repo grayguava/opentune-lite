@@ -42,7 +42,7 @@ import com.opentune.ui.components.GlassBackButton
  * A service's own sign-in page inside the app, with OpenTune around it: who
  * it's for and what it's used for, a line on what's kept, and the page in a
  * rounded card below with a thin bar while it loads. [web] draws the page in
- * the modifier it's handed. Shared by YouTube Music's and Spotify's sign-in.
+ * the modifier it's handed.
  */
 @Composable
 internal fun SignInPage(
@@ -149,6 +149,5 @@ internal fun SignInPage(
     }
 }
 
-/** YouTube Music's red and Spotify's green, for the sign-in pages' marks. */
+/** YouTube Music's red, for the sign-in pages' marks. */
 internal val YouTubeMusicRed = Color(0xFFFF0033)
-internal val SpotifyGreen = Color(0xFF1DB954)

@@ -295,13 +295,6 @@ class DspAudioProcessor : BaseAudioProcessor() {
             }
         }
         val out = replaceOutputBuffer(size)
-        if (silenced) {
-            // Casting: the phone keeps time for the queue while another device makes the sound.
-            repeat(size) { out.put(0) }
-            inputBuffer.position(inputBuffer.limit())
-            out.flip()
-            return
-        }
         val gain = masterGain
         if (p.isNeutral || channels == 0) {
             if (gain >= 0.999f || channels == 0) {
@@ -455,9 +448,6 @@ class DspAudioProcessor : BaseAudioProcessor() {
     }
 
     companion object {
-        /** While true, every processor puts out silence; set while casting. */
-        @Volatile var silenced = false
-
         /** A volume the sleep timer turns down as it winds down; 1 the rest of the time. */
         @Volatile var masterGain = 1f
         const val SPATIAL_WIDTH = 1.6f

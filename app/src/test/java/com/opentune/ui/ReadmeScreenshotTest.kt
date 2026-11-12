@@ -36,10 +36,6 @@ import com.opentune.data.radio.Radio
 import com.opentune.data.settings.AppSettings
 import com.opentune.data.settings.SoundSettings
 import com.opentune.data.settings.ThemeSettings
-import com.opentune.data.together.Member
-import com.opentune.data.together.RoomCode
-import com.opentune.data.together.Together
-import com.opentune.data.together.Track
 import com.opentune.ui.browse.SongActions
 import com.opentune.ui.components.SectionHeader
 import com.opentune.ui.explore.ExploreBoard
@@ -50,7 +46,6 @@ import com.opentune.ui.podcasts.EpisodeRow
 import com.opentune.ui.podcasts.ShowRow
 import com.opentune.ui.radio.StationRow
 import com.opentune.ui.theme.OpenTuneTheme
-import com.opentune.ui.together.RoomView
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assume.assumeTrue
@@ -221,20 +216,6 @@ class ReadmeScreenshotTest {
                 found.take(7).forEach { StationRow(it.station, false, {}, details = it.station.nearbyDetails(it.distanceKm)) }
             }
         }
-    }
-
-    @Test fun together() {
-        val room = Together.Room(
-            code = RoomCode.parse("K7QX-M2PA-9DTE")!!, hosting = true, myName = "Asha", phase = Together.Phase.Live, relays = 6,
-            members = listOf(Member("a", "Asha", host = true), Member("b", "Ravi"), Member("c", "Meera")),
-            hostName = "Asha", track = Track("4NRXx6U8ABQ", "Blinding Lights", "The Weeknd", cover("00")),
-            chat = listOf(
-                Together.ChatLine("", "Ravi joined", system = true),
-                Together.ChatLine("Ravi", "this one's a classic"),
-                Together.ChatLine("Asha", "turn it up", mine = true),
-            ),
-        )
-        shoot("together") { RoomView(room, onBack = {}) }
     }
 
     @Test fun podcasts() {

@@ -310,7 +310,7 @@ object MusicRepository {
 
     /**
      * "Because you played …": what the chosen recommendation engine (YouTube
-     * Music, Spotify or JioSaavn) suggests after the last song heard.
+     * Music or JioSaavn) suggests after the last song heard.
      */
     private suspend fun radioShelf(engine: Recommender): List<HomeShelf> {
         // A hidden song or artist isn't a seed for more of the same.
@@ -330,9 +330,8 @@ object MusicRepository {
         val fresh = result.songs.filter { it.videoId != last.videoId && it.videoId !in heard }
         // What the last shelf showed goes to the back, and the order changes with each refresh.
         val (seen, unseen) = fresh.partition { it.videoId in lastPicks }
-        val songs = if (engine == Recommender.SPOTIFY) fresh.take(20)
-            else (unseen.shuffled(kotlin.random.Random(launchShuffle + turn)) + seen).take(20)
-        if (songs.isEmpty() || (engine != Recommender.SPOTIFY && songs.size < 4)) return emptyList()
+        val songs = (unseen.shuffled(kotlin.random.Random(launchShuffle + turn)) + seen).take(20)
+        if (songs.size < 4) return emptyList()
         lastPicks = songs.mapTo(HashSet()) { it.videoId }
         val items = songs.map { ShelfItem(it.title, it.artist, it.thumbnailUrl, it.videoId, null) }
         val by = if (result.engine == Recommender.YOUTUBE) "Picked for you" else "Picked by ${result.engine.label}"

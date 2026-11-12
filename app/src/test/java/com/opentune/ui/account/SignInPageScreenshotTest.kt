@@ -31,18 +31,18 @@ import org.robolectric.annotation.GraphicsMode
 class SignInPageScreenshotTest {
     @get:Rule val compose = createAndroidComposeRule<androidx.activity.ComponentActivity>()
 
-    private fun show(spotify: Boolean) {
+    private fun show() {
         AppSettings.init(ApplicationProvider.getApplicationContext<android.app.Application>())
         compose.setContent {
             OpenTuneTheme(ThemeSettings().copy(mode = com.opentune.data.settings.ThemeMode.DARK, dynamicColor = false)) {
                 SignInPage(
-                    service = if (spotify) "Spotify" else "YouTube Music",
-                    brand = if (spotify) SpotifyGreen else YouTubeMusicRed,
-                    icon = if (spotify) Icons.Rounded.GraphicEq else Icons.Rounded.PlayCircle,
-                    gives = if (spotify) "Your playlists in Library, each song's Canvas, and suggestions made for you" else "Your playlists, liked songs, history and recommendations",
+                    service = "YouTube Music",
+                    brand = YouTubeMusicRed,
+                    icon = Icons.Rounded.PlayCircle,
+                    gives = "Your playlists, liked songs, history and recommendations",
                     loading = true,
                     onBack = {},
-                    hint = if (spotify) "If Google sign-in won't open here, use your Spotify email or username, or a one-time code by email." else null,
+                    hint = null,
                 ) { modifier ->
                     Box(modifier.background(Color(0xFFF4F4F4)), contentAlignment = Alignment.Center) { Text("Sign-in page", color = Color.Black) }
                 }
@@ -51,14 +51,8 @@ class SignInPageScreenshotTest {
         compose.waitForIdle()
     }
 
-    @Test fun spotify() {
-        show(spotify = true)
-        compose.onNodeWithText("Spotify").assertIsDisplayed()
-        save("sign-in-spotify")
-    }
-
     @Test fun youTubeMusic() {
-        show(spotify = false)
+        show()
         compose.onNodeWithText("YouTube Music").assertIsDisplayed()
         save("sign-in-youtube-music")
     }

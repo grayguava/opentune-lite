@@ -5,7 +5,6 @@ import androidx.compose.runtime.getValue
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -35,7 +34,6 @@ class MainActivity : ComponentActivity() {
     override fun attachBaseContext(newBase: android.content.Context) {
         super.attachBaseContext(com.opentune.ui.theme.AppLanguages.wrap(newBase))
     }
-    private var tv = false
 
     override fun onStop() {
         super.onStop()
@@ -52,42 +50,15 @@ class MainActivity : ComponentActivity() {
         java.util.Locale.setDefault(resources.configuration.locales[0])
         enableEdgeToEdge()
         if (savedInstanceState == null) receive(intent)
-        tv = com.opentune.ui.tv.Tv.isTv(this)
-        if (tv) requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        // A TV's graphics are a phone's from years back driving a far bigger picture: live blur,
-        // glass and moving covers made every press of the remote land late. Turned down the
-        // first time the app opens on one, after which they're the viewer's to turn back on.
-        if (tv && !AppSettings.ui.value.tvTuned) AppSettings.updateUi {
-            it.copy(
-                tvTuned = true,
-                reduceBlur = true,
-                liquidGlass = false,
-                frostedTopEdge = false,
-                coverGlow = false,
-                movingCover = false,
-                blurLyrics = false,
-                wavySeekbar = false,
-                openingAnimation = false,
-            )
-        }
         setContent {
             val vm: PlayerViewModel = viewModel()
             val theme by AppSettings.theme.collectAsState()
             val ui by AppSettings.ui.collectAsState()
             LaunchedEffect(ui.highRefreshRate, ui.refreshRateHz) { preferRefreshRate(ui.highRefreshRate, ui.refreshRateHz) }
-            // A TV dims and starts its screensaver after a few minutes without a key press;
-            // while music plays from here, the cover and lyrics stay on screen instead.
-            val playing by vm.isPlaying.collectAsState()
-            LaunchedEffect(playing) {
-                if (!tv) return@LaunchedEffect
-                if (playing) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            }
             val song by vm.currentSong.collectAsState()
             OpenTuneTheme(theme, artworkSeed = rememberArtworkSeed(song?.thumbnailUrl)) {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    // Some TVs crop the picture's edges: keep pages and buttons inside the safe area.
-                    androidx.compose.foundation.layout.Box(if (tv) Modifier.padding(horizontal = 28.dp, vertical = 16.dp) else Modifier) {
+                    androidx.compose.foundation.layout.Box(Modifier) {
                     // More than two releases behind, the app is only its update screen until it's updated.
                     val required by com.opentune.data.UpdateLock.required.collectAsState()
                     val behind by com.opentune.data.UpdateLock.behind.collectAsState()
@@ -108,13 +79,8 @@ class MainActivity : ComponentActivity() {
                         },
                         label = "welcome",
                     ) { welcome ->
-                        val page: @androidx.compose.runtime.Composable () -> Unit = {
-                            if (welcome) WelcomeScreen(onDone = {}) else AppRoot(vm)
-                        }
-                        if (tv) com.opentune.ui.tv.TvRemoteSurface(page) else page()
+                        if (welcome) WelcomeScreen(onDone = {}) else AppRoot(vm)
                     }
-                    }
-                    com.opentune.ui.account.ConfirmPairing()
                     }
                 }
             }
@@ -140,7 +106,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun receive(intent: Intent?) {
-        if (!com.opentune.ui.account.PairingLinks.receive(intent)) Links.receive(intent)
+        Links.receive(intent)
     }
 
     /**

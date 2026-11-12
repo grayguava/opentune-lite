@@ -1,7 +1,5 @@
 package com.opentune.ui
 
-import com.opentune.ui.tv.tvMediaKeys
-import com.opentune.ui.tv.TvMediaAction
 
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Explore
@@ -193,7 +191,6 @@ fun AppRoot(vm: PlayerViewModel) {
     var update by remember { mutableStateOf<com.opentune.data.UpdateCheck.Release?>(null) }
     LaunchedEffect(lifecycle) {
         lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
-            com.opentune.data.Usage.active()
             com.opentune.ui.components.Support.usedToday(appContext)
             while (true) {
                 if (com.opentune.data.settings.AppSettings.ui.value.checkForUpdates && update == null) {
@@ -254,8 +251,6 @@ fun AppRoot(vm: PlayerViewModel) {
         chromeScroll.expand()
     }
     LaunchedEffect(playbackError) { playbackError?.let { com.opentune.data.Pills.error(it) } }
-    LaunchedEffect(Unit) { com.opentune.data.together.Together.notices.collect { com.opentune.data.Pills.info(it) } }
-    LaunchedEffect(Unit) { com.opentune.cast.Cast.messages.collect { com.opentune.data.Pills.info(it) } }
     // A newer pill cuts the one showing short, so a run of swipes doesn't queue up notes.
     LaunchedEffect(Unit) { com.opentune.ui.components.QueueNotices.messages.collect { com.opentune.data.Pills.done(it) } }
     LaunchedEffect(Unit) { com.opentune.playback.SmartShuffle.notices.collect { com.opentune.data.Pills.info(it) } }
@@ -321,7 +316,7 @@ fun AppRoot(vm: PlayerViewModel) {
         keepInPlaylist = { s, id ->
             LibraryStore.addToPlaylist(id, s)
             com.opentune.playback.SmartShuffle.keep(s.videoId)
-            LibraryStore.playlist(id)?.takeIf { it.spotifyId == null }?.let { p -> com.opentune.data.Pills.done("Added to ${p.name}") }
+            LibraryStore.playlist(id)?.let { p -> com.opentune.data.Pills.done("Added to ${p.name}") }
         },
         progressOf = { s -> if (s.videoId == vm.currentSong.value?.videoId) vm.positionMs() to vm.durationMs.value else null },
         // One artist lookup at a time: a slower earlier one that failed showed its
@@ -368,8 +363,6 @@ fun AppRoot(vm: PlayerViewModel) {
         browse = { id -> nav.openBrowse(id) },
         server = { nav.navigate("server") },
         radio = { nav.navigate("radio") },
-        together = { nav.navigate("together") },
-        importPlaylist = { nav.navigate("import") },
         wrapped = { nav.navigate("wrapped") },
         history = { nav.navigate("history") },
         allPlaylists = { nav.navigate("playlists") },
@@ -410,8 +403,6 @@ fun AppRoot(vm: PlayerViewModel) {
                     else -> com.opentune.data.Pills.error("Couldn't read that link")
                 }
             }
-            is LinkTarget.SpotifyImport -> nav.navigate("import?link=${Uri.encode(link.text)}")
-            is LinkTarget.Together -> { playerOpen = false; nav.navigate("together?code=${link.code}") }
             is LinkTarget.Recognize -> { playerOpen = false; nav.navigate("recognize?listen=true") { launchSingleTop = true } }
             is LinkTarget.Player -> playerOpen = true
             is LinkTarget.PlaySearch -> {
@@ -438,8 +429,7 @@ fun AppRoot(vm: PlayerViewModel) {
     // the tree, so neither starts over (the activity handles the size change
     // itself rather than being recreated; see the manifest).
     val window = with(androidx.compose.ui.platform.LocalDensity.current) { androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.toSize().toDpSize() }
-    val television = com.opentune.ui.tv.LocalIsTv.current
-    val layout = appLayout(window.width.value.toInt(), window.height.value.toInt(), song != null, paneCollapsed, chromeUi.wideLayout, chromeUi.sidePlayer, television)
+    val layout = appLayout(window.width.value.toInt(), window.height.value.toInt(), song != null, paneCollapsed, chromeUi.wideLayout, chromeUi.sidePlayer)
     // Docked beside the page, the player is never also opened over it.
     val sheetOpen = playerOpen && !layout.sidePlayer
     com.opentune.ui.theme.SystemBars(if (sheetOpen) androidx.compose.ui.graphics.Color.Black else MaterialTheme.colorScheme.background)
@@ -464,7 +454,7 @@ fun AppRoot(vm: PlayerViewModel) {
     // the pane folds and unfolds.
     val direction = androidx.compose.ui.platform.LocalLayoutDirection.current
     val safe = WindowInsets.safeDrawing.asPaddingValues()
-    val startGutter = if (layout.nav == NavChrome.RAIL && chromeRoute) (if (television) com.opentune.ui.tv.TV_RAIL_GUTTER else RAIL_GUTTER) + safe.calculateStartPadding(direction) else 0.dp
+    val startGutter = if (layout.nav == NavChrome.RAIL && chromeRoute) RAIL_GUTTER + safe.calculateStartPadding(direction) else 0.dp
     val endGutterTarget = when {
         !chromeRoute -> 0.dp
         layout.nowPlaying == NowPlaying.PANE -> PANE_GUTTER + safe.calculateEndPadding(direction)
@@ -550,20 +540,6 @@ fun AppRoot(vm: PlayerViewModel) {
         }
     }
 
-    val handleTvMedia: (TvMediaAction) -> Unit = { command ->
-                when (command) {
-                    TvMediaAction.TOGGLE -> vm.togglePlayPause()
-                    TvMediaAction.PLAY -> if (!vm.isPlaying.value) vm.togglePlayPause()
-                    TvMediaAction.PAUSE, TvMediaAction.STOP -> if (vm.isPlaying.value) vm.togglePlayPause()
-                    TvMediaAction.NEXT -> vm.skipNext()
-                    TvMediaAction.PREVIOUS -> vm.skipPrevious()
-                    TvMediaAction.FORWARD, TvMediaAction.REWIND -> {
-                        val duration = vm.durationMs.value
-                        if (duration > 0) vm.seekTo((vm.positionMs() + if (command == TvMediaAction.FORWARD) 10_000 else -10_000).coerceIn(0, duration))
-                    }
-                }
-                }
-
     CompositionLocalProvider(
         LocalHazeState provides haze,
         LocalSongMenu provides songMenu,
@@ -573,7 +549,7 @@ fun AppRoot(vm: PlayerViewModel) {
         LocalOverscrollFactory provides RubberBandOverscrollFactory,
     ) {
         com.opentune.ui.components.ConnectionBanner(
-            Modifier.fillMaxSize().tvMediaKeys(handleTvMedia).graphicsLayer {
+            Modifier.fillMaxSize().graphicsLayer {
                 if (dive < 1f) {
                     val s = 1.14f - 0.14f * (1f - (1f - dive) * (1f - dive))
                     scaleX = s
@@ -602,7 +578,6 @@ fun AppRoot(vm: PlayerViewModel) {
                 }
             },
             reduceMotion = chromeUi.reduceAnimation,
-            onOnline = { com.opentune.ui.spotify.SpotifyConnection.retryFailedSync() },
         ) {
             Box(
                 Modifier.fillMaxSize()
@@ -685,16 +660,6 @@ fun AppRoot(vm: PlayerViewModel) {
                             onOpenWrapped = { nav.navigate("wrapped") },
                             onSignIn = { nav.navigate("login") },
                             onOpenDownloads = { nav.navigate("downloads") },
-                            onOpenSpotify = { nav.navigate("import") },
-                            onOpenDevices = { nav.navigate("devices") },
-                        )
-                    }
-                    page("devices") {
-                        com.opentune.ui.settings.LinkDeviceScreen(
-                            content,
-                            onBack = { nav.popBackStack() },
-                            onSignIn = { nav.navigate("login") },
-                            onTogether = { nav.navigate("together") },
                         )
                     }
                     page("login") { entry ->
@@ -723,26 +688,7 @@ fun AppRoot(vm: PlayerViewModel) {
                             listenAtOnce = e.arguments?.getBoolean("listen") == true,
                         )
                     }
-                    page(
-                        "import?link={link}",
-                        listOf(navArgument("link") { type = NavType.StringType; nullable = true; defaultValue = null }),
-                    ) { e ->
-                        com.opentune.ui.spotify.ImportScreen(
-                            content,
-                            actions,
-                            initialLink = e.arguments?.getString("link"),
-                            onBack = { nav.popBackStack() },
-                            onOpenPlaylist = { id -> nav.navigate("playlist/${Uri.encode(id)}") },
-                            onOpenExportify = { appContext.startActivity(android.content.Intent(appContext, com.opentune.ui.spotify.ExportifyActivity::class.java)) },
-                        )
-                    }
                     page("radio") { com.opentune.ui.radio.RadioScreen(content, actions, onBack = { nav.popBackStack() }) }
-                    page(
-                        "together?code={code}",
-                        arguments = listOf(androidx.navigation.navArgument("code") { nullable = true; defaultValue = null }),
-                    ) { entry ->
-                        com.opentune.ui.together.TogetherScreen(content, entry.arguments?.getString("code"), onBack = { nav.popBackStack() })
-                    }
                     page("server") { ServerScreen(content, actions, serverNav, onBack = { nav.popBackStack() }) }
                     page("server/artists") { ServerArtistsScreen(content, serverNav, onBack = { nav.popBackStack() }) }
                     page("server/album/{id}", listOf(navArgument("id") { type = NavType.StringType })) { e ->
@@ -842,14 +788,7 @@ fun AppRoot(vm: PlayerViewModel) {
             } else {
                 // Wide windows: the tabs in a rail down the start edge, and the mini
                 // player along the bottom of the page unless the player is docked.
-                if (television) com.opentune.ui.tv.TvNavRail(
-                    tabs = chromeTabs,
-                    selected = if (route == SEARCH_ROUTE) null else dockTabs.indexOf(tab).takeIf { it >= 0 },
-                    onSelect = selectTab, onSearch = openSearch,
-                    onSettings = { nav.navigate("settings") { launchSingleTop = true } },
-                    onPlayer = if (song == null) null else ({ openPlayer(false) }),
-                    modifier = Modifier.align(Alignment.CenterStart),
-                ) else NavRail(
+                NavRail(
                     tabs = chromeTabs,
                     selected = if (route == SEARCH_ROUTE) null else dockTabs.indexOf(tab).takeIf { it >= 0 },
                     onSelect = selectTab,
@@ -891,14 +830,13 @@ fun AppRoot(vm: PlayerViewModel) {
                     PlayerScreen(
                         vm,
                         onCollapse = { paneCollapsed = true },
-                        onTogether = { nav.navigate("together") },
                         onEqualizer = { nav.navigate("equalizer") },
                         docked = true,
                     )
                 }
             }
 
-            val sheetMorph = !chromeUi.reduceAnimation && !television
+            val sheetMorph = !chromeUi.reduceAnimation
             androidx.compose.runtime.SideEffect { com.opentune.ui.components.PlayerMorph.sheetMorph = sheetMorph }
             // The player itself, whichever way it comes and goes.
             val playerSheet: @Composable (settled: Boolean) -> Unit = { settled ->
@@ -914,20 +852,10 @@ fun AppRoot(vm: PlayerViewModel) {
                     vm,
                     onCollapse = { playerOpen = false },
                     onCovering = { still = it },
-                    onTogether = { fromPlayer { nav.navigate("together") } },
                     onEqualizer = { fromPlayer { nav.navigate("equalizer") } },
                 )
             }
-            if (television) {
-                if (sheetOpen && song != null) androidx.compose.ui.window.Dialog(
-                    onDismissRequest = { playerOpen = false },
-                    properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
-                ) {
-                    // A separate focus window keeps D-pad movement inside the player and restores
-                    // the launcher button when Back closes it. Playback remains in the same service.
-                    Box(Modifier.fillMaxSize().tvMediaKeys(handleTvMedia)) { playerSheet(true) }
-                }
-            } else if (sheetMorph) {
+            if (sheetMorph) {
                 // Out of the mini player as one card, and back into it.
                 var sheetSettled by remember { mutableStateOf(false) }
                 com.opentune.ui.components.PlayerSheet(
@@ -996,9 +924,9 @@ private fun NavHostController.openBrowse(browseId: String, type: BrowseType = Mu
     navigate(route.replace("{id}", Uri.encode(browseId)))
 }
 
-/** A destination of the NavHost; on a TV it keeps the remote's place when it's come back to (see TvPage). */
+/** A destination of the NavHost. */
 private fun androidx.navigation.NavGraphBuilder.page(
     route: String,
     arguments: List<androidx.navigation.NamedNavArgument> = emptyList(),
     content: @Composable androidx.compose.animation.AnimatedContentScope.(androidx.navigation.NavBackStackEntry) -> Unit,
-) = composable(route, arguments) { entry -> com.opentune.ui.tv.TvPage { content(entry) } }
+) = composable(route, arguments) { entry -> content(entry) }

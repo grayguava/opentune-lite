@@ -33,7 +33,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Smartphone
-import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.AllInclusive
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -149,7 +148,6 @@ fun QueuePane(
         }
     }
     val list = rememberLazyListState()
-    val television = com.opentune.ui.tv.LocalIsTv.current
     val canDrag = !shuffle
 
     LazyColumn(modifier, state = list, contentPadding = PaddingValues(bottom = 12.dp)) {
@@ -193,7 +191,7 @@ fun QueuePane(
                     }
                     .then(if (isDragged) Modifier else Modifier.animateItem())
                     .then(
-                        if (!canDrag || television) Modifier else Modifier.pointerInput(index) {
+                        if (!canDrag) Modifier else Modifier.pointerInput(index) {
                             detectDragGesturesAfterLongPress(
                                 onDragStart = {
                                     haptics.press()
@@ -229,8 +227,8 @@ fun QueuePane(
                     ),
             ) {
                 Column {
-                    QueueRow(song, isCurrent = false, isPlaying = false, handle = canDrag && !com.opentune.ui.tv.LocalIsTv.current, onClick = { onPlayIndex(index) }, onRemove = { onRemoveIndex(index) })
-                    if (com.opentune.ui.tv.LocalIsTv.current && canDrag) Row {
+                    QueueRow(song, isCurrent = false, isPlaying = false, handle = canDrag, onClick = { onPlayIndex(index) }, onRemove = { onRemoveIndex(index) })
+                    if (canDrag) Row {
                         androidx.compose.material3.TextButton(onClick = { onMove(index, order[pos - 1]) }, enabled = pos > 0) { Text("Move up") }
                         androidx.compose.material3.TextButton(onClick = { onMove(index, order[pos + 1]) }, enabled = pos < order.lastIndex) { Text("Move down") }
                     }
@@ -627,8 +625,7 @@ fun rememberOutputDeviceName(): String {
         am?.registerAudioDeviceCallback(cb, null)
         onDispose { am?.unregisterAudioDeviceCallback(cb) }
     }
-    val cast by com.opentune.cast.Cast.session.collectAsState()
-    return cast?.let { if (it.receiver == null) "Connecting to ${it.target.name}…" else "Playing on ${it.target.name}" } ?: name
+    return name
 }
 
 private fun outputName(context: Context, am: AudioManager?): String {
@@ -646,12 +643,11 @@ private fun outputName(context: Context, am: AudioManager?): String {
 }
 
 /** Which kind of output the sound is going to, for the player's output button and the pipeline page. */
-enum class OutputRoute { PHONE, HEADPHONES, BLUETOOTH, USB, CAST }
+enum class OutputRoute { PHONE, HEADPHONES, BLUETOOTH, USB }
 
 /** The icon for where the sound is going: earbuds for Bluetooth, headphones for a wire or USB. */
 internal val OutputRoute.icon: ImageVector
     get() = when (this) {
-        OutputRoute.CAST -> Icons.Rounded.Cast
         OutputRoute.BLUETOOTH -> PlayerIcons.Earbuds
         OutputRoute.HEADPHONES, OutputRoute.USB -> PlayerIcons.Headphones
         OutputRoute.PHONE -> Icons.Rounded.Smartphone
@@ -660,7 +656,7 @@ internal val OutputRoute.icon: ImageVector
 /** True for anything you'd put over your ears: the button shows a headphone icon for these. */
 val OutputRoute.isHeadset: Boolean get() = this == OutputRoute.HEADPHONES || this == OutputRoute.BLUETOOTH || this == OutputRoute.USB
 
-/** The live output route, following device changes and casting. */
+/** The live output route, following device changes. */
 @Composable
 fun rememberOutputRoute(): OutputRoute {
     val context = LocalContext.current
@@ -674,8 +670,7 @@ fun rememberOutputRoute(): OutputRoute {
         am?.registerAudioDeviceCallback(cb, null)
         onDispose { am?.unregisterAudioDeviceCallback(cb) }
     }
-    val cast by com.opentune.cast.Cast.session.collectAsState()
-    return if (cast != null) OutputRoute.CAST else route
+    return route
 }
 
 private fun outputRoute(am: AudioManager?): OutputRoute {

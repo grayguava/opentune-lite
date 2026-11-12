@@ -29,7 +29,7 @@ import androidx.media3.exoplayer.ExoPlayer
 
 /**
  * A silent clip on a loop, filling its box and cropped to it: Apple's
- * animated covers (HLS) and Spotify's Canvas (MP4). It fades in on its first
+ * animated covers (HLS). It fades in on its first
  * frame, so until then whatever is under it shows; it plays only while
  * [playing] and the app is in front, and tries [fallbackUrl] once if [url]
  * won't play. Its own player takes no audio focus and has no sound track.

@@ -224,28 +224,16 @@ fun SettingsScreen(
     onOpenWrapped: () -> Unit = {},
     onSignIn: () -> Unit = {},
     onOpenDownloads: () -> Unit = {},
-    onOpenSpotify: () -> Unit = {},
-    onOpenDevices: () -> Unit = {},
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     var openKey by rememberSaveable { mutableStateOf<String?>(null) }
     val signedIn by AccountStore.signedIn.collectAsState()
     val account by AccountStore.account.collectAsState()
     val updatePending = com.opentune.ui.components.updatePending()
-    val sections = settingsSections(onOpenEqualizer, onOpenReplay, onOpenWrapped, onSignIn, onOpenDownloads, onOpenSpotify, onOpenDevices)
+    val sections = settingsSections(onOpenEqualizer, onOpenReplay, onOpenWrapped, onSignIn, onOpenDownloads)
     val placed = remember(sections) { place(sections) }
     val open = SETTINGS_CATEGORIES.firstOrNull { it.key == openKey }
     androidx.activity.compose.BackHandler(enabled = open != null) { openKey = null }
-    // Back from a page on a TV: the remote's focus goes back to the row that opened it,
-    // not to wherever it fell when the page went (the rail's first button).
-    val tv = com.opentune.ui.tv.LocalIsTv.current
-    var cameFrom by rememberSaveable { mutableStateOf<String?>(null) }
-    val returnTo = remember { androidx.compose.ui.focus.FocusRequester() }
-    LaunchedEffect(open) {
-        if (!tv || open != null || cameFrom == null) return@LaunchedEffect
-        repeat(3) { androidx.compose.runtime.withFrameNanos { } }
-        runCatching { returnTo.requestFocus() }
-    }
     val q = query.trim()
     val languageContext = LocalContext.current
     // Kept out here, so coming back from a page finds the main list where it was left.
@@ -420,8 +408,6 @@ private fun settingsSections(
     onOpenWrapped: () -> Unit,
     onSignIn: () -> Unit,
     onOpenDownloads: () -> Unit,
-    onOpenSpotify: () -> Unit,
-    onOpenDevices: () -> Unit,
 ): List<Section> {
     val signedIn by AccountStore.signedIn.collectAsState()
     val account by AccountStore.account.collectAsState()
@@ -471,10 +457,6 @@ private fun settingsSections(
     val ui by AppSettings.ui.collectAsState()
     val lib by AppSettings.library.collectAsState()
     val metered = remember { AppSettings.onMeteredNetwork() }
-    val spotifyConnected by com.opentune.ui.spotify.SpotifyConnection.connected.collectAsState()
-    val spotifyProblem by com.opentune.ui.spotify.SpotifyConnection.problem.collectAsState()
-    val spotifySync by com.opentune.data.spotify.SpotifySync.status.collectAsState()
-    LaunchedEffect(Unit) { withContext(Dispatchers.IO) { com.opentune.ui.spotify.SpotifyConnection.refresh() } }
     var qualityDialog by remember { mutableStateOf<Boolean?>(null) } // true = Wi-Fi, false = mobile
     var audioAddons by remember { mutableStateOf(false) }
     if (audioAddons) AudioAddonsSheet { audioAddons = false }
@@ -684,8 +666,8 @@ private fun settingsSections(
                 SheetButton("Sign out", tone = SheetTone.Danger, onClick = {
                     confirmSignOut = false
                     AccountStore.signOut()
-                    // Every cookie goes, so Spotify's sign-in is put back afterwards.
-                    com.opentune.ui.spotify.SpotifyConnection.keepingSpotify { android.webkit.CookieManager.getInstance().removeAllCookies(it) }
+                    // Every cookie goes, so a sign-in has to be done again.
+                    android.webkit.CookieManager.getInstance().removeAllCookies(null)
                 })
             },
             dismissButton = { SheetButton("Cancel", onClick = { confirmSignOut = false }, closes = true) },
@@ -739,39 +721,6 @@ private fun settingsSections(
                         NavRow("Add another account", onSignIn, summary = "Sign in to a second YouTube Music account and switch between them", icon = Icons.Rounded.PersonAdd)
                     }
                 } else null,
-                Entry("Spotify account", "spotify connect sign in login account playlists library sync disconnect") {
-                    if (spotifyConnected) {
-                        Column {
-                            SettingRow(
-                                "Spotify",
-                                summary = when {
-                                    spotifySync.running && spotifySync.error != null -> "Connected · Connection interrupted. Retrying…"
-                                    spotifySync.running && spotifySync.current != null -> "Connected · bringing over ${spotifySync.current} (${spotifySync.index} of ${spotifySync.count})"
-                                    spotifySync.running -> "Connected · reading your Spotify library…"
-                                    spotifySync.error != null -> "Connected · ${spotifySync.error}. Tap to try again"
-                                    spotifySync.lastSynced > 0 -> "Connected · playlists in Library, checked " +
-                                        android.text.format.DateUtils.getRelativeTimeSpanString(spotifySync.lastSynced) + ". Tap to check now"
-                                    else -> "Connected · tap to bring your playlists into Library"
-                                },
-                                leading = { SpotifyMark() },
-                                enabled = !spotifySync.running,
-                                onClick = { com.opentune.ui.spotify.SpotifyConnection.syncPlaylists(force = true) },
-                            )
-                            RowDivider()
-                            SettingRow("Disconnect Spotify", summary = "Signs out of Spotify inside OpenTune. Playlists already brought over stay in Library", icon = Icons.Rounded.Close, onClick = { com.opentune.ui.spotify.SpotifyConnection.disconnect() })
-                        }
-                    } else {
-                        NavRow(
-                            "Connect Spotify",
-                            { context.startActivity(android.content.Intent(context, com.opentune.ui.spotify.SpotifyConnectActivity::class.java)) },
-                            summary = spotifyProblem?.let { "$it. Sign in again" } ?: "Your playlists in Library, each song's Canvas, and suggestions made for you",
-                            leading = { SpotifyMark() },
-                        )
-                    }
-                },
-                Entry("Link a device", "tv television web browser computer cast speaker chromecast watch wear together qr pairing sign in with your phone platforms") {
-                    NavRow("Link a device", onOpenDevices, summary = "Sign in your TV, the web player, speakers and more", icon = Icons.Rounded.Devices)
-                },
                 if (signedIn) {
                     Entry("Sign out", "logout account") {
                         SettingRow(if (accounts.size > 1) "Sign out of this account" else "Sign out", icon = Icons.AutoMirrored.Rounded.Logout, onClick = { confirmSignOut = true })
@@ -901,7 +850,7 @@ private fun settingsSections(
                 Entry("Autoplay", "radio continue") {
                     ToggleRow("Autoplay", pb.autoplay, AppSettings::setAutoplay, summary = "Keep playing similar songs when the queue ends", icon = Icons.AutoMirrored.Rounded.PlaylistPlay)
                 },
-                Entry("Recommendations", "recommendation engine spotify jiosaavn saavn youtube music radio suggestions similar songs") {
+                Entry("Recommendations", "recommendation engine jiosaavn saavn youtube music radio suggestions similar songs") {
                     NavRow(
                         "Recommendations",
                         { recommenderDialog = true },
@@ -910,12 +859,12 @@ private fun settingsSections(
                         value = pb.recommender.label,
                     )
                 },
-                Entry("Sync listening history", "youtube account privacy sync spotify history") {
+                Entry("Sync listening history", "youtube account privacy sync history") {
                     NavRow("Sync listening history", { historyTargetDialog = true },
-                        summary = "YouTube Music needs a signed-in account. Spotify does not accept plays from other services; likes can sync separately. Connected scrobblers keep their own settings.",
+                        summary = "YouTube Music needs a signed-in account. Connected scrobblers keep their own settings.",
                         icon = Icons.Rounded.History, value = pb.listeningHistoryTarget.label)
                 },
-                Entry("Pause account sync", "private pause youtube spotify history recommendations") {
+                Entry("Pause account sync", "private pause youtube history recommendations") {
                     ToggleRow("Pause account sync", pb.pauseListeningHistory,
                         { v -> AppSettings.updatePlayback { it.copy(pauseListeningHistory = v) } },
                         summary = "Pause sending new listens to YouTube Music. Your local history, listening stats and personal recommendations keep updating. Paused listens are never sent later; likes and connected scrobblers keep their own settings.",
@@ -1145,21 +1094,8 @@ private fun settingsSections(
                         })
                     }
                 },
-                Entry("Spotify", "spotify canvas video loop background likes mixes home") {
-                    // Connecting is in Account; these only do something while Spotify is connected.
-                    val off = if (spotifyConnected) null else "Connect Spotify in Account first"
-                    ToggleRow("Spotify Canvas", ui.spotifyCanvas, { v -> AppSettings.updateUi { it.copy(spotifyCanvas = v) } }, summary = off ?: "When a song has a Canvas on Spotify, it loops silently behind the player", icon = Icons.Rounded.Animation, enabled = spotifyConnected)
-                    RowDivider()
-                    SettingRow("Behind the title and controls", summary = off ?: ui.canvasLook.summary, icon = Icons.Rounded.BlurOn, below = {
-                        PillSegmented(com.opentune.data.settings.CanvasLook.entries, ui.canvasLook, { it.label }, { v -> AppSettings.updateUi { it.copy(canvasLook = v) } })
-                    })
-                    RowDivider()
-                    ToggleRow("Save likes to Spotify", ui.spotifySaveLikes, { v -> AppSettings.updateUi { it.copy(spotifySaveLikes = v) } }, summary = off ?: "Likes are saved to Spotify. Listening here does not add plays to Spotify history", icon = Icons.Rounded.Favorite, enabled = spotifyConnected)
-                    RowDivider()
-                    ToggleRow("Spotify mixes on Home", ui.spotifyMixes, { v -> AppSettings.updateUi { it.copy(spotifyMixes = v) } }, summary = off ?: "Your Daily Mixes, Discover Weekly and Release Radar from Spotify, found on YouTube Music", icon = Icons.Rounded.Album, enabled = spotifyConnected)
-                },
-                Entry("Animated covers on Wi-Fi only", "mobile data metered save data wifi animated covers canvas video") {
-                    ToggleRow("Animated covers on Wi-Fi only", ui.animatedCoversWifiOnly, { v -> AppSettings.updateUi { it.copy(animatedCoversWifiOnly = v) } }, summary = "Animated covers and Canvas don't load on mobile data", icon = Icons.Rounded.Wifi, enabled = ui.animatedCovers || (spotifyConnected && ui.spotifyCanvas))
+                Entry("Animated covers on Wi-Fi only", "mobile data metered save data wifi animated covers") {
+                    ToggleRow("Animated covers on Wi-Fi only", ui.animatedCoversWifiOnly, { v -> AppSettings.updateUi { it.copy(animatedCoversWifiOnly = v) } }, summary = "Animated covers don't load on mobile data", icon = Icons.Rounded.Wifi, enabled = ui.animatedCovers)
                 },
                 Entry("Reduce animation", "motion") {
                     ToggleRow("Reduce animation", ui.reduceAnimation, { v -> AppSettings.updateUi { it.copy(reduceAnimation = v) } }, summary = "Freezes decorative motion and simplifies player and lyric transitions", icon = Icons.Rounded.Animation)
@@ -1498,14 +1434,6 @@ private fun settingsSections(
             ),
         ),
         Section(
-            "Import",
-            listOf(
-                Entry("Import a playlist", "spotify youtube music import playlist album link csv exportify transfer migrate") {
-                    NavRow("Import a playlist", onOpenSpotify, summary = "From a Spotify or YouTube Music link, or a CSV export", icon = Icons.AutoMirrored.Rounded.QueueMusic)
-                },
-            ),
-        ),
-        Section(
             "Miscellaneous",
             listOf(
                 Entry("Playlists in Library", "playlists library tiles list grid view rows layout show all view all") {
@@ -1554,15 +1482,6 @@ private fun settingsSections(
                 Entry("Check for updates automatically", "update new version release auto") {
                     ToggleRow("Check for updates automatically", ui.checkForUpdates, { v -> AppSettings.updateUi { it.copy(checkForUpdates = v) }; com.opentune.data.UpdateCheck.schedule(context) }, summary = "Looks for a new release on GitHub every few hours, in the background too, and offers to install it", icon = Icons.Rounded.SystemUpdate)
                 },
-                Entry("Count this phone in usage numbers", "anonymous usage statistics analytics counter privacy telemetry") {
-                    ToggleRow(
-                        "Count this phone in usage numbers",
-                        ui.countUsage,
-                        { v -> AppSettings.updateUi { it.copy(countUsage = v) }; com.opentune.data.Usage.consentChanged(v) },
-                        summary = "Shares a random installation ID, app version, active dates and daily play totals. No hardware ID, account or song names. Reinstalls get a new ID; updates keep it.",
-                        icon = Icons.Rounded.Info,
-                    )
-                },
                 Entry("OpenTune community", "github discord community addons developer") { CommunityBanner() },
                 Entry("Support OpenTune", "donate upi pay money tip support developer") {
                     NavRow("Support OpenTune", { supportDialog = true }, summary = "A small thank-you helps keep OpenTune going", icon = Icons.Rounded.Favorite)
@@ -1604,10 +1523,3 @@ private fun outputSummary(context: Context, float: Boolean): String {
 }
 
 private fun formatMb(mb: Int): String = if (mb >= 1024) "%.1f GB".format(mb / 1024f) else "$mb MB"
-
-/** Spotify's green disc, for its rows in Account. */
-@Composable
-private fun SpotifyMark() {
-    // Spotify's own mark, in its own colours.
-    androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(com.opentune.R.drawable.ic_spotify), "Spotify", Modifier.size(40.dp))
-}

@@ -344,8 +344,6 @@ data class InterfaceSettings(
     val playlistList: Boolean = false,
     /** Playlists pinned to the top of Library, first pinned first: a local playlist's id, or a YouTube Music browse id. */
     val pinnedPlaylists: List<String> = emptyList(),
-    /** On a TV, the heavy effects have been turned down once; they can be turned back on by hand. */
-    val tvTuned: Boolean = false,
     val reduceAnimation: Boolean = false,
     /** The mark's dive into the app when it starts. */
     val openingAnimation: Boolean = true,
@@ -404,16 +402,8 @@ data class InterfaceSettings(
     val signatureApi: String = com.opentune.data.covers.ArtistSignatures.DEFAULT_API,
     /** How sharp Apple's animated covers play; sharper uses more data. */
     val motionQuality: MotionQuality = MotionQuality.MEDIUM,
-    /** Animated covers and Spotify Canvas only load on Wi-Fi or another unmetered network. */
+    /** Animated covers only load on Wi-Fi or another unmetered network. */
     val animatedCoversWifiOnly: Boolean = true,
-    /** With Spotify connected, its Canvas loops behind the player. */
-    val spotifyCanvas: Boolean = true,
-    /** How a Canvas turns from the title down, so the controls over it read. */
-    val canvasLook: CanvasLook = CanvasLook.TINT,
-    /** With Spotify connected, songs liked here are saved to Spotify's Liked Songs too. */
-    val spotifySaveLikes: Boolean = true,
-    /** With Spotify connected, Home shows Spotify's mixes made for the listener. */
-    val spotifyMixes: Boolean = true,
     val lyricsAnimation: LyricsAnimation = LyricsAnimation.FLUID,
     /** Lyrics text size, as a fraction of the standard size. */
     val lyricsTextScale: Float = 1f,
@@ -428,8 +418,6 @@ data class InterfaceSettings(
     val hapticStrength: Float = 0.6f,
     /** Look for a new release once a day when the app opens. */
     val checkForUpdates: Boolean = true,
-    /** Add this phone to the app's anonymous usage counts (see Usage). */
-    val countUsage: Boolean = true,
     /** How the glass of the dock, buttons and bars looks. */
     val glassStyle: GlassStyle = GlassStyle.LIQUID,
     /** Pages blur and fade out as they scroll under the status bar. */
@@ -563,11 +551,24 @@ enum class VolumeLevel(val label: String, val summary: String, val offsetDb: Flo
 }
 
 /** Whose recommendations pick the songs autoplay adds. Every song still plays from YouTube Music. */
-@Serializable
+@Serializable(with = RecommenderSerializer::class)
 enum class Recommender(val label: String, val summary: String) {
     YOUTUBE("YouTube Music", "YouTube Music's own radio for the last song"),
-    SPOTIFY("Spotify", "Spotify's song radio, personalized when connected. Keeps Spotify's picks and order; no YouTube recommendation fallback"),
     JIOSAAVN("JioSaavn", "JioSaavn's picks after the last song, strong on Indian music, found on YouTube Music"),
+}
+
+/**
+ * Reads a saved choice that a later version dropped as the default, so a
+ * setting left over from an earlier build doesn't reset the rest.
+ */
+object RecommenderSerializer : kotlinx.serialization.KSerializer<Recommender> {
+    override val descriptor = kotlinx.serialization.descriptors.PrimitiveSerialDescriptor(
+        "Recommender", kotlinx.serialization.descriptors.PrimitiveKind.STRING,
+    )
+    override fun deserialize(decoder: kotlinx.serialization.decoder.Decoder): Recommender =
+        runCatching { Recommender.valueOf(decoder.decodeString()) }.getOrDefault(Recommender.YOUTUBE)
+    override fun serialize(encoder: kotlinx.serialization.encoding.Encoder, value: Recommender) =
+        encoder.encodeString(value.name)
 }
 
 /** How the player's back, play/pause and forward buttons look and move. */
@@ -590,15 +591,6 @@ enum class DockMotion(val label: String, val summary: String) {
     MINIMIZE("Minimize", "Like iOS 26: the tabs shrink to the open one, with the song in a slim bar beside it"),
     CAPSULE("Capsule", "The tabs and the song gather into one small capsule in the middle"),
     SINK("Sink", "The tabs sink away into a blur and the song settles into their place"),
-}
-
-/** How a Canvas turns from the title down, so the title and controls over it read. */
-@Serializable
-enum class CanvasLook(val label: String, val summary: String) {
-    TINT("Tint", "From the title down the Canvas fades into the song's own colour"),
-    SHADE("Dark", "From the title down the Canvas fades to near black"),
-    FROST("Frosted", "From the title down the Canvas blurs into frosted glass, where the phone can blur video"),
-    NONE("Plain", "Only a light darkening behind the controls"),
 }
 
 /** How sharp an animated cover plays: the largest picture and the most data a second it may use. */

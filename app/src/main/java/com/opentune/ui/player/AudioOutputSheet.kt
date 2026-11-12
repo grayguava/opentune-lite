@@ -1,4 +1,4 @@
-package com.opentune.ui.cast
+package com.opentune.ui.player
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,12 +14,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.GraphicEq
-import androidx.compose.material.icons.rounded.Headphones
-import androidx.compose.material.icons.rounded.Smartphone
 import androidx.compose.material.icons.rounded.Speaker
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,39 +31,24 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.opentune.ui.components.FloatingCard
 import com.opentune.ui.components.rememberHaptics
-import com.opentune.ui.player.OutputRoute
-import com.opentune.ui.player.icon
-import com.opentune.ui.player.isHeadset
-import com.opentune.ui.player.rememberOutputDeviceName
-import com.opentune.ui.player.rememberOutputRoute
 
 /**
  * Where the sound goes, in one place: this phone or the headphones plugged
- * into it, a Chromecast or TV to cast to, and the audio pipeline for the
- * full signal path. Cast and the pipeline each open their own sheet.
+ * into it, and the audio pipeline for the full signal path.
  */
 @Composable
-fun AudioOutputSheet(onDismiss: () -> Unit, onCast: () -> Unit, onPipeline: () -> Unit) {
+fun AudioOutputSheet(onDismiss: () -> Unit, onPipeline: () -> Unit) {
     val route = rememberOutputRoute()
     val haptics = rememberHaptics()
-    val deviceName = rememberOutputDeviceName()
-        .removePrefix("Playing on ").substringBefore("…").ifBlank { "This phone" }
-    val casting = castingTo()
+    val deviceName = rememberOutputDeviceName().ifBlank { "This phone" }
     FloatingCard(onDismiss = onDismiss, title = "Audio output", icon = Icons.Rounded.Speaker) {
         Column(Modifier.padding(bottom = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             OutputRow(
-                icon = if (route == OutputRoute.CAST) Icons.Rounded.Smartphone else route.icon,
-                title = if (route == OutputRoute.CAST) "This phone" else deviceName,
-                subtitle = if (casting == null) "Playing here" else "Silent here while casting",
-                selected = casting == null,
+                icon = route.icon,
+                title = deviceName,
+                subtitle = "Playing here",
+                selected = true,
             ) { haptics.tick(); onDismiss() }
-            OutputRow(
-                icon = Icons.Rounded.Cast,
-                title = "Cast",
-                subtitle = casting ?: "Chromecast and Google Cast speakers",
-                selected = casting != null,
-                chevron = true,
-            ) { haptics.tick(); onCast() }
             OutputRow(
                 icon = Icons.Rounded.GraphicEq,
                 title = "Audio pipeline",

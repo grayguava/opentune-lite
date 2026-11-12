@@ -113,7 +113,6 @@ class PlaybackService : MediaLibraryService() {
     private val car by lazy { CarLibrary(this) }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
-    private var castMirror: CastMirror? = null
     private var radioJob: Job? = null
     private var radioSeed: String? = null
 
@@ -264,8 +263,8 @@ class PlaybackService : MediaLibraryService() {
                 /* handleAudioFocus= */ true,
             )
             .setHandleAudioBecomingNoisy(true)
-            // On a watch, music waits for Bluetooth headphones rather than playing from
-            // its speaker, and Wear OS offers to connect some. Other devices are unaffected.
+            // Music waits for Bluetooth headphones rather than playing from the
+            // phone's speaker. Other devices are unaffected.
             .setSuppressPlaybackOnUnsuitableOutput(true)
             .build()
         player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
@@ -359,13 +358,6 @@ class PlaybackService : MediaLibraryService() {
             AppSettings.playback.map { it.systemEffects }.distinctUntilChanged().collect { openEffectSession(player.audioSessionId) }
         }
         crossfade = Crossfade(context, scope, sources, player).also { it.start() }
-        // Casting: the device follows this player while one is connected.
-        castMirror = CastMirror(context, player, scope)
-        scope.launch {
-            com.opentune.cast.Cast.session.map { it?.receiver }.distinctUntilChanged().collect { r ->
-                if (r != null) castMirror?.attach(r) else castMirror?.detach()
-            }
-        }
         scope.launch {
             com.opentune.data.addons.AddonStore.revision.collect { revision ->
                 // Searched again at once, the misses forgotten, but quietly: not as if asked from the menu.
@@ -420,9 +412,10 @@ class PlaybackService : MediaLibraryService() {
             AppSettings.playback.map { it.bitPerfectUsb to it.floatOutput }.distinctUntilChanged().collect { applyBitPerfect(reopen = true) }
         }
         scope.launch {
-            // Speed or pitch moved off normal (or back), skip silence turned on or off, a room joined
-            // or left: the output is set up again, so the song changes over at once rather than at the next.
-            combine(AppSettings.sound, AppSettings.playback, com.opentune.data.together.Together.room) { _, _, _ -> stretching() }
+            // Speed or pitch moved off normal (or back), or skip silence turned on
+            // or off: the output is set up again, so the song changes over at once
+            // rather than at the next.
+            combine(AppSettings.sound, AppSettings.playback) { _, _ -> stretching() }
                 .distinctUntilChanged().drop(1).collect { rebuildOutput() }
         }
         registerReceiver(volumeReceiver, IntentFilter("android.media.VOLUME_CHANGED_ACTION"), VOLUME_RECEIVER_FLAGS)
@@ -464,16 +457,11 @@ class PlaybackService : MediaLibraryService() {
             val fresh = before?.let { now - it }.orEmpty()
             before = now
             if (fresh.isEmpty()) return@collect
-            // A guest's queue mirrors the host's: it asks the host to skip, and changes nothing here.
-            if (com.opentune.data.together.Together.room.value?.following == true) {
-                if (player.currentMediaItem?.mediaId in fresh) com.opentune.data.together.Together.intercept(com.opentune.data.together.Together.Control.Next)
-                return@collect
-            }
             val current = player.currentMediaItemIndex
             for (i in player.mediaItemCount - 1 downTo current + 1) {
                 if (player.getMediaItemAt(i).mediaId in fresh) player.removeMediaItem(i)
             }
-            if (player.currentMediaItem?.mediaId in fresh && !com.opentune.data.together.Together.intercept(com.opentune.data.together.Together.Control.Next)) {
+            if (player.currentMediaItem?.mediaId in fresh) {
                 if (player.hasNextMediaItem()) player.seekToNextMediaItem() else player.pause()
             }
         }
@@ -611,8 +599,6 @@ class PlaybackService : MediaLibraryService() {
         com.opentune.data.AppHooks.onPlayerStopped(this)
         crossfade?.release()
         crossfade = null
-        castMirror?.detach(resume = false)
-        castMirror = null
         closeEffectSession()
         finishListen()
         // The listen just finished, and anything else not yet saved, before the process goes.
@@ -1060,7 +1046,6 @@ class PlaybackService : MediaLibraryService() {
             val threshold = minOf(30_000L, duration / 2)
             if (heard >= threshold) {
                 listenRecord = History.record(song, heard)
-                com.opentune.data.Usage.played()
             }
         }
     }
@@ -2156,7 +2141,7 @@ class PlaybackService : MediaLibraryService() {
     }
 
     private fun stretching(): Boolean = isStretched(
-        AppSettings.sound.value, AppSettings.playback.value.skipSilence, com.opentune.data.together.Together.room.value != null,
+        AppSettings.sound.value, AppSettings.playback.value.skipSilence,
     )
 
     /**

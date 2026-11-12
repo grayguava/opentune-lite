@@ -122,7 +122,7 @@ class PrecisionAudioSink(
     /** The effects are off and the output is the decoder's own format: nothing to do to the samples. */
     private fun untouched(): Boolean =
         inputEncoding == outputEncoding && dsp.params.isNeutral &&
-            DspAudioProcessor.masterGain >= 0.999f && !DspAudioProcessor.silenced
+            DspAudioProcessor.masterGain >= 0.999f
 
     /** [input], all of it, through the effects and into [out], in the output's encoding. */
     private fun process(input: ByteBuffer): ByteBuffer {

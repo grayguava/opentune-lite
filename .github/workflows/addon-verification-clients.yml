@@ -2,7 +2,7 @@ name: Verified add-on clients
 on:
   push:
     branches: [feat/first-party-lossless-addon]
-    paths: ['app/**', 'core/**', 'web/**', '.github/workflows/addon-verification-clients.yml']
+    paths: ['app/**', 'core/**', '.github/workflows/addon-verification-clients.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -48,25 +48,3 @@ jobs:
       - name: Remove signing material
         if: always()
         run: rm -f "$RUNNER_TEMP/verification.keystore"
-  web:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-      - uses: pnpm/action-setup@v4
-        with:
-          package_json_file: web/package.json
-      - run: pnpm install --frozen-lockfile
-        working-directory: web
-      - run: pnpm typecheck && pnpm test
-        working-directory: web
-      - run: pnpm --filter @opentune/extension icons && pnpm build:site
-        working-directory: web
-      - uses: actions/upload-artifact@v4
-        with:
-          name: OpenTune-verified-source-web
-          path: web/app/dist
-          if-no-files-found: error

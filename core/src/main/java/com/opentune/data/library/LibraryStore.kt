@@ -67,16 +67,6 @@ data class LocalPlaylist(
     val privacy: PlaylistPrivacy? = null,
     /** The account (its email) the copy on YouTube Music was made in; null when not known. */
     val account: String? = null,
-    /**
-     * The Spotify playlist this one is a copy of (its id, or
-     * [com.opentune.data.spotify.SpotifyLibrary.LIKED_ID]); null for every
-     * other. Its songs are replaced when Spotify's change. See [com.opentune.data.spotify.SpotifySync].
-     */
-    val spotifyId: String? = null,
-    /** Spotify's version of it when last brought over, so an unchanged one isn't read again. */
-    val spotifyRevision: String? = null,
-    /** Spotify's cover for it. */
-    val coverUrl: String? = null,
 ) {
     /** Kept in step with YouTube Music, or waiting for its copy to be made there. */
     val synced: Boolean get() = remoteId != null || privacy != null
@@ -227,8 +217,6 @@ object LibraryStore {
                     .onFailure { Log.w("LibraryStore", "Couldn't rate ${song.videoId} on YouTube Music", it) }
             }
         }
-        // And in Spotify's Liked Songs, when Spotify is connected.
-        com.opentune.data.spotify.SpotifyLikes.liked(song, liked)
     }
 
     // Every change to a playlist below is made here at once and, for one kept
@@ -260,10 +248,6 @@ object LibraryStore {
     /** Adds [songs] in order, skipping any already there; one write for the lot. */
     @Synchronized
     fun addAllToPlaylist(id: String, songs: List<Song>) {
-        if (playlist(id)?.spotifyId != null) {
-            com.opentune.data.Pills.info("Edit this playlist in Spotify")
-            return
-        }
         var added = emptyList<SongRef>()
         editPlaylist(id) { p ->
             val have = p.songs.mapTo(HashSet()) { it.videoId }
@@ -274,15 +258,6 @@ object LibraryStore {
     }
 
     fun addToPlaylist(id: String, song: Song) = addAllToPlaylist(id, listOf(song))
-
-    /** Only called after the remote service has accepted the write. */
-    @Synchronized
-    internal fun confirmSpotifyAddition(id: String, spotifyId: String, song: Song) {
-        editPlaylist(id) { p ->
-            if (p.spotifyId != spotifyId || p.songs.any { it.videoId == song.videoId }) p
-            else p.copy(songs = p.songs + SongRef.of(song), spotifyRevision = null)
-        }
-    }
 
     @Synchronized
     fun removeFromPlaylist(id: String, index: Int) {
@@ -382,30 +357,6 @@ object LibraryStore {
     }
 
     fun playlist(id: String): LocalPlaylist? = _playlists.value.firstOrNull { it.id == id }
-
-    /**
-     * The copy of Spotify playlist [spotifyId]: made at the end of the list the
-     * first time, its name, cover and songs replaced after that.
-     */
-    fun putSpotifyPlaylist(spotifyId: String, name: String, songs: List<Song>, revision: String?, coverUrl: String?) {
-        val refs = songs.distinctBy { it.videoId }.map(SongRef::of)
-        update { d ->
-            val existing = d.playlists.firstOrNull { it.spotifyId == spotifyId }
-            if (existing == null) {
-                val p = LocalPlaylist(UUID.randomUUID().toString(), name, refs, spotifyId = spotifyId, spotifyRevision = revision, coverUrl = coverUrl)
-                d.copy(playlists = d.playlists + p)
-            } else {
-                d.copy(playlists = d.playlists.map {
-                    if (it.id == existing.id) it.copy(name = name, songs = refs, spotifyRevision = revision, coverUrl = coverUrl) else it
-                })
-            }
-        }
-    }
-
-    /** Takes away the copies of Spotify playlists no longer in the Spotify library. */
-    fun dropSpotifyPlaylists(keep: Set<String>) = update { d ->
-        d.copy(playlists = d.playlists.filter { it.spotifyId == null || it.spotifyId in keep })
-    }
 
     private fun editPlaylist(id: String, t: (LocalPlaylist) -> LocalPlaylist) = update { d ->
         d.copy(playlists = d.playlists.map { if (it.id == id) t(it) else it })

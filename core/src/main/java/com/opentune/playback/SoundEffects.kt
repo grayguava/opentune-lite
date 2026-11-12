@@ -20,12 +20,12 @@ import kotlinx.coroutines.flow.asStateFlow
  * the app's own DSP, so it works on every phone.
  */
 /**
- * Whether a song is stretched in time: speed or pitch off normal, silence
- * skipped, or a listening room nudging its speed to keep in sync. Media3 does
- * all of that only on 16-bit output, so float output is set aside while it is.
+ * Whether a song is stretched in time: speed or pitch off normal, or silence
+ * skipped. Media3 does all of that only on 16-bit output, so float output is
+ * set aside while it is.
  */
-fun isStretched(sound: SoundSettings, skipSilence: Boolean, inRoom: Boolean): Boolean =
-    kotlin.math.abs(sound.speed - 1f) > 0.001f || kotlin.math.abs(sound.pitch - 1f) > 0.001f || skipSilence || inRoom
+fun isStretched(sound: SoundSettings, skipSilence: Boolean): Boolean =
+    kotlin.math.abs(sound.speed - 1f) > 0.001f || kotlin.math.abs(sound.pitch - 1f) > 0.001f || skipSilence
 
 @OptIn(UnstableApi::class)
 class SoundEffects(private val player: ExoPlayer) {

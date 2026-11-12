@@ -103,7 +103,7 @@ fun HomeScreen(
     /** Opens every Speed dial pick on a page of its own. */
     onOpenSpeedDial: () -> Unit = {},
 ) {
-    val platform = if (com.opentune.ui.tv.LocalIsTv.current) "tv" else "android"
+    val platform = "android"
     val runtime by com.opentune.data.config.RemoteConfig.state.collectAsState()
     val playback by AppSettings.playback.collectAsState()
     val loader = rememberLoader("home:${playback.recommender.name}") { MusicRepository.home() }
@@ -174,16 +174,6 @@ fun HomeScreen(
         com.opentune.data.reco.HomeSeed.mixes(com.opentune.data.history.DailyMixes.build(records, hidden = hidden), seeds, records.size)
     }
     val ui by AppSettings.ui.collectAsState()
-    // Spotify's own mixes for the listener, when Spotify is connected (see SpotifySync).
-    val spotifyConnected by com.opentune.ui.spotify.SpotifyConnection.connected.collectAsState()
-    val spotifyMixesAll by com.opentune.data.spotify.SpotifySync.mixes.collectAsState()
-    val spotifyMixes = remember(spotifyMixesAll, hidden, spotifyConnected, ui.spotifyMixes) {
-        if (!spotifyConnected || !ui.spotifyMixes) emptyList()
-        else spotifyMixesAll.mapNotNull { m ->
-            val songs = hidden.songs(m.songs.map { it.toSong() })
-            if (songs.size < 6) null else com.opentune.data.history.DailyMixes.Mix("spotify:${m.id}", m.name, m.readableDescription, songs)
-        }
-    }
     val signedIn by AccountStore.signedIn.collectAsState()
     val account by AccountStore.account.collectAsState()
     val savedAccounts by AccountStore.accounts.collectAsState()
@@ -258,9 +248,9 @@ fun HomeScreen(
                     in 17..21 -> "Good evening"
                     else -> "Late night"
                 }
-                // A name only when there really is one: the signed-in account's, or the
-                // one entered for Listen together. Otherwise the greeting stands alone.
-                val firstName = (account?.name ?: com.opentune.data.together.Together.savedName)
+                // A name only when there really is one: the signed-in account's.
+                // Otherwise the greeting stands alone.
+                val firstName = (account?.name.orEmpty())
                     .substringBefore(' ').trim().takeIf { it.isNotBlank() }
                 Column(
                     Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars)
@@ -323,10 +313,6 @@ fun HomeScreen(
                     val seededOnly = mixes.all { it.id.startsWith("seed:") }
                     MixesShelf(mixes, actions, if (seededOnly) "From the artists you follow, until you've played more" else MIXES_LINE,
                         title = runtime.title(section.id, "Made for you today"))
-                }
-                "spotify-mixes" -> if (spotifyMixes.isNotEmpty()) item(key = "spotifyMixes") {
-                    MixesShelf(spotifyMixes, actions, "Spotify's mixes for you, from your likes and listening there",
-                        title = runtime.title(section.id, "Made for you on Spotify"))
                 }
                 "featured-playlists" -> if (runtime.playlists.isNotEmpty()) item(key = "featured-playlists") {
                     HomeShelfView(HomeShelf(runtime.title(section.id, "From the community"), runtime.playlists.map {

@@ -5,12 +5,12 @@ name: Website
 on:
   push:
     branches: [main]
-    paths: ["web/**", "site/**", "usage-api/dashboard/**", ".github/workflows/pages.yml", "scripts/prepare-usage-assets.py", "scripts/check-published-usage.py"]
-  # After every release, and after its desktop downloads are attached, so the download
-  # buttons name the new build without the page being edited. A release made by the Release workflow's own token doesn't
+    paths: ["site/**", "usage-api/dashboard/**", ".github/workflows/pages.yml", "scripts/prepare-usage-assets.py", "scripts/check-published-usage.py"]
+  # After every release, so the download buttons name the new build without the
+  # page being edited. A release made by the Release workflow's own token doesn't
   # send a release event, hence workflow_run as well.
   workflow_run:
-    workflows: ["Release", "iOS", "Desktop release"]
+    workflows: ["Release"]
     types: [completed]
   release:
     types: [published]
@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   deploy:
-    # Also honor merge-only commits when Release/iOS completion triggers this workflow.
+    # Also honor merge-only commits when Release completion triggers this workflow.
     if: >-
       ${{ !contains(github.event.head_commit.message, '[skip deploy]') &&
       (github.event_name != 'workflow_run' ||
@@ -42,23 +42,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-      - uses: pnpm/action-setup@v4
-        with:
-          package_json_file: web/package.json
-      - name: Browser player and companion extensions
-        working-directory: web
-        env:
-          # OpenTune's own Discord application (a repository variable); see web/extension/lib/discord.ts.
-          DISCORD_APP_ID: ${{ vars.DISCORD_APP_ID || secrets.DISCORD_APP_ID }}
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm --filter @opentune/extension icons
-          pnpm build:site
-          mkdir -p ../site/player
-          cp -R app/dist/. ../site/player/
       - name: Latest releases
         env:
           GH_TOKEN: ${{ github.token }}
@@ -79,50 +62,6 @@ jobs:
           jq --slurpfile n notes.json '[.[] | . + (if $n[0][.tag_name] then {highlights: $n[0][.tag_name]} else {} end)]' releases.raw.json > site/releases.json
           rm -f releases.raw.json notes.json one.json
           jq -c '.[0] | {tag_name, highlights, apks: [.assets[].name]}' site/releases.json
-      - name: iPhone source for SideStore and AltStore
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p site/ios
-          cp ios/OpenTune/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png site/ios/icon.png
-          if ! gh api "repos/${{ github.repository }}/releases/tags/ios" > ios-release.json 2>/dev/null; then
-            echo "No iOS build published yet"; rm -f ios-release.json; exit 0
-          fi
-          base="https://justshivv.github.io/Opentune"
-          jq --arg base "$base" '
-            (.assets | map(select(.name == "OpenTune-iOS.ipa")) | first) as $ipa
-            | if $ipa == null then empty else
-            {
-              name: "OpenTune",
-              identifier: "io.github.justshivv.opentune",
-              subtitle: "A free music player",
-              sourceURL: ($base + "/ios/source.json"),
-              website: ($base + "/"),
-              iconURL: ($base + "/ios/icon.png"),
-              tintColor: "FF8A65",
-              apps: [{
-                name: "OpenTune",
-                bundleIdentifier: "com.opentune.ios",
-                developerName: "justshivv",
-                subtitle: "Every song. No ads. No account.",
-                localizedDescription: "A free, open-source music player for the YouTube Music catalogue, with synced lyrics, radio once the queue runs out, background play, lock-screen controls and AirPlay. An early version of the Android app.",
-                iconURL: ($base + "/ios/icon.png"),
-                tintColor: "FF8A65",
-                category: "entertainment",
-                versions: [{
-                  version: (.name | capture("v(?<v>[0-9][0-9.]*)").v),
-                  date: $ipa.updated_at,
-                  localizedDescription: .body,
-                  downloadURL: $ipa.browser_download_url,
-                  size: $ipa.size,
-                  minOSVersion: "16.0"
-                }],
-                appPermissions: { entitlements: [], privacy: {} }
-              }],
-              news: []
-            } end' ios-release.json > site/ios/source.json
-          rm -f ios-release.json
-          [ -s site/ios/source.json ] && jq -c '.apps[0].versions[0] | {version, size}' site/ios/source.json || rm -f site/ios/source.json
       - name: Validate social preview
         run: python scripts/check-social-preview.py
       - name: Version dashboard assets

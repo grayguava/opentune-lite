@@ -5,9 +5,8 @@ import android.content.Intent
 import androidx.media3.common.Player
 
 /**
- * What the shared code needs from whichever app it runs in (phone and TV, or
- * watch) without knowing that app's classes: how to open it, and what else
- * shows the playing song.
+ * What the shared code needs from the app it runs in without knowing that
+ * app's classes: how to open it, and what else shows the playing song.
  */
 object AppHooks {
     /** Opens the app at its main screen, as its launcher icon does. */

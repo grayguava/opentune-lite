@@ -54,18 +54,15 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.automirrored.rounded.FormatListBulleted
 import androidx.compose.material.icons.rounded.Bedtime
-import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.Headphones
 import androidx.compose.material.icons.rounded.Smartphone
 import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Equalizer
-import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.HighQuality
 import androidx.compose.material.icons.rounded.Lyrics
 import androidx.compose.material.icons.rounded.MoreHoriz
@@ -131,7 +128,6 @@ import com.opentune.data.settings.PlayerStyle
 import com.opentune.data.settings.RemixPreset
 import com.opentune.data.settings.SoundSettings
 import com.opentune.data.settings.ThemeSettings
-import com.opentune.data.together.Together
 import com.opentune.playback.AudioFormatInfo
 import com.opentune.playback.PlaybackRequests
 import com.opentune.ui.LyricsState
@@ -198,8 +194,6 @@ data class PlayerUiState(
     val smartShuffleAvailable: Boolean = false,
     /** Apple's animated cover for the song, to loop in its cover. */
     val coverVideo: com.opentune.data.covers.AppleMotionArt.Motion? = null,
-    /** Spotify's Canvas for the song, to loop behind the player. */
-    val canvasVideo: String? = null,
     val loadingMessage: String? = null,
 )
 
@@ -214,7 +208,6 @@ class PlayerActions(
     val removeIndex: (Int) -> Unit,
     val collapse: () -> Unit,
     val moveIndex: (Int, Int) -> Unit = { _, _ -> },
-    val openTogether: () -> Unit = {},
     val openEqualizer: () -> Unit = {},
 )
 
@@ -224,7 +217,6 @@ fun PlayerScreen(
     onCollapse: () -> Unit,
     /** True while the player sits fully open, not being dragged down. */
     onCovering: (Boolean) -> Unit = {},
-    onTogether: () -> Unit = {},
     onEqualizer: () -> Unit = {},
     /** Docked beside the page on a large screen; see [PlayerLayout]. */
     docked: Boolean = false,
@@ -251,7 +243,6 @@ fun PlayerScreen(
     val source by vm.source.collectAsState()
     val audioFormat by vm.audioFormat.collectAsState()
     val coverVideo by vm.coverVideo.collectAsState()
-    val canvasVideo by vm.canvasVideo.collectAsState()
     val actions = remember(vm, onCollapse) {
         PlayerActions(
             togglePlay = vm::togglePlayPause,
@@ -264,7 +255,6 @@ fun PlayerScreen(
             removeIndex = vm::removeQueueItem,
             collapse = onCollapse,
             moveIndex = vm::moveQueueItem,
-            openTogether = onTogether,
             openEqualizer = onEqualizer,
         )
     }
@@ -272,7 +262,7 @@ fun PlayerScreen(
         PlayerUiState(
             shown, isPlaying, isBuffering, hasNext, shuffle, repeat, duration,
             lyrics, queue, currentIndex, upNext, sound, theme, ui, source, audioFormat,
-            shuffleMode, smartShuffleAvailable, coverVideo, canvasVideo, loadingMessage,
+            shuffleMode, smartShuffleAvailable, coverVideo, loadingMessage,
         ),
         position = rememberPlaybackPosition(vm),
         buffered = vm::bufferedPositionMs,
@@ -329,7 +319,6 @@ fun PlayerLayout(
     var bigTitle by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
     val flight = remember { PaneFlight() }
     var showRemix by remember { mutableStateOf(false) }
-    var showCast by remember { mutableStateOf(false) }
     var showOutput by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     var showSleep by remember { mutableStateOf(false) }
@@ -362,11 +351,9 @@ fun PlayerLayout(
     var controlsAway by remember { mutableStateOf(false) }
     var seenTouch by remember { mutableLongStateOf(touchedAt) }
     val artworkMotion = com.opentune.ui.components.rememberArtworkMotion(state.isPlaying && state.ui.movingCover && !state.ui.reduceAnimation)
-    val television = com.opentune.ui.tv.LocalIsTv.current
-    val focusable = !television && state.ui.lyricsFocus && pane == Pane.LYRICS && state.isPlaying &&
+    val focusable = state.ui.lyricsFocus && pane == Pane.LYRICS && state.isPlaying &&
         ((state.lyrics as? LyricsState.Found)?.lyrics is com.opentune.data.lyrics.Lyrics.Synced)
-    androidx.activity.compose.BackHandler(enabled = television && pane != Pane.COVER) { paneName = Pane.COVER.name }
-    val sheetOpen = showMenu || showRemix || showSleep || showCast || showOffset || showLyricsSource || showDetails || showSignal
+    val sheetOpen = showMenu || showRemix || showSleep || showOffset || showLyricsSource || showDetails || showSignal
     LaunchedEffect(touchedAt, focusable, sheetOpen) {
         // A sheet opening or closing leaves the controls as they are, the tap that opened
         // it included: bringing them back resized the lyrics under the sheet as it slid
@@ -435,7 +422,7 @@ fun PlayerLayout(
     val windowHeight = with(LocalDensity.current) { androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.height.toDp() }
     val roomy = !docked || windowHeight >= DOCKED_ROOMY_HEIGHT
     // On its side the player has its own layout.
-    val landscape = !docked && (television || LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE)
+    val landscape = !docked && LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     // Full-screen cover only fits the layouts built around a plain square cover.
     val fullCover = !landscape && !amoled && (apple || state.ui.fullScreenCover) && pane == Pane.COVER && (apple || style == PlayerStyle.CLASSIC || style == PlayerStyle.MINIMAL)
     // Where the cover area ends, measured from the top of the player, so a
@@ -728,10 +715,6 @@ fun PlayerLayout(
                     change = if (state.ui.reduceAnimation) com.opentune.data.settings.CoverChange.FADE else state.ui.coverChange,
                     index = state.currentIndex,
                     songId = current.videoId,
-                    canvas = state.canvasVideo,
-                    titleTop = with(LocalDensity.current) { bigTitle?.top?.takeIf { it > 0f }?.toDp() },
-                    // Lyrics and the queue are read over the whole page, so the Canvas frosts top to bottom.
-                    canvasBehindText = pane != Pane.COVER,
                 )
             }
 
@@ -824,13 +807,10 @@ fun PlayerLayout(
                         }
                     },
             ) {
-                // "Playing from", whose room it is, or the remix pill.
+                // "Playing from", or the remix pill.
                 val statusLine: @Composable () -> Unit = {
-                    val room by Together.room.collectAsState()
                     AnimatedContent(sound.isDefault, label = "remixPill") { normal ->
-                        if (room != null) {
-                            TogetherPill(room!!, actions.openTogether)
-                        } else if (normal) {
+                        if (normal) {
                             if (!state.ui.hideSongStatus) SongStatus(state.source)
                         } else {
                             AssistChip(
@@ -979,7 +959,6 @@ fun PlayerLayout(
                                             onSeekBy = seekBy.takeIf { state.ui.doubleTapSeek },
                                             glow = state.ui.coverGlow && !state.ui.reduceAnimation && !amoled && !apple,
                                             video = state.coverVideo,
-                                            canvasShowing = state.canvasVideo != null,
                                         )
                                 }
                                 }
@@ -1204,7 +1183,7 @@ fun PlayerLayout(
                             // Its two halves split by a hairline; the fill is the morphing one behind.
                             Row(Modifier.height(52.dp).clip(RoundedCornerShape(30.dp)), verticalAlignment = Alignment.CenterVertically) {
                                 // Each half is the button: a press fills the half, not a circle round the icon.
-                                // Apple Music's has where it's playing, then who's listening with you.
+                                // Apple Music's has where it's playing.
                                 if (!apple) {
                                     PillButton(Icons.Rounded.Bedtime, "Sleep timer", sleepLabel != null, { showSleep = true }, enabled = enabled)
                                     Box(Modifier.width(1.dp).fillMaxHeight().background(Color.White.copy(alpha = 0.16f)))
@@ -1212,16 +1191,10 @@ fun PlayerLayout(
                                 PillButton(
                                     outputRoute.icon,
                                     "Audio output",
-                                    // Headphones only change the icon; lit up is for casting, a session to notice.
-                                    outputRoute == OutputRoute.CAST,
+                                    false,
                                     { showOutput = true },
                                     enabled = enabled,
                                 )
-                                if (apple) {
-                                    val room by Together.room.collectAsState()
-                                    Box(Modifier.width(1.dp).fillMaxHeight().background(Color.White.copy(alpha = 0.16f)))
-                                    PillButton(Icons.Rounded.Person, "Listen together", room != null, actions.openTogether, enabled = enabled)
-                                }
                             }
                         },
                         secondContent = { enabled ->
@@ -1288,12 +1261,10 @@ fun PlayerLayout(
             Box(Modifier.fillMaxSize().graphicsLayer { alpha = (windDown * 0.55f).coerceIn(0f, 0.55f) }.background(Color.Black))
         }
         if (showRemix) RemixSheet(onDismiss = { showRemix = false })
-        if (showOutput) com.opentune.ui.cast.AudioOutputSheet(
+        if (showOutput) AudioOutputSheet(
             onDismiss = { showOutput = false },
-            onCast = { showOutput = false; showCast = true },
             onPipeline = { showOutput = false; showSignal = true },
         )
-        if (showCast) com.opentune.ui.cast.CastSheet(onDismiss = { showCast = false })
         if (showSleep) SleepTimerDialog(onDismiss = { showSleep = false })
         if (showMenu) {
             SongMenuSheet(
@@ -1303,7 +1274,6 @@ fun PlayerLayout(
                 tools = { close ->
                     MenuRow(Icons.Rounded.HighQuality, "Track details") { close(); showDetails = true }
                     MenuRow(Icons.Rounded.GraphicEq, "Signal path") { close(); showSignal = true }
-                    MenuRow(Icons.Rounded.Groups, "Listen together") { close(); actions.openTogether() }
                     MenuRow(Icons.Rounded.Bedtime, sleepLabel ?: "Sleep timer") { close(); showSleep = true }
                     MenuRow(Icons.Rounded.Tune, "Lyrics offset") { close(); showOffset = true }
                     MenuRow(Icons.Rounded.Lyrics, "Lyrics source") { close(); showLyricsSource = true }
@@ -1664,30 +1634,6 @@ fun MiniPlayerBar(vm: PlayerViewModel, onExpand: () -> Unit, modifier: Modifier 
         modifier = modifier,
         inline = inline,
         replica = replica,
-    )
-}
-
-/** Shown where "Playing from" goes while in a room: whose room, and how many are in. */
-@Composable
-private fun TogetherPill(room: Together.Room, onClick: () -> Unit) {
-    AssistChip(
-        onClick = onClick,
-        label = {
-            Text(
-                when {
-                    room.hosting -> "Your room · ${room.members.size} listening"
-                    room.holding -> "Paused for you · ${room.hostName ?: "room"}"
-                    room.phase == Together.Phase.Live -> "With ${room.hostName ?: "the host"} · ${room.members.size} listening"
-                    else -> "Listening together"
-                },
-            )
-        },
-        leadingIcon = { Icon(Icons.Rounded.Groups, null, Modifier.size(18.dp)) },
-        colors = AssistChipDefaults.assistChipColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            leadingIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        ),
     )
 }
 

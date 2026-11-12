@@ -127,15 +127,4 @@ object FirstPartyAddonAuth {
                 .header("X-OpenTune-Nonce", nonce).header("X-OpenTune-Signature", sign(alias, canonical)).build()
         }
     }
-    suspend fun pairingInfo(id: String): JSONObject {
-        require(id.matches(Regex("[A-Za-z0-9_-]{43}")))
-        val request = authorize(Request.Builder().url("$ORIGIN/auth/web/info?id=$id").build())
-        return withContext(Dispatchers.IO) { call(request).also { check(it.optBoolean("ok")) { "Browser request has expired" } } }
-    }
-    suspend fun approveBrowser(id: String) {
-        require(id.matches(Regex("[A-Za-z0-9_-]{43}")))
-        val body = JSONObject().put("id", id).toString()
-        val request = authorize(post(ORIGIN, "/auth/web/approve", body), body)
-        withContext(Dispatchers.IO) { call(request).also { check(it.optBoolean("ok")) { "Browser approval failed" } } }
-    }
 }

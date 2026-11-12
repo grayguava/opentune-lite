@@ -167,17 +167,9 @@ fun PlayerBackdrop(
     index: Int = 0,
     /** The playing song, so a sharper copy of its cover swaps in place rather than as a song change. */
     songId: String? = null,
-    /** Spotify's Canvas for the playing song, looped over the whole backdrop. */
-    canvas: String? = null,
-    /** Where the title starts, from the top: over a Canvas, the frost begins a little above it. */
-    titleTop: Dp? = null,
-    /** Lyrics or the queue are open over the Canvas: it's frosted and darkened all the way up. */
-    canvasBehindText: Boolean = false,
     fullCoverVisible: Boolean = true,
     artworkMotion: com.opentune.ui.components.ArtworkMotion? = null,
 ) {
-    // On a TV the backdrop holds still: redrawn every frame across a big picture, it cost the remote its quickness.
-    val animate = animate && !com.opentune.ui.tv.LocalIsTv.current
     val scheme = MaterialTheme.colorScheme
     if (style == PlayerBackground.AMOLED) {
         Box(modifier.background(Color.Black))
@@ -218,9 +210,7 @@ fun PlayerBackdrop(
                 }
             }
         }
-        if (canvas != null) {
-            CanvasBackdrop(canvas, playing, titleTop, canvasBehindText, Modifier.matchParentSize())
-        } else if (fullCover) {
+        if (fullCover) {
             CoverSwap(CoverShown(artworkUrl, index, songId), change) { url, motion ->
                 // The cover runs from the top down to just behind the title and
                 // fades out there into whatever backdrop is below it, with a light
@@ -257,105 +247,6 @@ fun PlayerBackdrop(
     }
 }
 
-/**
- * Spotify's Canvas filling the player, sharp at the top and turning to
- * frosted glass from just above the title down to the bottom, where the
- * title, seek bar and buttons sit, so they read over any clip. The blur
- * comes in gradually over the first stretch rather than starting at a line.
- * With blur reduced (or before Android 12) a darker wash does the same job.
- * The frost can be turned off in Settings, leaving only a light darkening.
- */
-@Composable
-private fun CanvasBackdrop(canvas: String, playing: Boolean, titleTop: Dp?, behindText: Boolean, modifier: Modifier) {
-    val ui by com.opentune.data.settings.AppSettings.ui.collectAsState()
-    val haze = dev.chrisbanes.haze.rememberHazeState()
-    val look = ui.canvasLook
-    val blur = look == com.opentune.data.settings.CanvasLook.FROST && !ui.reduceBlur
-    androidx.compose.foundation.layout.BoxWithConstraints(modifier) {
-        Box(Modifier.matchParentSize().then(if (blur) Modifier.hazeSource(haze) else Modifier)) {
-            // Keyed on the clip, so the next song's starts fresh and fades in over this one's backdrop.
-            androidx.compose.runtime.key(canvas) {
-                LoopingVideo(canvas, playing, Modifier.matchParentSize(), maxPx = 1920, maxBitrate = 8_000_000)
-            }
-        }
-        // A light scrim at the top so the status bar and "Playing from" stay readable.
-        Box(Modifier.matchParentSize().background(Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.35f), 0.18f to Color.Transparent)))
-        // Over lyrics and the queue the frost starts at the very top, moving up there as they open.
-        // The frosted box keeps its full size throughout and only where the frost begins moves,
-        // read while drawing: resizing it every frame re-laid it out and made the blur start
-        // over at a new size each time, which is what stuttered.
-        val density = androidx.compose.ui.platform.LocalDensity.current
-        val toPx = with(density) { ((titleTop ?: (maxHeight * 0.55f)) - CANVAS_FROST_LEAD).coerceIn(0.dp, maxHeight).toPx() }
-        val from = androidx.compose.animation.core.animateFloatAsState(toPx, androidx.compose.animation.core.tween(450), label = "canvasFrost")
-        val shade = androidx.compose.animation.core.animateFloatAsState(if (behindText) 1f else 0f, androidx.compose.animation.core.tween(450), label = "canvasShade")
-        val ramp = with(density) { (CANVAS_FROST_LEAD * 2).toPx() }
-        // Behind lyrics and the queue there's no blur: the clip goes on under a wash of the
-        // song's own colour, deep enough for text to read over any frame. Blurring a moving
-        // video over the whole page cost a fresh blur on every frame, and stuttered.
-        val wash = lerp(MaterialTheme.colorScheme.surface, Color.Black, 0.35f)
-        // Changes once, as the wash settles or lifts, not on each frame of it.
-        val settled by remember(behindText) { androidx.compose.runtime.derivedStateOf { behindText && shade.value >= 0.999f } }
-        val frosted = blur && !settled
-        Box(
-            Modifier
-                .matchParentSize()
-                .then(
-                    if (!frosted) Modifier else Modifier.hazeEffect(haze) {
-                        blurRadius = 30.dp
-                        noiseFactor = 0.04f
-                        tints = listOf(dev.chrisbanes.haze.HazeTint(Color.Black.copy(alpha = 0.18f)))
-                        // A blur this soft loses nothing worked out at half size, and costs a quarter.
-                        inputScale = dev.chrisbanes.haze.HazeInputScale.Fixed(0.5f)
-                        val start = from.value
-                        progressive = dev.chrisbanes.haze.HazeProgressive.verticalGradient(
-                            easing = androidx.compose.animation.core.EaseInOut,
-                            startY = start,
-                            startIntensity = 0f,
-                            endY = start + ramp,
-                            endIntensity = 1f,
-                        )
-                    },
-                )
-                // From where the title begins down: the chosen look, coming in over the ramp.
-                // Tint and Dark are plain gradients, so they show the same on every phone
-                // and cost nothing per frame; a phone that can't blur video shows Frosted as
-                // its light darkening only.
-                .drawBehind {
-                    val start = from.value
-                    val span = (size.height - start).coerceAtLeast(1f)
-                    val inAt = (ramp / span).coerceIn(0.05f, 0.9f)
-                    val (tone, mid, foot) = when (look) {
-                        com.opentune.data.settings.CanvasLook.TINT -> Triple(wash, 0.8f, 0.92f)
-                        com.opentune.data.settings.CanvasLook.SHADE -> Triple(Color.Black, 0.62f, 0.86f)
-                        com.opentune.data.settings.CanvasLook.FROST -> Triple(Color.Black, if (blur) 0.15f else 0.45f, if (blur) 0.45f else 0.8f)
-                        com.opentune.data.settings.CanvasLook.NONE -> Triple(Color.Black, 0.25f, 0.7f)
-                    }
-                    drawRect(
-                        Brush.verticalGradient(
-                            0f to tone.copy(alpha = 0f),
-                            inAt to tone.copy(alpha = mid),
-                            1f to tone.copy(alpha = foot),
-                            startY = start,
-                            endY = size.height,
-                        ),
-                        topLeft = androidx.compose.ui.geometry.Offset(0f, start),
-                    )
-                    // Behind lyrics and the queue: the colour wash, a touch lighter at the top.
-                    val k = shade.value
-                    if (k > 0f) drawRect(
-                        Brush.verticalGradient(
-                            0f to wash.copy(alpha = 0.74f * k),
-                            0.5f to wash.copy(alpha = 0.82f * k),
-                            1f to wash.copy(alpha = 0.9f * k),
-                        ),
-                    )
-                },
-        )
-    }
-}
-
-/** How far above the title the Canvas frost starts, and half the stretch it takes to come in fully. */
-private val CANVAS_FROST_LEAD = 56.dp
 
 /**
  * A cover whose [url] may be swapped for a sharper copy while it's shown:
@@ -612,13 +503,9 @@ fun ArtworkPane(
     glow: Boolean = false,
     /** Apple's animated cover for this song, looped over the still one. */
     video: com.opentune.data.covers.AppleMotionArt.Motion? = null,
-    /**
-     * Spotify's Canvas is playing behind the player: the still cover over it fades away,
-     * keeping its place, so the clip shows and swipes and taps on it still work.
-     */
-    canvasShowing: Boolean = false,
 ) {
-    val coverShown by animateFloatAsState(if (canvasShowing) 0f else 1f, tween(450), label = "coverOverCanvas")
+    val coverShown by animateFloatAsState(1f, tween(450), label = "coverOverCanvas")
+
     val scale by animateFloatAsState(
         if (isPlaying) 1f else 0.86f,
         spring(dampingRatio = 0.62f, stiffness = Spring.StiffnessLow),
@@ -652,7 +539,7 @@ fun ArtworkPane(
             },
         contentAlignment = Alignment.Center,
     ) {
-        if (glow && !canvasShowing) CoverGlow(isPlaying, scale, Modifier.matchParentSize())
+        if (glow) CoverGlow(isPlaying, scale, Modifier.matchParentSize())
         Box(Modifier.graphicsLayer { alpha = coverShown }, contentAlignment = Alignment.Center) {
         CoverSwap(CoverShown(song.thumbnailUrl, index, song.videoId), change) { url, motion ->
             UpgradingArtwork(
@@ -679,7 +566,7 @@ fun ArtworkPane(
                 imageModifier = Modifier.livingArt(isPlaying, moving, artworkMotion),
             ) {
                 // Only on the playing song's cover, not on one leaving as the song changes.
-                if (video != null && !canvasShowing && url == song.thumbnailUrl) {
+                if (video != null && url == song.thumbnailUrl) {
                     val quality = com.opentune.data.settings.AppSettings.ui.collectAsState().value.motionQuality
                     // Keyed on the quality, so a new choice in Settings takes effect at once.
                     androidx.compose.runtime.key(quality) {
@@ -1243,56 +1130,29 @@ fun NerdStatsLine(format: AudioFormatInfo?) {
     )
 }
 
-/** Volume of the active output: the cast receiver when connected, otherwise the phone. */
+/** The volume of the phone's media output. */
 @Composable
 fun VolumeBar(modifier: Modifier = Modifier) {
-    val session by com.opentune.cast.Cast.session.collectAsState()
-    val receiver = session?.receiver
-    // Cancel gestures and pending UI work when the output changes.
-    androidx.compose.runtime.key(receiver) { OutputVolumeBar(receiver, modifier) }
+    OutputVolumeBar(modifier)
 }
 
 @Composable
-internal fun OutputVolumeBar(receiver: com.opentune.cast.Receiver?, modifier: Modifier) {
+internal fun OutputVolumeBar(modifier: Modifier) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val am = remember { context.getSystemService(AudioManager::class.java) }
     val max = remember { am?.getStreamMaxVolume(AudioManager.STREAM_MUSIC)?.coerceAtLeast(1) ?: 1 }
-    val remoteVolume = receiver?.status?.collectAsState()?.value?.volume
     var volume by remember { mutableFloatStateOf(
-        if (receiver != null) remoteVolume ?: 0f else (am?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0).toFloat() / max
+        (am?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0).toFloat() / max
     ) }
     var dragging by remember { mutableStateOf(false) }
-    var pending by remember { androidx.compose.runtime.mutableIntStateOf(0) }
-    val commands = remember { kotlinx.coroutines.sync.Mutex() }
-    LaunchedEffect(remoteVolume, dragging, pending) {
-        if (receiver != null && !dragging && pending == 0) remoteVolume?.let { volume = it.coerceIn(0f, 1f) }
-    }
     LaunchedEffect(am) {
-        if (receiver != null) return@LaunchedEffect
         while (true) {
             if (!dragging) volume = (am?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0).toFloat() / max
             delay(400)
         }
     }
     fun commit() {
-        val level = volume
-        if (receiver == null) {
-            am?.setStreamVolume(AudioManager.STREAM_MUSIC, (level * max).roundToInt(), 0)
-        } else {
-            pending++
-            scope.launch {
-                try {
-                    commands.withLock { receiver.setVolume(level) }
-                } catch (cancelled: kotlinx.coroutines.CancellationException) {
-                    throw cancelled
-                } catch (_: Exception) {
-                    com.opentune.data.Pills.info("Couldn't change the volume on ${receiver.name}", context)
-                } finally {
-                    pending--
-                }
-            }
-        }
+        am?.setStreamVolume(AudioManager.STREAM_MUSIC, (volume * max).roundToInt(), 0)
     }
     fun adjust(step: Float) {
         volume = (volume + step).coerceIn(0f, 1f)
@@ -1300,23 +1160,22 @@ internal fun OutputVolumeBar(receiver: com.opentune.cast.Receiver?, modifier: Mo
     }
     var focused by remember { mutableStateOf(false) }
     val focusInk = MaterialTheme.colorScheme.primary
-    val television = com.opentune.ui.tv.LocalIsTv.current
-    val step = if (receiver != null) 0.05f else 1f / max
+    val step = 1f / max
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Icon(Icons.AutoMirrored.Rounded.VolumeDown, "Volume down", tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(if (television) 48.dp else 20.dp).clickable { adjust(-step) })
+            modifier = Modifier.size(20.dp).clickable { adjust(-step) })
         val track = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.18f)
         val fill = MaterialTheme.colorScheme.onSurface
         fun preview(x: Float, width: Int) {
             if (width <= 0) return
             volume = (x / width).coerceIn(0f, 1f)
-            if (receiver == null) commit()
+            commit()
         }
         Canvas(
             Modifier
                 .weight(1f)
                 .padding(horizontal = 10.dp)
-                .height(if (television) 48.dp else 28.dp)
+                .height(28.dp)
                 .onFocusChanged { focused = it.isFocused }
                 .onKeyEvent { e ->
                     when (e.key) {
@@ -1329,12 +1188,12 @@ internal fun OutputVolumeBar(receiver: com.opentune.cast.Receiver?, modifier: Mo
                 }
                 .focusable()
                 .semantics {
-                    contentDescription = receiver?.let { "${it.name} volume" } ?: "Media volume"
+                    contentDescription = "Media volume"
                     progressBarRangeInfo = ProgressBarRangeInfo(volume, 0f..1f)
                     setProgress { volume = it.coerceIn(0f, 1f); commit(); true }
                 }
-                .pointerInput(max, receiver) { detectTapGestures { preview(it.x, size.width); commit() } }
-                .pointerInput(max, receiver) {
+                .pointerInput(max) { detectTapGestures { preview(it.x, size.width); commit() } }
+                .pointerInput(max) {
                     detectHorizontalDragGestures(
                         onDragStart = { dragging = true },
                         onDragEnd = { commit(); dragging = false },
@@ -1353,7 +1212,7 @@ internal fun OutputVolumeBar(receiver: com.opentune.cast.Receiver?, modifier: Mo
             drawRoundRect(fill, Offset(0f, y), Size(size.width * f, h), CornerRadius(h / 2))
         }
         Icon(Icons.AutoMirrored.Rounded.VolumeUp, "Volume up", tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(if (television) 48.dp else 20.dp).clickable { adjust(step) })
+            modifier = Modifier.size(20.dp).clickable { adjust(step) })
     }
 }
 

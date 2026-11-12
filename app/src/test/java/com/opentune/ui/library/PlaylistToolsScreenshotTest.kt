@@ -58,26 +58,6 @@ class PlaylistToolsScreenshotTest {
 
     @Test fun page() = shoot("playlist/page") { LocalPlaylistScreen(id, PaddingValues(), SongActions(null, false, { _, _, _, _ -> }, {}, {}), onBack = {}) }
 
-    @Test fun spotifyUsesTheSamePlaylistLayout() {
-        LibraryStore.putSpotifyPlaylist("1234567890123456789012", "Late nights", songs, "revision", null)
-        val spotify = LibraryStore.playlists.value.first { it.spotifyId != null }
-        shoot("playlist/spotify") { LocalPlaylistScreen(spotify.id, PaddingValues(), SongActions(null, false, { _, _, _, _ -> }, {}, {}), onBack = {}) }
-        compose.onNodeWithText("Spotify").assertExists()
-        compose.onNodeWithText("Search this list").assertDoesNotExist()
-        compose.onNodeWithContentDescription("Add songs").assertDoesNotExist()
-        compose.onNodeWithContentDescription("More").performClick()
-        compose.onNodeWithText("Add songs").assertDoesNotExist()
-    }
-
-    @Test fun spotifyPlaylistsAreNotOfferedAsWriteTargets() {
-        LibraryStore.putSpotifyPlaylist("1234567890123456789012", "Spotify collection", songs, "revision", null)
-        compose.setContent { OpenTuneTheme(ThemeSettings()) {
-            com.opentune.ui.components.AddToPlaylistDialog(songs.last(), onDone = {}, onDismiss = {})
-        } }
-        compose.onNodeWithText("Spotify collection").assertDoesNotExist()
-        compose.onNodeWithText("Late nights").assertExists()
-    }
-
     @Test fun addSheet() = shoot("playlist/add") { AddSongsSheet(id, onDismiss = {}) }
 
     @Test fun completedPlaylistCanOpenRemovalAndKeepItsDownloads() {

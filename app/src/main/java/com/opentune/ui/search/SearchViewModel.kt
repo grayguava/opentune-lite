@@ -165,7 +165,7 @@ class SearchViewModel(application: android.app.Application) : androidx.lifecycle
     }
 
     /**
-     * Your playlists (made here or brought over from Spotify) and the albums and
+     * Your playlists (made here) and the albums and
      * playlists saved with their heart, every word of [q] in the name; names
      * that start with it first.
      */
@@ -176,8 +176,8 @@ class SearchViewModel(application: android.app.Application) : androidx.lifecycle
         val own = store.playlists.value.filter { matches(it.name) }.map { p ->
             LibraryList(
                 "pl:${p.id}", p.name,
-                listOfNotNull(if (p.spotifyId != null) "Spotify" else null, "${p.songs.size} songs").joinToString(" · "),
-                p.coverUrl, p.songs.map { it.thumbnailUrl }, playlistId = p.id,
+                "${p.songs.size} songs",
+                null, p.songs.map { it.thumbnailUrl }, playlistId = p.id,
             )
         }
         val saved = store.savedLists.value.filter { matches(it.title) }.map { l ->

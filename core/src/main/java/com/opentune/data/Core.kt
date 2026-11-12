@@ -18,11 +18,11 @@ import com.opentune.playback.QueueStore
 /** Starts the shared services, in the order they depend on each other. */
 object Core {
     /**
-     * [phone] is false on the watch, which leaves out what only the phone
-     * and TV app does: new-release alerts, update checks and usage counts.
+     * Starts everything the phone and TV app share. New-release alerts, update
+     * checks and usage counts belong to it too.
      */
     @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-    fun init(app: Application, phone: Boolean = true) {
+    fun init(app: Application) {
         // Media3's warnings and errors (a failed load, a decoder that won't
         // start) into the app's own log as well as logcat, for "Copy log".
         androidx.media3.common.util.Log.setLogger(object : androidx.media3.common.util.Log.Logger {
@@ -49,19 +49,15 @@ object Core {
         LoudnessStore.init(app)
         UpgradedTracks.init(app)
         QueueStore.init(app)
-        com.opentune.data.together.Together.init(app)
         LastFm.init(app)
         Subsonic.init(app)
         ListenBrainz.init(app)
         com.opentune.data.radio.Radio.init(app)
-        if (phone) {
-            com.opentune.data.addons.AddonRefreshWorker.schedule(app)
-            com.opentune.data.releases.NewReleases.init(app)
-            com.opentune.data.UpdateCheck.init(app)
-            com.opentune.data.UpdateLock.init(app)
-            com.opentune.data.UpdateCheck.schedule(app)
-            com.opentune.data.Usage.init(app)
-        }
+        com.opentune.data.addons.AddonRefreshWorker.schedule(app)
+        com.opentune.data.releases.NewReleases.init(app)
+        com.opentune.data.UpdateCheck.init(app)
+        com.opentune.data.UpdateLock.init(app)
+        com.opentune.data.UpdateCheck.schedule(app)
         // Spotify sign-in is gone; drop any tokens an earlier version kept.
         app.deleteSharedPreferences("spotify")
         // The waveform seek bar is gone; drop the waveforms an earlier version saved.
@@ -69,8 +65,6 @@ object Core {
         com.opentune.data.podcasts.Podcasts.init(app)
         com.opentune.data.library.ResumePoints.init(app)
         AlbumCovers.init(app)
-        com.opentune.data.spotify.SpotifyWebPlayer.init(app)
-        com.opentune.data.spotify.SpotifySync.init(app)
         AutoEq.init(app)
         com.opentune.data.library.LibraryArtwork.init(app)
         LibraryStore.init(app)

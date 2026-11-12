@@ -375,11 +375,11 @@ internal fun listMeta(kind: String, songs: List<com.opentune.data.model.Song>): 
     return listOfNotNull(kind, count, length).joinToString(" · ")
 }
 
-/** Shared artwork, typography and spacing for YouTube, Spotify and local playlists. */
+/** Shared artwork, typography and spacing for YouTube and local playlists. */
 @Composable
 internal fun PlaylistHeading(title: String, subtitle: String, thumbnail: String?, songs: List<com.opentune.data.model.Song>,
     isAlbum: Boolean = false, cover: (@Composable () -> Unit)? = null) {
-    val coverSize = if (com.opentune.ui.tv.LocalIsTv.current) Modifier.size(220.dp) else Modifier.fillMaxWidth(0.76f).aspectRatio(1f)
+    val coverSize = Modifier.fillMaxWidth(0.76f).aspectRatio(1f)
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         if (cover == null) Artwork(
             thumbnail.artworkAt(HEADER_ART_PX),
