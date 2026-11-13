@@ -68,16 +68,6 @@ enum class PlayerStyle(val label: String, val summary: String) {
 }
 
 @Serializable
-enum class AppFont(val label: String) {
-    SYSTEM("System sans"), OUTFIT("Outfit"), SERIF("Serif"), MONO("Monospace"), CUSTOM("Imported font"),
-}
-
-@Serializable
-enum class TextWeight(val label: String, val minimum: Int) {
-    REGULAR("Regular", 400), MEDIUM("Medium", 500), BOLD("Bold", 700),
-}
-
-@Serializable
 data class ThemeSettings(
     val mode: ThemeMode = ThemeMode.SYSTEM,
     /** Material You wallpaper colors, on Android 12 and later. */
@@ -90,12 +80,6 @@ data class ThemeSettings(
     /** Re-seed the whole app from the playing track's artwork. */
     val colorFromArtwork: Boolean = true,
     val playerBackground: PlayerBackground = PlayerBackground.BLUR,
-    val font: AppFont = AppFont.SYSTEM,
-    val textWeight: TextWeight = TextWeight.MEDIUM,
-    /** Private copied file ID, never an external storage path or URI. */
-    val customFontId: String = "",
-    val customFontName: String = "",
-
 )
 
 /** Reverb presets map onto android.media.audiofx.PresetReverb's. */

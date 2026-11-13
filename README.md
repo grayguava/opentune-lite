@@ -349,7 +349,6 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
   the player can open on a Spring, a Smooth glide, a Bouncy overshoot or
   Snappy. On phones with 90 or 120 Hz screens the app asks for the fastest
   rate, which can be turned off to save battery.
-- **Its own typeface.** Every screen is set in Outfit.
 - **Home greets you** by the time of day and your name, with your avatar
   leading to settings. Below YouTube Music's own shelves it adds a radio
   of your last song, albums, singles and similar artists for the artists

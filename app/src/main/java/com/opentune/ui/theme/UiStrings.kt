@@ -96,7 +96,6 @@ private fun resourceFor(text: String): Int? = when (text) {
         "Player layout" -> R.string.ui_bef9404fb65d
         "Player background" -> R.string.ui_917c0ca4a898
         "Player buttons" -> R.string.ui_e089f7778ed4
-        "Fonts & readability" -> R.string.ui_8750701cf154
         "Theme" -> R.string.ui_efb52e7172b7
         "Dark" -> R.string.ui_60acc53f13a5
         "Light" -> R.string.ui_dbcd5e7bb7a0
@@ -108,8 +107,6 @@ private fun resourceFor(text: String): Int? = when (text) {
         "Regular" -> R.string.ui_b455784ab530
         "Medium" -> R.string.ui_8e588cd18774
         "Bold" -> R.string.ui_94fee62e68e2
-        "Imported font" -> R.string.ui_131221e57e9c
-        "Import font" -> R.string.ui_1cf7b894de15
         "Sign in" -> R.string.ui_bfd402b2f6f3
         "Sign out" -> R.string.ui_48f0d3d397d4
         "Connected" -> R.string.ui_22965568d22a

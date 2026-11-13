@@ -20,11 +20,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import com.opentune.R
-import androidx.compose.ui.text.ExperimentalTextApi
-import androidx.compose.ui.text.font.FontVariation
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.materialkolor.PaletteStyle
@@ -98,7 +93,7 @@ fun OpenTuneTheme(
 
     MaterialTheme(
         colorScheme = scheme.animated(),
-        typography = rememberAppTypography(settings),
+        typography = AppTypography,
         shapes = AppShapes,
     ) {
         CompositionLocalProvider(
@@ -132,7 +127,7 @@ fun PlayerTheme(seed: Color?, settings: ThemeSettings, neutral: Boolean = false,
     ) else scheme
     MaterialTheme(
         colorScheme = if (!active) MaterialTheme.colorScheme else if (amoled) playerScheme.toPureBlack() else playerScheme.animated(),
-        typography = rememberAppTypography(settings),
+        typography = AppTypography,
         shapes = AppShapes,
     ) {
         content()
@@ -195,42 +190,29 @@ internal fun ColorScheme.animated(): ColorScheme {
 
 private val baseType = Typography()
 
-/**
- * Outfit, OpenTune's typeface: a geometric sans with round, open letters
- * (SIL Open Font License; see third_party/outfit). One variable font file,
- * instanced at the weights the app uses.
- */
-@OptIn(ExperimentalTextApi::class)
-val Outfit = FontFamily(
-    listOf(300, 400, 500, 600, 700, 800).map { w ->
-        Font(R.font.outfit_variable, FontWeight(w), variationSettings = FontVariation.Settings(FontVariation.weight(w)))
-    },
-)
-
-private fun TextStyle.outfit(weight: FontWeight? = null, spacing: Float? = null) =
-    copy(fontFamily = Outfit, fontWeight = weight ?: fontWeight, letterSpacing = spacing?.sp ?: letterSpacing)
+private fun TextStyle.scaled(weight: FontWeight? = null, spacing: Float? = null) =
+    copy(fontWeight = weight ?: fontWeight, letterSpacing = spacing?.sp ?: letterSpacing)
 
 val AppTypography = Typography(
-    displayLarge = baseType.displayLarge.outfit(FontWeight.Bold, -1.2f),
-    displayMedium = baseType.displayMedium.outfit(FontWeight.Bold, -1f),
-    displaySmall = baseType.displaySmall.outfit(FontWeight.Bold, -0.6f),
-    headlineLarge = baseType.headlineLarge.outfit(FontWeight.Bold, -0.4f),
-    headlineMedium = baseType.headlineMedium.outfit(FontWeight.SemiBold, -0.3f),
-    headlineSmall = baseType.headlineSmall.outfit(FontWeight.SemiBold, -0.2f),
-    titleLarge = baseType.titleLarge.outfit(FontWeight.SemiBold, -0.1f),
-    titleMedium = baseType.titleMedium.outfit(FontWeight.Medium),
-    titleSmall = baseType.titleSmall.outfit(FontWeight.Medium),
-    bodyLarge = baseType.bodyLarge.outfit(),
-    bodyMedium = baseType.bodyMedium.outfit(),
-    bodySmall = baseType.bodySmall.outfit(),
-    labelLarge = baseType.labelLarge.outfit(FontWeight.Medium),
-    labelMedium = baseType.labelMedium.outfit(FontWeight.Medium),
-    labelSmall = baseType.labelSmall.outfit(FontWeight.Medium),
+    displayLarge = baseType.displayLarge.scaled(FontWeight.Bold, -1.2f),
+    displayMedium = baseType.displayMedium.scaled(FontWeight.Bold, -1f),
+    displaySmall = baseType.displaySmall.scaled(FontWeight.Bold, -0.6f),
+    headlineLarge = baseType.headlineLarge.scaled(FontWeight.Bold, -0.4f),
+    headlineMedium = baseType.headlineMedium.scaled(FontWeight.SemiBold, -0.3f),
+    headlineSmall = baseType.headlineSmall.scaled(FontWeight.SemiBold, -0.2f),
+    titleLarge = baseType.titleLarge.scaled(FontWeight.SemiBold, -0.1f),
+    titleMedium = baseType.titleMedium.scaled(FontWeight.Medium),
+    titleSmall = baseType.titleSmall.scaled(FontWeight.Medium),
+    bodyLarge = baseType.bodyLarge.scaled(),
+    bodyMedium = baseType.bodyMedium.scaled(),
+    bodySmall = baseType.bodySmall.scaled(),
+    labelLarge = baseType.labelLarge.scaled(FontWeight.Medium),
+    labelMedium = baseType.labelMedium.scaled(FontWeight.Medium),
+    labelSmall = baseType.labelSmall.scaled(FontWeight.Medium),
 )
 
 /** Large, heavy lyric lines, read at a glance from arm's length. */
 val LyricsTextStyle = TextStyle(
-    fontFamily = Outfit,
     fontSize = 34.sp,
     lineHeight = 41.sp,
     fontWeight = FontWeight.ExtraBold,
@@ -247,37 +229,3 @@ val AppShapes = Shapes(
 
 @Composable
 fun rememberSeedSwatches(colors: List<Int>): List<Color> = remember(colors) { colors.map { Color(it) } }
-
-/** System sans avoids thin OEM/variable-font rendering; imported files fall back safely if removed. */
-@Composable
-internal fun rememberAppFont(settings: ThemeSettings): FontFamily {
-    val context = LocalContext.current
-    return remember(settings.font, settings.customFontId) {
-        when (settings.font) {
-            com.opentune.data.settings.AppFont.SYSTEM -> FontFamily.SansSerif
-            com.opentune.data.settings.AppFont.OUTFIT -> Outfit
-            com.opentune.data.settings.AppFont.SERIF -> FontFamily.Serif
-            com.opentune.data.settings.AppFont.MONO -> FontFamily.Monospace
-            com.opentune.data.settings.AppFont.CUSTOM -> runCatching {
-                val file = requireNotNull(ImportedFonts.file(context, settings.customFontId))
-                FontFamily(requireNotNull(android.graphics.Typeface.Builder(file).build()))
-            }.getOrDefault(FontFamily.SansSerif)
-        }
-    }
-}
-
-@Composable
-private fun rememberAppTypography(settings: ThemeSettings): Typography {
-    val family = rememberAppFont(settings)
-    return remember(family, settings.textWeight) {
-        fun TextStyle.readable() = copy(fontFamily = family,
-            fontWeight = FontWeight(maxOf(fontWeight?.weight ?: 400, settings.textWeight.minimum)))
-        AppTypography.run { copy(
-            displayLarge = displayLarge.readable(), displayMedium = displayMedium.readable(), displaySmall = displaySmall.readable(),
-            headlineLarge = headlineLarge.readable(), headlineMedium = headlineMedium.readable(), headlineSmall = headlineSmall.readable(),
-            titleLarge = titleLarge.readable(), titleMedium = titleMedium.readable(), titleSmall = titleSmall.readable(),
-            bodyLarge = bodyLarge.readable(), bodyMedium = bodyMedium.readable(), bodySmall = bodySmall.readable(),
-            labelLarge = labelLarge.readable(), labelMedium = labelMedium.readable(), labelSmall = labelSmall.readable(),
-        ) }
-    }
-}

@@ -23,9 +23,7 @@ NewPipe's design. [InnerTubeX](https://github.com/MetrolistGroup/innertubex)
 by MetrolistGroup and [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor)
 are used as libraries under GPLv3. Liquid Glass uses Kyant's
 [backdrop](https://github.com/Kyant0/AndroidLiquidGlass) library, and
-frosted glass uses [Haze](https://github.com/chrisbanes/haze). The
-[Outfit](https://github.com/Outfitio/Outfit-Fonts) font is used under the
-SIL Open Font License 1.1 (`third_party/outfit/OFL.txt`). Album covers
+frosted glass uses [Haze](https://github.com/chrisbanes/haze). Album covers
 come from the [Cover Art Archive](https://coverartarchive.org) through
 [MusicBrainz](https://musicbrainz.org), and recommendations from
 [ListenBrainz](https://listenbrainz.org), all run by the MetaBrainz

@@ -426,7 +426,6 @@ private fun settingsSections(
     var updateBytes by remember { mutableStateOf(0L) }
     var playerStyleDialog by remember { mutableStateOf(false) }
     var appIconDialog by remember { mutableStateOf(false) }
-    var fontDialog by remember { mutableStateOf(false) }
     var languageDialog by remember { mutableStateOf(false) }
     var recommenderDialog by remember { mutableStateOf(false) }
     var historyTargetDialog by remember { mutableStateOf(false) }
@@ -520,7 +519,6 @@ private fun settingsSections(
     if (followedDialog) FollowedArtistsDialog(onDismiss = { followedDialog = false })
     if (hiddenDialog) HiddenDialog(onDismiss = { hiddenDialog = false })
     if (appIconDialog) AppIconDialog { appIconDialog = false }
-    if (fontDialog) com.opentune.ui.theme.FontSettingsSheet { fontDialog = false }
     if (playerStyleDialog) {
         ChoiceSheet(
             title = "Player layout",
@@ -953,9 +951,6 @@ private fun settingsSections(
                 },
                 Entry("App icon", "launcher icon design glass pearl midnight rose ocean") {
                     NavRow("App icon", { appIconDialog = true }, summary = "Choose the OpenTune icon on your home screen", icon = Icons.Rounded.Palette)
-                },
-                Entry("Fonts & readability", "font typeface text weight bold thin ttf otf import custom") {
-                    NavRow("Fonts & readability", { fontDialog = true }, summary = "Built-in fonts, text weight and your own font file", icon = Icons.Rounded.TextFields, value = theme.font.label)
                 },
                 Entry("Pure black", "oled amoled") {
                     ToggleRow("Pure black", theme.pureBlack, { v -> AppSettings.updateTheme { it.copy(pureBlack = v) } }, summary = "Black backgrounds with neutral gray cards in dark theme", icon = Icons.Rounded.Wallpaper)
