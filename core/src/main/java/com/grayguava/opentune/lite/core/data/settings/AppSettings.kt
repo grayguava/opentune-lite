@@ -26,31 +26,6 @@ enum class AudioQuality(val label: String, val summary: String, val maxKbps: Int
 }
 
 @Serializable
-enum class PlayerBackground(val label: String) {
-    /** The cover itself, blurred smooth and drifting slowly, as the album and playlist pages' headers. */
-    BLUR("Cover blur"),
-    /** Soft patches of several of the cover's colours, drifting into each other. */
-    MESH("Mesh"),
-    /** The cover's main colour at the top, deepening to dark, with a faint glow under the controls. */
-    GRADIENT("Gradient"),
-    ECHO_GLOW("Echo glow"),
-    AMOLED("AMOLED black"),
-}
-
-/** How the full-screen player is laid out. */
-@Serializable
-enum class PlayerStyle(val label: String, val summary: String) {
-    APPLE_MUSIC("Apple Music inspired", "Edge-to-edge artwork, quiet surfaces and crisp white controls"),
-    CLASSIC("Classic", "Big cover, title, lyric preview and every control"),
-    VINYL("Vinyl", "The cover turns as a record while the song plays"),
-    LYRICS_FIRST("Lyrics first", "A small cover on top and the lyrics taking the rest"),
-    MINIMAL("Minimal", "Cover, title, seek bar and controls; lyrics and queue a tap away"),
-    CASSETTE("Cassette", "A tape whose reels turn and wind on as the song plays"),
-    HALO("Halo", "A round cover inside a ring of moving bars"),
-    POLAROID("Polaroid", "The cover as an instant photo, swaying gently"),
-}
-
-@Serializable
 data class ThemeSettings(
     /** Material You wallpaper colors, on Android 12 and later. */
     val dynamicColor: Boolean = false,
@@ -58,7 +33,6 @@ data class ThemeSettings(
     val pureBlack: Boolean = true,
     /** Re-seed the whole app from the playing track's artwork. */
     val colorFromArtwork: Boolean = true,
-    val playerBackground: PlayerBackground = PlayerBackground.BLUR,
 )
 
 /** Reverb presets map onto android.media.audiofx.PresetReverb's. */
@@ -305,7 +279,6 @@ data class InterfaceSettings(
     val openingAnimation: Boolean = true,
     /** Solid fills instead of frosted glass. */
     val reduceBlur: Boolean = false,
-    val fullScreenCover: Boolean = false,
     val hideVolumeBar: Boolean = false,
     val hideSongStatus: Boolean = false,
     /** Show the current lyric above the controls, independently of the player layout. */
@@ -324,14 +297,10 @@ data class InterfaceSettings(
     val speedDial: Boolean = true,
     /** Apple's Liquid Glass on Android 13+; the app's smoke glass otherwise. */
     val liquidGlass: Boolean = false,
-    /** Draw the played part of the seek bar as a moving wave. */
-    val wavySeekbar: Boolean = false,
     /** How thick the seek bar's track is. */
     val seekbarThickness: SeekbarThickness = SeekbarThickness.REGULAR,
     /** What marks the place on the seek bar. */
     val seekbarThumb: SeekbarThumb = SeekbarThumb.DOT,
-    /** The played part's colour. */
-    val seekbarColor: SeekbarColor = SeekbarColor.PLAIN,
     /** What the time on the right of the seek bar shows. */
     val seekbarTime: SeekbarTime = SeekbarTime.LEFT,
     /** The audio details page: cards of format, routing and source, or the live pipeline. */
@@ -342,8 +311,6 @@ data class InterfaceSettings(
     val skipToChorus: Boolean = false,
     /** The pill under the title naming where the audio comes from and its quality. */
     val sourcePill: Boolean = true,
-    /** A soft light in the cover's colour under the player's cover. */
-    val coverGlow: Boolean = true,
     /** Double-tapping the cover's left or right side goes back or on ten seconds. */
     val doubleTapSeek: Boolean = true,
     /** While the seek bar is dragged, the lyric line at that point shows above the finger. */
@@ -363,9 +330,7 @@ data class InterfaceSettings(
     val lyricsAnimation: LyricsAnimation = LyricsAnimation.FLUID,
     /** Lyrics text size, as a fraction of the standard size. */
     val lyricsTextScale: Float = 1f,
-    val playerStyle: PlayerStyle = PlayerStyle.CLASSIC,
     val dockMotion: DockMotion = DockMotion.MINIMIZE,
-    val controlStyle: ControlStyle = ControlStyle.BLOOM,
     /** The cover drifts and zooms slowly in the player while a song plays. */
     val movingCover: Boolean = true,
     /** One or two of Home's song and album cards drift and zoom the same way while the page sits still. */
@@ -389,8 +354,6 @@ data class InterfaceSettings(
     val refreshRateHz: Int = 0,
     /** How the full player rises over the page and drops away. */
     val playerMotion: PlayerMotion = PlayerMotion.SPRING,
-    /** How the player's cover gives way to the next song's. */
-    val coverChange: CoverChange = CoverChange.FADE,
     /** The first-run welcome: whether it's still to be shown. See [com.grayguava.opentune.lite.data.Welcome]. */
     val welcome: WelcomeState = WelcomeState.UNDECIDED,
     /** On wide windows (tablets, unfolded phones, phones on their side): the tabs in a rail and pages in a readable column. */
@@ -417,21 +380,7 @@ enum class WelcomeState {
     SEEN,
 }
 
-/** How the cover changes when the song does. */
-@Serializable
-enum class CoverChange(val label: String, val summary: String) {
-    FADE("Fade", "The new cover fades in as it settles to size"),
-    CAROUSEL("Carousel", "Covers slide past in the direction you skipped"),
-    FLIP("Flip", "The cover turns over like a card to show the next one"),
-    DECK("Deck", "The next cover drops onto the pile and the old one sinks under it"),
-    ZOOM("Zoom through", "The old cover rushes past you as the new one grows in from behind it"),
-    DISSOLVE("Dissolve", "The old cover blurs away while the new one comes into focus"),
-    CUBE("Cube", "The covers turn like two faces of a cube, hinged on the edge they share"),
-    REVEAL("Reveal", "The new cover opens out of the middle as a growing circle"),
-    TOSS("Toss", "The old cover is flung off to the side and the new one drops into place"),
-}
-
-/** How the full-screen player opens and closes. */
+/** How the full player opens and closes. */
 @Serializable
 enum class PlayerMotion(val label: String, val summary: String) {
     SPRING("Spring", "Rises quickly and settles with a hint of give"),
@@ -514,16 +463,6 @@ object RecommenderSerializer : kotlinx.serialization.KSerializer<Recommender> {
         encoder.encodeString(value.name)
 }
 
-/** How the player's back, play/pause and forward buttons look and move. */
-@Serializable
-enum class ControlStyle(val label: String, val summary: String) {
-    BLOOM("Bloom", "Large bare glyphs; a soft light blooms behind each press and play folds into pause"),
-    CAPSULE("Capsule", "Play stretches into a wide accent pill while it plays; the skips tilt as you tap"),
-    ORBIT("Orbit", "Play sits inside the song's progress ring, with a comet of light circling while it plays"),
-    MORPH("Morph", "A round button that ripples into a slowly turning wavy shape while it plays, with outlined glyphs"),
-    ECHO("Echo", "An accent-coloured wavy play button that turns gently while playing"),
-}
-
 /**
  * How the dock tucks away while a page scrolls down, and comes back. Each
  * ends in a different shape and gets there a different way. A saved choice
@@ -556,14 +495,7 @@ enum class SeekbarThickness(val label: String, val dp: Float) {
 enum class SeekbarThumb(val label: String) {
     DOT("Dot"),
     LINE("Line"),
-    TOUCH("While dragging"),
     NONE("None"),
-}
-
-enum class SeekbarColor(val label: String) {
-    PLAIN("Plain"),
-    ACCENT("Accent"),
-    GRADIENT("Gradient"),
 }
 
 /** How the audio details from the quality label are laid out. */
@@ -773,7 +705,6 @@ object AppSettings {
                 dynamicColor = p.getBoolean("dynamic_color", false),
                 pureBlack = p.getBoolean("pure_black", true),
                 colorFromArtwork = p.getBoolean("color_from_artwork", true),
-                playerBackground = enumOf(PlayerBackground.entries.toTypedArray(), p.getString("player_background", null), PlayerBackground.BLUR),
             ),
             sound = SoundSettings(
                 speed = p.getFloat("sound_speed", 1f),

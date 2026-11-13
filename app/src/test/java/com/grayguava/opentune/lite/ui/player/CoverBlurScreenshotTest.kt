@@ -14,7 +14,6 @@ import coil3.SingletonImageLoader
 import coil3.asImage
 import coil3.test.FakeImageLoaderEngine
 import com.grayguava.opentune.lite.data.settings.AppSettings
-import com.grayguava.opentune.lite.data.settings.PlayerBackground
 import java.io.File
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -45,7 +44,7 @@ class CoverBlurScreenshotTest {
         SingletonImageLoader.setUnsafe(ImageLoader.Builder(compose.activity).components { add(engine) }.build())
         compose.setContent {
             MaterialTheme(darkColorScheme(surface = Color(0xFF1A1110), primaryContainer = Color(0xFF6B3A12))) {
-                PlayerBackdrop(PlayerBackground.BLUR, "https://img/cover", Modifier.fillMaxSize(), animate = false)
+                PlayerBackdrop("https://img/cover", Modifier.fillMaxSize(), animate = false)
             }
         }
         compose.waitForIdle()

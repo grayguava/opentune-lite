@@ -156,16 +156,12 @@ import com.grayguava.opentune.lite.data.local.LocalMusic
 import com.grayguava.opentune.lite.data.releases.NewReleases
 import com.grayguava.opentune.lite.data.settings.AppSettings
 import com.grayguava.opentune.lite.data.settings.AudioQuality
-import com.grayguava.opentune.lite.data.settings.ControlStyle
-import com.grayguava.opentune.lite.data.settings.CoverChange
 import com.grayguava.opentune.lite.data.settings.DockLens
 import com.grayguava.opentune.lite.data.settings.DockMotion
 import com.grayguava.opentune.lite.data.settings.LyricsAlign
 import com.grayguava.opentune.lite.data.settings.LyricsAnimation
 import com.grayguava.opentune.lite.data.settings.PageTransition
-import com.grayguava.opentune.lite.data.settings.PlayerBackground
 import com.grayguava.opentune.lite.data.settings.PlayerMotion
-import com.grayguava.opentune.lite.data.settings.PlayerStyle
 import com.grayguava.opentune.lite.data.settings.Recommender
 import com.grayguava.opentune.lite.data.settings.VolumeLevel
 import com.grayguava.opentune.lite.data.sponsorblock.SponsorBlock
@@ -414,7 +410,6 @@ private fun settingsSections(
     var supportDialog by remember { mutableStateOf(false) }
     val pendingUpdate by UpdateCheck.pending.collectAsState()
     var updateBytes by remember { mutableStateOf(0L) }
-    var playerStyleDialog by remember { mutableStateOf(false) }
     var recommenderDialog by remember { mutableStateOf(false) }
     var historyTargetDialog by remember { mutableStateOf(false) }
     var followedDialog by remember { mutableStateOf(false) }
@@ -427,8 +422,6 @@ private fun settingsSections(
     var dockLensDialog by remember { mutableStateOf(false) }
     var pageTransitionDialog by remember { mutableStateOf(false) }
     var playerMotionDialog by remember { mutableStateOf(false) }
-    var coverChangeDialog by remember { mutableStateOf(false) }
-    var controlStyleDialog by remember { mutableStateOf(false) }
     val lyricsSettings by AppSettings.lyrics.collectAsState()
     var confirmSignOut by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -499,16 +492,6 @@ private fun settingsSections(
     if (supportDialog) com.grayguava.opentune.lite.ui.components.SupportDialog(onDismiss = { supportDialog = false })
     if (followedDialog) FollowedArtistsDialog(onDismiss = { followedDialog = false })
     if (hiddenDialog) HiddenDialog(onDismiss = { hiddenDialog = false })
-    if (playerStyleDialog) {
-        ChoiceSheet(
-            title = "Player layout",
-            options = PlayerStyle.entries,
-            selected = ui.playerStyle,
-            label = { "${it.label} · ${it.summary}" },
-            onSelect = { v -> AppSettings.updateUi { it.copy(playerStyle = v) } },
-            onDismiss = { playerStyleDialog = false },
-        )
-    }
     if (historyTargetDialog) {
         ChoiceSheet(
             title = "Sync listening history",
@@ -531,16 +514,6 @@ private fun settingsSections(
                 AppSettings.updatePlayback { it.copy(recommender = r) }
             },
             onDismiss = { recommenderDialog = false },
-        )
-    }
-    if (controlStyleDialog) {
-        ChoiceSheet(
-            title = "Player buttons",
-            options = ControlStyle.entries,
-            selected = ui.controlStyle,
-            label = { "${it.label} · ${it.summary}" },
-            onSelect = { c -> AppSettings.updateUi { it.copy(controlStyle = c) } },
-            onDismiss = { controlStyleDialog = false },
         )
     }
     if (dockMotionDialog) {
@@ -571,16 +544,6 @@ private fun settingsSections(
             label = { "${it.label} · ${it.summary}" },
             onSelect = { t -> AppSettings.updateUi { it.copy(pageTransition = t) } },
             onDismiss = { pageTransitionDialog = false },
-        )
-    }
-    if (coverChangeDialog) {
-        ChoiceSheet(
-            title = "Song change",
-            options = CoverChange.entries,
-            selected = ui.coverChange,
-            label = { "${it.label} · ${it.summary}" },
-            onSelect = { c -> AppSettings.updateUi { it.copy(coverChange = c) } },
-            onDismiss = { coverChangeDialog = false },
         )
     }
     if (playerMotionDialog) {
@@ -879,9 +842,6 @@ private fun settingsSections(
                 Entry("Pure black", "oled amoled") {
                     ToggleRow("Pure black", theme.pureBlack, { v -> AppSettings.updateTheme { it.copy(pureBlack = v) } }, summary = "Black backgrounds with neutral gray cards in dark theme", icon = Icons.Rounded.Wallpaper)
                 },
-                Entry("Player layout", "player style layout vinyl record lyrics minimal classic screen") {
-                    NavRow("Player layout", { playerStyleDialog = true }, summary = ui.playerStyle.summary, icon = Icons.Rounded.Album, value = ui.playerStyle.label)
-                },
                 Entry("Player beside the page", "tablet foldable large screen side pane docked player split landscape") {
                     ToggleRow(
                         "Player beside the page",
@@ -891,9 +851,6 @@ private fun settingsSections(
                         icon = Icons.Rounded.VerticalSplit,
                         enabled = ui.wideLayout,
                     )
-                },
-                Entry("Player buttons", "play pause next previous skip controls buttons design morph disc squircle glass") {
-                    NavRow("Player buttons", { controlStyleDialog = true }, summary = ui.controlStyle.summary, icon = Icons.Rounded.PlayCircle, value = ui.controlStyle.label)
                 },
                 Entry("Dock animation", "navigation bar dock fold hide scroll animation motion squash pop") {
                     NavRow("Dock animation", { dockMotionDialog = true }, summary = ui.dockMotion.summary, icon = Icons.Rounded.Dock, value = ui.dockMotion.label)
@@ -916,35 +873,14 @@ private fun settingsSections(
                 Entry("Double-tap to skip 10 seconds", "double tap cover seek forward back rewind ten seconds gesture") {
                     ToggleRow("Double-tap to skip 10 seconds", ui.doubleTapSeek, { v -> AppSettings.updateUi { it.copy(doubleTapSeek = v) } }, summary = "Double-tap the left of the cover to go back 10 seconds, the right to go on", icon = Icons.Rounded.TouchApp)
                 },
-                Entry("Glow under the cover", "glow shadow light cover colour bass pulse") {
-                    ToggleRow("Glow under the cover", ui.coverGlow, { v -> AppSettings.updateUi { it.copy(coverGlow = v) } }, summary = "A soft light in the cover's colours under it, swelling a little with the bass", icon = Icons.Rounded.AutoAwesome)
-                },
-                Entry("Song change", "cover change next song skip animation flip carousel deck fade") {
-                    NavRow("Song change", { coverChangeDialog = true }, summary = ui.coverChange.summary, icon = Icons.Rounded.SwapHoriz, value = ui.coverChange.label)
-                },
                 Entry("Player opening", "now playing sheet open close animation spring smooth bouncy snappy") {
                     NavRow("Player opening", { playerMotionDialog = true }, summary = ui.playerMotion.summary, icon = Icons.Rounded.UnfoldMore, value = ui.playerMotion.label)
-                },
-                Entry("Player background", "cover blur blurred mesh gradient echo glow colours pure black oled amoled") {
-                    SettingRow("Player background", icon = Icons.Rounded.Wallpaper, below = {
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            PlayerBackground.entries.forEach { b ->
-                                FilterChip(theme.playerBackground == b, { AppSettings.updateTheme { it.copy(playerBackground = b) } }, label = { Text(b.label) })
-                            }
-                        }
-                    })
                 },
                 Entry("Moving cover art", "motion artwork canvas animated cover drift zoom") {
                     ToggleRow("Moving cover art", ui.movingCover, { v -> AppSettings.updateUi { it.copy(movingCover = v) } }, summary = "The cover drifts and zooms slowly in the player while a song plays", icon = Icons.Rounded.Animation)
                 },
                 Entry("Moving covers on Home", "motion artwork animated cover drift zoom home cards mixes") {
                     ToggleRow("Moving covers on Home", ui.homeMovingCovers, { v -> AppSettings.updateUi { it.copy(homeMovingCovers = v) } }, summary = "Song and album covers on Home drift and zoom slowly, one or two at a time, while you're not scrolling. Off in battery saver", icon = Icons.Rounded.Animation)
-                },
-                Entry("Full-screen cover art", "artwork edge") {
-                    ToggleRow("Full-screen cover art", ui.fullScreenCover, { v -> AppSettings.updateUi { it.copy(fullScreenCover = v) } }, summary = "Runs the cover to the edges of the player instead of a square sleeve", icon = Icons.Rounded.Fullscreen)
-                },
-                Entry("Wavy seek bar", "wave progress slider") {
-                    ToggleRow("Wavy seek bar", ui.wavySeekbar, { v -> AppSettings.updateUi { it.copy(wavySeekbar = v) } }, summary = "The played part of the bar ripples while music plays", icon = Icons.Rounded.Waves)
                 },
                 Entry("Lyric preview while seeking", "scrub seek bar lyric line preview bubble drag") {
                     ToggleRow("Lyric preview while seeking", ui.lyricScrubPreview, { v -> AppSettings.updateUi { it.copy(lyricScrubPreview = v) } }, summary = "Dragging the seek bar shows the line sung at that point above your finger", icon = Icons.Rounded.Lyrics)
@@ -957,11 +893,6 @@ private fun settingsSections(
                 Entry("Seek bar handle", "progress bar thumb knob dot line handle") {
                     SettingRow("Seek bar handle", icon = Icons.Rounded.RadioButtonChecked, below = {
                         PillSegmented(com.grayguava.opentune.lite.data.settings.SeekbarThumb.entries, ui.seekbarThumb, { it.label }, { v -> AppSettings.updateUi { it.copy(seekbarThumb = v) } })
-                    })
-                },
-                Entry("Seek bar colour", "progress bar color accent gradient") {
-                    SettingRow("Seek bar colour", summary = "Accent and Gradient follow the cover when the player takes its colours", icon = Icons.Rounded.Palette, below = {
-                        PillSegmented(com.grayguava.opentune.lite.data.settings.SeekbarColor.entries, ui.seekbarColor, { it.label }, { v -> AppSettings.updateUi { it.copy(seekbarColor = v) } })
                     })
                 },
                 Entry("Seek bar time", "progress bar remaining total length duration time left") {

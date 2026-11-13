@@ -132,7 +132,6 @@ import com.grayguava.opentune.lite.data.model.ROW_ART_PX
 import com.grayguava.opentune.lite.playback.AudioFormatInfo
 import com.grayguava.opentune.lite.data.model.Song
 import com.grayguava.opentune.lite.data.model.artworkAt
-import com.grayguava.opentune.lite.data.settings.PlayerBackground
 import com.grayguava.opentune.lite.ui.components.Artwork
 import com.grayguava.opentune.lite.ui.formatTime
 import kotlin.math.PI
@@ -152,7 +151,6 @@ import coil3.request.allowHardware
  */
 @Composable
 fun PlayerBackdrop(
-    style: PlayerBackground,
     artworkUrl: String?,
     modifier: Modifier = Modifier,
     animate: Boolean = true,
@@ -162,8 +160,7 @@ fun PlayerBackdrop(
     /** Let the full cover drift and zoom while playing (see livingArt). */
     movingCover: Boolean = false,
     playing: Boolean = false,
-    /** How the full-screen cover changes to the next song's, and where that song is in the queue. */
-    change: com.grayguava.opentune.lite.data.settings.CoverChange = com.grayguava.opentune.lite.data.settings.CoverChange.FADE,
+    /** Where the song sits in the queue, so a sharper copy of its cover swaps in place. */
     index: Int = 0,
     /** The playing song, so a sharper copy of its cover swaps in place rather than as a song change. */
     songId: String? = null,
@@ -171,47 +168,10 @@ fun PlayerBackdrop(
     artworkMotion: com.grayguava.opentune.lite.ui.components.ArtworkMotion? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
-    if (style == PlayerBackground.AMOLED) {
-        Box(modifier.background(Color.Black))
-        return
-    }
     Box(modifier.background(scheme.surface)) {
-        when (style) {
-            PlayerBackground.AMOLED -> Unit
-            PlayerBackground.ECHO_GLOW -> EchoGlowBackground(animate && playing, Modifier.matchParentSize())
-            PlayerBackground.BLUR -> CoverBlur(artworkUrl, animate && playing, Modifier.matchParentSize())
-            PlayerBackground.MESH -> MeshGradient(artworkUrl, animate, Modifier.matchParentSize())
-            PlayerBackground.GRADIENT -> {
-                // Two tones: the cover's own colour at the top, deepening to
-                // the dark surface by the middle, where the controls sit.
-                val top = scheme.primaryContainer
-                Box(
-                    Modifier.matchParentSize().background(
-                        Brush.verticalGradient(
-                            0f to top,
-                            0.3f to lerp(top, scheme.surface, 0.35f),
-                            0.62f to lerp(top, scheme.surface, 0.85f),
-                            1f to scheme.surface,
-                        ),
-                    ),
-                )
-                // Under the controls, a faint glow in the same colour.
-                androidx.compose.foundation.layout.BoxWithConstraints(Modifier.matchParentSize()) {
-                    AmbientLights(
-                        listOf(scheme.primary, scheme.primaryContainer, scheme.inversePrimary),
-                        playing = playing,
-                        animate = animate,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(maxHeight * 0.5f)
-                            .align(Alignment.BottomCenter)
-                            .graphicsLayer { alpha = 0.35f },
-                    )
-                }
-            }
-        }
+        CoverBlur(artworkUrl, animate && playing, Modifier.matchParentSize())
         if (fullCover) {
-            CoverSwap(CoverShown(artworkUrl, index, songId), change) { url, motion ->
+            CoverSwap(CoverShown(artworkUrl, index, songId)) { url, motion ->
                 // The cover runs from the top down to just behind the title and
                 // fades out there into whatever backdrop is below it, with a light
                 // scrim at the top so the status line stays readable. It's never
@@ -280,81 +240,6 @@ private fun UpgradingArtwork(
 /** How far a full-screen cover runs past its area, under the title, and how long its fade is. */
 private val FULL_COVER_OVERLAP = 44.dp
 private val FULL_COVER_FADE = 210.dp
-
-/**
- * Wide, soft patches of the cover's own colours, several of them, laid over
- * the whole player and drifting slowly into each other, like Apple Music's
- * animated backgrounds. Darker toward the bottom so the controls read.
- * Still when [animate] is false.
- */
-@Composable
-private fun MeshGradient(artworkUrl: String?, animate: Boolean, modifier: Modifier = Modifier) {
-    val scheme = MaterialTheme.colorScheme
-    val palette = com.grayguava.opentune.lite.ui.theme.rememberArtworkPalette(artworkUrl)
-    // The cover's colours, or the song's scheme until they've been read. Each
-    // is kept between dark and mid so none of them glares behind white text.
-    val wanted = remember(palette, scheme.primary, scheme.tertiary) {
-        val cover = palette.ifEmpty { listOf(scheme.primary, scheme.tertiary, scheme.secondary, scheme.primaryContainer) }
-            .map { Hct.fromInt(it.toArgb()) }
-        // A cover of one hue (or greys and one hue) gets the scheme's second
-        // accent too, so the patches don't all melt into one colour.
-        val hues = cover.filter { it.chroma >= 12 }.map { it.hue }
-        val oneHue = hues.all { h -> hues.all { abs(h - it).let { d -> minOf(d, 360 - d) } < 40 } }
-        val extra = listOfNotNull(scheme.tertiary.takeIf { oneHue }, scheme.primaryContainer.takeIf { cover.size < 3 })
-        // Dark greys stay dark, as shadow between the colours rather than haze.
-        val all = (cover + extra.map { Hct.fromInt(it.toArgb()) }).map {
-            val grey = it.chroma < 12
-            Color(Hct.from(it.hue, if (grey) it.chroma else it.chroma * 1.15, it.tone.coerceIn(if (grey) 14.0 else 30.0, if (grey) 50.0 else 60.0)).toInt())
-        }
-        // The patches, then the deepest shade of the cover's main colour to lay them on.
-        List(MESH_BLOBS) { all[it % all.size] } + Color(cover.first().withTone(12.0).toInt())
-    }
-    // Each colour eases into the next song's rather than jumping.
-    val colors = wanted.mapIndexed { i, c -> animateColorAsState(c, tween(1_200), label = "mesh$i").value }
-    // One drift takes 40 s, so a dozen steps a second can't be told from
-    // every frame. It matters: the mesh is what the player's Liquid Glass
-    // samples, and each step makes every glass control blur and bend again.
-    val t by produceState(0.15f, animate) {
-        if (!animate) return@produceState
-        val start = withFrameNanos { it } - (0.15f * MESH_CYCLE_NS).toLong()
-        while (true) {
-            delay(MESH_STEP_MS)
-            value = ((withFrameNanos { it } - start) % MESH_CYCLE_NS).toFloat() / MESH_CYCLE_NS
-        }
-    }
-    Canvas(modifier) {
-        drawRect(colors[MESH_BLOBS])
-        val w = size.width
-        val h = size.height
-        val phase = t * 2 * PI.toFloat()
-        for (i in 0 until MESH_BLOBS) {
-            val p = MESH_PATHS[i]
-            // Whole turns per drift, so the loop closes without a jump.
-            val cx = w * (p[0] + 0.22f * cos(phase * p[2] + p[4]))
-            val cy = h * (p[1] + 0.12f * sin(phase * p[3] + p[4]))
-            val radius = maxOf(w, h) * (0.36f + 0.04f * sin(phase + i))
-            val c = colors[i]
-            drawCircle(
-                // Bright well out, then easing to nothing, so no patch shows a rim.
-                Brush.radialGradient(
-                    *com.grayguava.opentune.lite.ui.components.glowStops(c, 1f, shape = 2.5f),
-                    center = Offset(cx, cy),
-                    radius = radius,
-                ),
-                radius = radius,
-                center = Offset(cx, cy),
-            )
-        }
-        // Darker toward the bottom so the title and controls stay readable.
-        drawRect(
-            Brush.verticalGradient(
-                0f to Color.Black.copy(alpha = 0.06f),
-                0.5f to Color.Black.copy(alpha = 0.2f),
-                1f to Color.Black.copy(alpha = 0.5f),
-            ),
-        )
-    }
-}
 
 /**
  * The cover itself behind the player, blurred smooth, the way the album and
@@ -494,13 +379,12 @@ fun ArtworkPane(
     modifier: Modifier = Modifier,
     moving: Boolean = false,
     artworkMotion: com.grayguava.opentune.lite.ui.components.ArtworkMotion? = null,
-    change: com.grayguava.opentune.lite.data.settings.CoverChange = com.grayguava.opentune.lite.data.settings.CoverChange.FADE,
-    /** The song's place in the queue, so Carousel knows which way to slide. */
+    /** Whether the cover dissolves into the next one, or crossfades. */
+    animate: Boolean = true,
+    /** The song's place in the queue. */
     index: Int = 0,
     /** Double-tapping the cover's left or right side jumps by this many milliseconds back or on. */
     onSeekBy: ((Long) -> Unit)? = null,
-    /** A soft light in the cover's colour under it, swelling with the bass. */
-    glow: Boolean = false,
     /** Apple's animated cover for this song, looped over the still one. */
     video: com.grayguava.opentune.lite.data.covers.AppleMotionArt.Motion? = null,
 ) {
@@ -539,9 +423,8 @@ fun ArtworkPane(
             },
         contentAlignment = Alignment.Center,
     ) {
-        if (glow) CoverGlow(isPlaying, scale, Modifier.matchParentSize())
         Box(Modifier.graphicsLayer { alpha = coverShown }, contentAlignment = Alignment.Center) {
-        CoverSwap(CoverShown(song.thumbnailUrl, index, song.videoId), change) { url, motion ->
+        CoverSwap(CoverShown(song.thumbnailUrl, index, song.videoId), animate) { url, motion ->
             UpgradingArtwork(
                 url.artworkAt(com.grayguava.opentune.lite.data.model.PLAYER_ART_PX),
                 // As wide as the pane, unless that's taller than the room it has: then as
@@ -649,43 +532,6 @@ internal fun SeekTaps(
     }
 }
 
-/** A blurred light in the cover's colours under it, drifting a little lower and swelling with the bass. */
-@Composable
-private fun CoverGlow(playing: Boolean, scale: Float, modifier: Modifier) {
-    val (a, b) = com.grayguava.opentune.lite.ui.theme.songAccents()
-    val swell = remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
-    androidx.compose.runtime.DisposableEffect(Unit) {
-        com.grayguava.opentune.lite.playback.AudioLevels.hold()
-        onDispose { com.grayguava.opentune.lite.playback.AudioLevels.release() }
-    }
-    LaunchedEffect(playing) {
-        var peak = 0.05f
-        var last = 0L
-        while (playing) {
-            androidx.compose.runtime.withFrameNanos { now ->
-                val dt = if (last == 0L) 0.016f else ((now - last) / 1e9f).coerceIn(0f, 0.1f)
-                last = now
-                val level = com.grayguava.opentune.lite.playback.AudioLevels.at(System.nanoTime())?.let { it.bass * 0.8f + it.level * 0.2f } ?: 0f
-                peak = maxOf(level, peak * (1f - dt * 0.3f)).coerceAtLeast(0.02f)
-                val target = (level / peak).coerceIn(0f, 1f)
-                swell.floatValue += (target - swell.floatValue) * (dt * if (target > swell.floatValue) 6f else 2f).coerceAtMost(1f)
-            }
-        }
-        swell.floatValue = 0f
-    }
-    val strength by animateFloatAsState(if (playing) 1f else 0.45f, tween(600), label = "glow")
-    Canvas(modifier) {
-        val s = swell.floatValue
-        val w = size.width * scale
-        val c = Offset(center.x, center.y + w * 0.12f)
-        val r = w * (0.7f + 0.07f * s)
-        val peak = (0.7f + 0.25f * s).coerceAtMost(1f) * strength
-        // A straight fade to transparent black showed its edge as a line across the player.
-        val stops = com.grayguava.opentune.lite.ui.components.glowStops(a, peak, b)
-        drawCircle(Brush.radialGradient(*stops, center = c, radius = r), r, c)
-    }
-}
-
 /**
  * A slim seek bar that thickens while dragged. Position is read in the draw
  * phase, so the bar moves every frame without recomposing anything.
@@ -697,8 +543,6 @@ fun SeekBar(
     durationMs: Long,
     onSeek: (Long) -> Unit,
     modifier: Modifier = Modifier,
-    wavy: Boolean = false,
-    playing: Boolean = false,
     /** The lyric line sung at a moment, shown above the finger while the bar is dragged. */
     lyricAt: ((Long) -> String?)? = null,
     /** Where the song's parts (verse, chorus) begin, in ms, marked as small gaps in the track. */
@@ -708,27 +552,18 @@ fun SeekBar(
     var dragFraction by remember { mutableStateOf<Float?>(null) }
     var scrubStartY by remember { mutableStateOf(0f) }
     var fineScrubbing by remember { mutableStateOf(false) }
-    // The wave travels while music plays and flattens out when it stops.
-    // Only animated while it can be seen, so an idle bar costs no frames.
-    val phaseState = if (wavy && playing) rememberWavePhase() else null
-    val amplitude by animateFloatAsState(if (wavy && playing && dragFraction == null) 1f else 0f, tween(400), label = "amp")
     val look = AppSettings.ui.collectAsState().value
     val base = look.seekbarThickness.dp.dp
     val trackHeight by animateDpAsState(if (dragFraction != null) base * 2 else base, label = "track")
-    // The dot rides the track; the line stands across it; "While dragging" only shows while held.
+    // The dot rides the track; the line stands across it.
     val thumbShown = when (look.seekbarThumb) {
         com.grayguava.opentune.lite.data.settings.SeekbarThumb.DOT, com.grayguava.opentune.lite.data.settings.SeekbarThumb.LINE -> dragFraction == null
-        com.grayguava.opentune.lite.data.settings.SeekbarThumb.TOUCH -> dragFraction != null
         com.grayguava.opentune.lite.data.settings.SeekbarThumb.NONE -> false
     }
     val thumbRadius by animateDpAsState(if (thumbShown) maxOf(7.dp, base * 0.9f + 3.dp) else 0.dp, label = "thumb")
     val lineThumb = look.seekbarThumb == com.grayguava.opentune.lite.data.settings.SeekbarThumb.LINE
-    val active = when (look.seekbarColor) {
-        com.grayguava.opentune.lite.data.settings.SeekbarColor.PLAIN -> MaterialTheme.colorScheme.onSurface
-        else -> MaterialTheme.colorScheme.primary
-    }
+    val active = MaterialTheme.colorScheme.primary
     val gradientEnd = MaterialTheme.colorScheme.tertiary
-    val gradient = look.seekbarColor == com.grayguava.opentune.lite.data.settings.SeekbarColor.GRADIENT
     val shownMarks = if (look.seekbarMarks) marks else emptyList()
     val inactive = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.18f)
     val bufferedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
@@ -820,25 +655,7 @@ fun SeekBar(
                 return@Canvas
             }
             drawRoundRect(bufferedColor, Offset(0f, y), Size(size.width * maxOf(b, f), h), r)
-            if (amplitude > 0f) {
-                // Played part as a sine wave, a stroke as thick as the track.
-                val amp = h * 0.9f * amplitude
-                val length = h * 7f
-                val wavePath = Path().apply {
-                    moveTo(0f, size.height / 2)
-                    var x = 0f
-                    while (x <= size.width * f) {
-                        lineTo(x, size.height / 2 + amp * sin(x / length * 2 * PI.toFloat() + (phaseState?.value ?: 0f)))
-                        x += 2f
-                    }
-                }
-                if (gradient) drawPath(wavePath, Brush.horizontalGradient(listOf(active, gradientEnd), endX = maxOf(size.width * f, 1f)), style = Stroke(width = h, cap = StrokeCap.Round))
-                else drawPath(wavePath, active, style = Stroke(width = h, cap = StrokeCap.Round))
-            } else if (gradient) {
-                drawRoundRect(Brush.horizontalGradient(listOf(active, gradientEnd), endX = maxOf(size.width * f, 1f)), Offset(0f, y), Size(size.width * f, h), r)
-            } else {
-                drawRoundRect(active, Offset(0f, y), Size(size.width * f, h), r)
-            }
+            drawRoundRect(Brush.horizontalGradient(listOf(active, gradientEnd), endX = maxOf(size.width * f, 1f)), Offset(0f, y), Size(size.width * f, h), r)
             // A small dot where each part of the song still to come begins. Ones already
             // played aren't drawn: cut into the played line (the wave above all) they read as breaks.
             if (durationMs > 0) {
@@ -851,7 +668,7 @@ fun SeekBar(
             }
             if (thumbRadius > 0.dp) {
                 val at = Offset(size.width * f, size.height / 2)
-                val thumbColor = if (gradient) gradientEnd else active
+                val thumbColor = gradientEnd
                 if (lineThumb) {
                     // A short upright bar across the track, rounded at the ends.
                     val w = 3.dp.toPx()
@@ -899,12 +716,6 @@ fun SeekBar(
         if (look.seekbarTime == com.grayguava.opentune.lite.data.settings.SeekbarTime.HIDDEN) quality?.let { Box(Modifier.fillMaxWidth().padding(top = 8.dp), contentAlignment = Alignment.Center) { it() } }
     }
 }
-
-/** The wave's travel, 0 to 2π, looping. */
-@Composable
-private fun rememberWavePhase(): androidx.compose.runtime.State<Float> =
-    rememberInfiniteTransition(label = "wave")
-        .animateFloat(0f, (2 * PI).toFloat(), infiniteRepeatable(tween(1_600, easing = LinearEasing)), label = "phase")
 
 /**
  * Now playing, above the dock: a card tinted with the cover's colour, with
@@ -1243,68 +1054,6 @@ fun ArtworkSwipeArea(
         content = content,
     )
 }
-
-/**
- * The cover as a record: round, with grooves and a spindle hole, turning
- * gently once every 20 seconds while playing, resting where it stopped on pause.
- */
-@Composable
-fun VinylPane(
-    song: Song,
-    isPlaying: Boolean,
-    onSwipeNext: () -> Unit,
-    onSwipePrevious: () -> Unit,
-    animate: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    var angle by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(isPlaying, animate) {
-        if (!isPlaying || !animate) return@LaunchedEffect
-        var last = 0L
-        while (true) {
-            androidx.compose.runtime.withFrameNanos { now ->
-                if (last != 0L) angle = (angle + (now - last) / 1_000_000_000f * VINYL_DEGREES_PER_SECOND) % 360f
-                last = now
-            }
-        }
-    }
-    val groove = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
-    ArtworkSwipeArea(onSwipeNext = onSwipeNext, onSwipePrevious = onSwipePrevious, modifier = modifier.fillMaxWidth()) {
-        Box(
-            Modifier
-                .fillMaxWidth(0.92f)
-                .aspectRatio(1f)
-                .align(Alignment.Center)
-                .graphicsLayer {
-                    rotationZ = angle
-                    shadowElevation = 30.dp.toPx()
-                    shape = CircleShape
-                    clip = true
-                }
-                .background(Color(0xFF111111)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Artwork(
-                song.thumbnailUrl.artworkAt(com.grayguava.opentune.lite.data.model.PLAYER_ART_PX),
-                Modifier.fillMaxSize(0.62f).clip(CircleShape),
-                CircleShape,
-            )
-            androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
-                val r = size.minDimension / 2
-                // Grooves between the label and the rim.
-                var ring = r * 0.66f
-                while (ring < r * 0.98f) {
-                    drawCircle(groove, radius = ring, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.2f))
-                    ring += r * 0.035f
-                }
-                drawCircle(Color(0xFF111111), radius = r * 0.045f)
-                drawCircle(Color.White.copy(alpha = 0.25f), radius = r * 0.045f, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5f))
-            }
-        }
-    }
-}
-
-private const val VINYL_DEGREES_PER_SECOND = 360f / 20f
 
 /**
  * While the seek bar is dragged, the line sung at that point in a bubble

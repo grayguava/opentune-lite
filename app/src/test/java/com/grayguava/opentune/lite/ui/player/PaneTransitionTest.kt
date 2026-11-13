@@ -47,20 +47,17 @@ class PaneTransitionTest {
         }.coroutineContext(Dispatchers.Unconfined).build())
     }
 
-    @Test fun classicLyricsShrinksBeforeReachingTheHeader() = transition(PlayerStyle.CLASSIC, "Lyrics")
-    @Test fun classicQueueShrinksBeforeReachingTheHeader() = transition(PlayerStyle.CLASSIC, "Queue")
-    @Test fun appleLyricsShrinksBeforeReachingTheHeader() = transition(PlayerStyle.APPLE_MUSIC, "Lyrics")
-    @Test fun appleQueueShrinksBeforeReachingTheHeader() = transition(PlayerStyle.APPLE_MUSIC, "Queue")
-    @Test fun fullClassicCoverShrinksBeforeReachingTheHeader() = transition(PlayerStyle.CLASSIC, "Lyrics", true)
+    @Test fun lyricsShrinksBeforeReachingTheHeader() = transition("Lyrics")
+    @Test fun queueShrinksBeforeReachingTheHeader() = transition("Queue")
 
-    private fun transition(style: PlayerStyle, pane: String, fullCover: Boolean = false) {
+    private fun transition(pane: String) {
         val song = Song("test", "Test track", "Test artist", "https://covers.invalid/test.jpg", "3:00")
         val state = PlayerUiState(
             song = song, isPlaying = true, isBuffering = false, hasNext = true,
             shuffle = false, repeatMode = Player.REPEAT_MODE_OFF, durationMs = 180_000,
             lyrics = LyricsState.NotFound, queue = listOf(song), currentIndex = 0, upNext = emptyList(),
             sound = SoundSettings(), theme = ThemeSettings(), source = null,
-            ui = InterfaceSettings(liquidGlass = false, playerStyle = style, reduceAnimation = false, fullScreenCover = fullCover),
+            ui = InterfaceSettings(liquidGlass = false, reduceAnimation = false),
         )
         compose.mainClock.autoAdvance = false
         compose.setContent {

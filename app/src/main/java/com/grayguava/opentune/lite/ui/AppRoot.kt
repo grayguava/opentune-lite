@@ -877,7 +877,7 @@ fun AppRoot(vm: PlayerViewModel) {
             com.grayguava.opentune.lite.ui.theme.PlayerTheme(
                 seed = com.grayguava.opentune.lite.ui.theme.rememberArtworkSeed(song?.thumbnailUrl),
                 settings = notificationTheme,
-                neutral = chromeUi.playerStyle == com.grayguava.opentune.lite.data.settings.PlayerStyle.APPLE_MUSIC,
+                neutral = true,
                 active = sheetOpen && song != null,
             ) {
                 com.grayguava.opentune.lite.ui.components.PillHost(chromeUi.reduceAnimation, Modifier.align(Alignment.TopCenter))

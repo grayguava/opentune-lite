@@ -126,9 +126,6 @@ class ReadmeScreenshotTest {
         lyrics: com.grayguava.opentune.lite.ui.LyricsState,
         initialLyrics: Boolean,
         position: Long,
-        style: com.grayguava.opentune.lite.data.settings.PlayerStyle = com.grayguava.opentune.lite.data.settings.PlayerStyle.CLASSIC,
-        fullCover: Boolean = false,
-        controls: com.grayguava.opentune.lite.data.settings.ControlStyle = com.grayguava.opentune.lite.data.settings.ControlStyle.BLOOM,
         playing: Boolean = true,
         theme: ThemeSettings = ThemeSettings(),
     ) = PlayerUiState(
@@ -136,36 +133,13 @@ class ReadmeScreenshotTest {
         durationMs = 200_000, lyrics = lyrics, queue = queue, currentIndex = 0, upNext = listOf(1, 2, 3),
         sound = SoundSettings(), theme = theme, source = song.albumName,
         // Liquid Glass needs the GPU's shaders, which this software drawing can't run; the smoke glass stands in.
-        // The new designs move every frame while playing; a still needs that held, or the test never goes idle.
-        ui = com.grayguava.opentune.lite.data.settings.InterfaceSettings(liquidGlass = false, playerStyle = style, reduceAnimation = style != com.grayguava.opentune.lite.data.settings.PlayerStyle.CLASSIC, fullScreenCover = fullCover, controlStyle = controls),
+        // The player moves every frame while playing; a still needs that held, or the test never goes idle.
+        ui = com.grayguava.opentune.lite.data.settings.InterfaceSettings(liquidGlass = false, reduceAnimation = true),
     ).let { state -> @Composable { PlayerLayout(state, position = { position }, buffered = { position + 30_000 }, actions = noActions, initialLyrics = initialLyrics) } }
 
     @Test fun nowPlaying() = shoot("player", content = player(blinding, com.grayguava.opentune.lite.ui.LyricsState.NotFound, false, 64_000))
 
-    @Test fun fullCover() = shoot("player-full-cover", content = player(blinding, com.grayguava.opentune.lite.ui.LyricsState.NotFound, false, 64_000, fullCover = true))
-
-    /** Each button design, playing and paused, swapped into one composition (a test can set content only once). */
-    @Test fun buttons() {
-        // Orbit's comet circles for as long as music plays, so this one runs on a hand-moved clock.
-        compose.mainClock.autoAdvance = false
-        var shown by androidx.compose.runtime.mutableStateOf<@Composable () -> Unit>({})
-        var first = true
-        com.grayguava.opentune.lite.data.settings.ControlStyle.entries.forEach { c ->
-            listOf(true, false).forEach { playing ->
-                shown = player(blinding, com.grayguava.opentune.lite.ui.LyricsState.NotFound, false, 64_000, controls = c, playing = playing)
-                val name = "buttons-${c.name.lowercase()}-${if (playing) "playing" else "paused"}"
-                if (first) shoot(name) { shown() } else capture(name)
-                first = false
-            }
-        }
-    }
-
-    @Test fun appleInspired() = shoot("style-apple-inspired", content = player(blinding, com.grayguava.opentune.lite.ui.LyricsState.NotFound, false, 64_000, com.grayguava.opentune.lite.data.settings.PlayerStyle.APPLE_MUSIC))
-    @Test fun amoledPlayer() = shoot("player-amoled", content = player(blinding, com.grayguava.opentune.lite.ui.LyricsState.NotFound, false, 64_000, com.grayguava.opentune.lite.data.settings.PlayerStyle.APPLE_MUSIC, theme = ThemeSettings(playerBackground = com.grayguava.opentune.lite.data.settings.PlayerBackground.AMOLED)))
-
-    @Test fun cassette() = shoot("style-cassette", content = player(blinding, com.grayguava.opentune.lite.ui.LyricsState.NotFound, false, 64_000, com.grayguava.opentune.lite.data.settings.PlayerStyle.CASSETTE))
-    @Test fun halo() = shoot("style-halo", content = player(blinding, com.grayguava.opentune.lite.ui.LyricsState.NotFound, false, 64_000, com.grayguava.opentune.lite.data.settings.PlayerStyle.HALO))
-    @Test fun polaroid() = shoot("style-polaroid", content = player(blinding, com.grayguava.opentune.lite.ui.LyricsState.NotFound, false, 64_000, com.grayguava.opentune.lite.data.settings.PlayerStyle.POLAROID))
+    @Test fun buttons() = shoot("buttons-capsule", content = player(blinding, com.grayguava.opentune.lite.ui.LyricsState.NotFound, false, 64_000))
 
     @Test fun lyrics() = lyricsShot("lyrics")
 

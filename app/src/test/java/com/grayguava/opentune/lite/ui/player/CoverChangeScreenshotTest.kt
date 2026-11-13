@@ -9,7 +9,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,7 +20,6 @@ import coil3.SingletonImageLoader
 import coil3.asImage
 import coil3.test.FakeImageLoaderEngine
 import com.grayguava.opentune.lite.data.model.Song
-import com.grayguava.opentune.lite.data.settings.CoverChange
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import org.junit.Before
@@ -32,7 +30,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-/** Each way the cover can change, caught part-way through, to build/screenshots/cover. */
+/** The dissolve between covers, caught part-way through, to build/screenshots/cover. */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [35], qualifiers = "w411dp-h891dp-xxhdpi", application = android.app.Application::class)
@@ -54,33 +52,26 @@ class CoverChangeScreenshotTest {
         SingletonImageLoader.setUnsafe(ImageLoader.Builder(context).components { add(engine) }.coroutineContext(Dispatchers.Unconfined).build())
     }
 
-    @Test fun eachChange() {
-        var change by mutableStateOf(CoverChange.FADE)
+    @Test fun theDissolve() {
         var index by mutableIntStateOf(0)
         compose.mainClock.autoAdvance = false
         compose.setContent {
             MaterialTheme(darkColorScheme()) {
                 Box(Modifier.fillMaxSize().background(Color(0xFF15131A)).padding(40.dp), contentAlignment = Alignment.Center) {
-                    ArtworkPane(songs[index], isPlaying = true, onSwipeNext = {}, onSwipePrevious = {}, change = change, index = index)
+                    ArtworkPane(songs[index], isPlaying = true, onSwipeNext = {}, onSwipePrevious = {}, index = index)
                 }
             }
         }
-        CoverChange.entries.forEach { c ->
-            // Changed on the UI thread so each round's state reaches the screen at once.
-            compose.runOnUiThread { change = c; index = 0 }
-            androidx.compose.runtime.snapshots.Snapshot.sendApplyNotifications()
-            compose.mainClock.advanceTimeBy(1_500)
-            compose.waitForIdle()
-            save("cover/${c.name.lowercase()}-before")
-            compose.runOnUiThread { index = 1 }
-            androidx.compose.runtime.snapshots.Snapshot.sendApplyNotifications()
-            var at = 0L
-            listOf(0L, 100, 200, 300, 450, 800).forEach { t ->
-                compose.mainClock.advanceTimeBy(t - at)
-                at = t
-                save("cover/${c.name.lowercase()}-${"%03d".format(t)}")
-            }
-            compose.mainClock.advanceTimeBy(1_500)
+        compose.mainClock.advanceTimeBy(1_500)
+        compose.waitForIdle()
+        save("cover/dissolve-before")
+        compose.runOnUiThread { index = 1 }
+        androidx.compose.runtime.snapshots.Snapshot.sendApplyNotifications()
+        var at = 0L
+        listOf(0L, 100, 200, 300, 450, 800).forEach { t ->
+            compose.mainClock.advanceTimeBy(t - at)
+            at = t
+            save("cover/dissolve-${"%03d".format(t)}")
         }
     }
 

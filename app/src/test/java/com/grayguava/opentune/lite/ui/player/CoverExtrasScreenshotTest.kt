@@ -45,7 +45,7 @@ class CoverExtrasScreenshotTest {
                     ArtworkPane(
                         Song("v", "Song", "Artist", "https://img/c"), isPlaying = true, onSwipeNext = {}, onSwipePrevious = {},
                         modifier = Modifier.padding(40.dp).testTag("cover"),
-                        onSeekBy = { seeks += it }, glow = true,
+                        onSeekBy = { seeks += it },
                     )
                 }
             }

@@ -9,9 +9,9 @@ by the Echo Music contributors, under GPLv3. The sources are
 `ui/player/MiniPlayer.kt` (animated glow and wavy play button) and
 `ui/component/BottomSheet.kt` (soft spring), under
 `app/src/main/kotlin/com/music/echo/` at that revision.
-OpenTune adapts these in `ui/player/EchoMotion.kt`, `PlayerButtons.kt`
-and `ui/PageMotion.kt`, with its own palette, pause/lifecycle
-handling and reduced-motion behavior. See [Echo motion](docs/echo-motion.md).
+OpenTune adapts these in `ui/PageMotion.kt`, with its own palette,
+pause/lifecycle handling and reduced-motion behavior. See
+[Echo motion](docs/echo-motion.md).
 
 The Innertube client, response parser and YouTube stream resolver under
 `data/innertube/` are adapted from

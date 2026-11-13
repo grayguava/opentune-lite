@@ -389,13 +389,8 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
   view artist, open album, convert to the music video, and dislike (kept
   out of autoplay); plus upgrade quality,
   signal path, sleep timer, lyrics offset and copy log in the player.
-- **Player layouts:** Classic; Vinyl, where the cover turns as a record
-  while the song plays; Lyrics first, with a small cover on top and the
-  lyrics taking the rest; Minimal, with just the cover, title, seek bar
-  and controls; Cassette, a tape whose reels turn and wind from one side to
-  the other as the song goes on; Halo, a round cover in a ring of moving
-  bars; and Polaroid, the cover as an instant photo that sways gently.
-- **Wavy seek bar** (optional) that ripples while music plays.
+- **One player layout,** the Apple Music one: the cover runs to the edges
+  of the player, the surfaces stay quiet and the controls are crisp white.
 - **Quick screens.** Home opens on the last copy saved while the fresh one
   loads; pages you've visited and searches you've made come back at once
   and refresh in the background.
@@ -412,21 +407,11 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
   cover in a dark rounded frame with the artist's photo and name at the
   top, a share button and a heart, and the title, the time, a progress bar
   and the controls over its foot.
-- **Player buttons in four designs.** Bloom: big bare glyphs, a soft disc
-  of light blooming behind each press. Capsule: play in an accent pill
-  that stretches wide while music plays, between skip buttons that tilt
-  toward where they go. Orbit: play inside the song's progress ring with a
-  comet of light circling it, and an arc that spins round a skip button
-  when tapped. Morph: a round button that ripples into a slowly turning
-  wavy shape while music plays, its outlined triangle folding into two
-  outlined bars, with skips that ripple when tapped. In all four, play
-  folds into pause and the skip arrows roll a step on with each tap.
-- **Song change.** The cover can Fade into the next, slide past in a
-  Carousel in the direction you skipped, Flip over like a card, drop onto
-  a Deck while the old one sinks under it, Zoom through as the old one
-  rushes past you, Dissolve from one blur into the other, turn like a
-  Cube, open out of the middle in a Reveal, or Toss the old one aside as
-  the new one lands. It applies to the full-screen cover too.
+- **Player buttons.** Play sits in an accent pill that stretches wide
+  while music plays, between skip buttons that tilt toward where they go.
+  Play folds into pause and the skip arrows roll a step on with each tap.
+- **Song change.** The cover dissolves from one blur into the other. It
+  applies to the full-screen cover too.
 - **Double-tap the cover** on either side to go back or ahead 10 seconds;
   taps in a row add up, with a ripple and the total on the cover.
 - **A glow under the cover** in its own colours, which swells with the
@@ -439,11 +424,8 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
   blurred and stretched behind the top, fading into the page; artist photos
   stay sharp at the top and melt into the blur below.
 - **What's new.** After an update, a short sheet lists what changed, once.
-- **Ambient light.** With the Gradient player background, wide soft
-  glows in the song's colours drift slowly under the controls, meeting and
-  mixing over a pale wash at the foot of the screen, and lift a little
-  with the music. The level is read from the app's own audio as it plays,
-  so no microphone permission is needed.
+- **The cover behind the player,** blurred smooth and drifting slowly, so
+  the colours of the song's own art sit under the controls.
 - **A player you can feel.** Play swells into a deep thump, pause thumps
   and fades, next rushes forward into a kick, previous kicks and pulls
   back, a like beats twice like a heart, and dragging the seek bar ticks

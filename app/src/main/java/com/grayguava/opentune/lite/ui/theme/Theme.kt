@@ -105,7 +105,6 @@ fun PlayerTheme(seed: Color?, settings: ThemeSettings, neutral: Boolean = false,
         isAmoled = settings.pureBlack,
         style = PaletteStyle.Vibrant,
     )
-    val amoled = settings.playerBackground == com.grayguava.opentune.lite.data.settings.PlayerBackground.AMOLED
     // Keep artwork-derived background tones even when the layout uses white controls.
     val playerScheme = if (neutral) scheme.copy(
         primary = Color.White, onPrimary = Color.Black, secondary = Color.White, tertiary = Color.White,
@@ -114,7 +113,7 @@ fun PlayerTheme(seed: Color?, settings: ThemeSettings, neutral: Boolean = false,
         surfaceContainer = Color(0xFF2B2B2E), surfaceContainerHigh = Color(0xFF36363A),
     ) else scheme
     MaterialTheme(
-        colorScheme = if (!active) MaterialTheme.colorScheme else if (amoled) playerScheme.toPureBlack() else playerScheme.animated(),
+        colorScheme = if (!active) MaterialTheme.colorScheme else playerScheme.animated(),
         typography = AppTypography,
         shapes = AppShapes,
     ) {

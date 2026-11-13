@@ -1,6 +1,7 @@
 package com.grayguava.opentune.lite.data
 
 import com.grayguava.opentune.lite.data.settings.LyricsSource
+import com.grayguava.opentune.lite.data.settings.ThemeSettings
 import com.grayguava.opentune.lite.data.settings.SettingsState
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -36,19 +37,11 @@ class SettingsDefaultsTest {
         assertEquals(com.grayguava.opentune.lite.data.settings.DockMotion.MINIMIZE, ui.dockMotion)
     }
 
-    @Test fun aPlayerBackgroundThatWasDroppedReadsBackAsTheDefault() {
-        val settings = json.decodeFromString<SettingsState>("""{"theme":{"playerBackground":"PLAIN","pureBlack":false}}""")
-        assertEquals(com.grayguava.opentune.lite.data.settings.PlayerBackground.BLUR, settings.theme.playerBackground)
+    @Test fun aPlayerBackgroundThatWasDroppedIsIgnored() {
+        // The player has one background now: an old choice of another one is ignored.
+        val settings = json.decodeFromString<SettingsState>("""{"theme":{"playerBackground":"MESH","pureBlack":false}}""")
         assertFalse(settings.theme.pureBlack)
-        // Blur was dropped once and is back: an old choice of it holds again.
-        assertEquals(
-            com.grayguava.opentune.lite.data.settings.PlayerBackground.BLUR,
-            json.decodeFromString<SettingsState>("""{"theme":{"playerBackground":"BLUR"}}""").theme.playerBackground,
-        )
-        assertEquals(
-            com.grayguava.opentune.lite.data.settings.PlayerBackground.MESH,
-            json.decodeFromString<SettingsState>("""{"theme":{"playerBackground":"MESH"}}""").theme.playerBackground,
-        )
+        assertEquals(ThemeSettings().copy(pureBlack = false), settings.theme)
     }
 
     @Test fun aDroppedDockMotionReadsBackAsTheDefault() {

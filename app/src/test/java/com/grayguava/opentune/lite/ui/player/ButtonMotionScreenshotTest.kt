@@ -33,16 +33,15 @@ import org.robolectric.annotation.GraphicsMode
 class ButtonMotionScreenshotTest {
     @get:Rule val compose = createAndroidComposeRule<androidx.activity.ComponentActivity>()
 
-    @Test fun echoControlsOnLightAndDarkGlow() {
+    @Test fun controlsOnLightAndDark() {
         var dark by mutableStateOf(true)
         var playing by mutableStateOf(false)
         compose.mainClock.autoAdvance = false
         compose.setContent {
             androidx.compose.material3.MaterialTheme(colorScheme = if (dark) androidx.compose.material3.darkColorScheme() else androidx.compose.material3.lightColorScheme()) {
                 androidx.compose.foundation.layout.Box(Modifier.size(360.dp, 250.dp)) {
-                    EchoGlowBackground(false, Modifier.matchParentSize())
                     PlayerControls(playing, false, true, { playing = !playing }, {}, {},
-                        Modifier.align(Alignment.Center), com.grayguava.opentune.lite.data.settings.ControlStyle.ECHO, animate = false)
+                        Modifier.align(Alignment.Center), animate = false)
                 }
             }
         }
@@ -50,12 +49,12 @@ class ButtonMotionScreenshotTest {
         compose.onNodeWithContentDescription("Play").performClick()
         compose.mainClock.advanceTimeBy(100)
         compose.onNodeWithContentDescription("Pause").assertExists()
-        save("echo/dark-playing")
+        save("capsule/dark-playing")
         dark = false
         compose.onNodeWithContentDescription("Pause").performClick()
         compose.mainClock.advanceTimeBy(100)
         compose.onNodeWithContentDescription("Play").assertExists()
-        save("echo/light-paused")
+        save("capsule/light-paused")
     }
 
     @Test fun motion() {

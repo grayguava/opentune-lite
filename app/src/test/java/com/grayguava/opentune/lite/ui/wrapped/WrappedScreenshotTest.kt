@@ -25,7 +25,6 @@ import coil3.asImage
 import coil3.test.FakeImageLoaderEngine
 import com.grayguava.opentune.lite.data.history.History
 import com.grayguava.opentune.lite.data.history.PlayRecord
-import com.grayguava.opentune.lite.data.settings.ControlStyle
 import com.grayguava.opentune.lite.ui.browse.SongActions
 import com.grayguava.opentune.lite.ui.player.PlayerControls
 import java.io.File
@@ -114,7 +113,7 @@ class WrappedScreenshotTest {
         compose.setContent {
             MaterialTheme(darkColorScheme()) {
                 Box(Modifier.fillMaxSize().background(Color(0xFF15131A)).padding(24.dp), contentAlignment = Alignment.Center) {
-                    PlayerControls(playing, false, true, {}, {}, {}, style = ControlStyle.MORPH)
+                    PlayerControls(playing, false, true, {}, {}, {})
                 }
             }
         }
