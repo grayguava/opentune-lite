@@ -65,12 +65,12 @@ class SettingsScreenshotTest {
     }
 
     @Test fun searchFindsAcrossPages() {
-        compose.onNodeWithText("Search settings").performTextInput("jelly")
+        compose.onNodeWithText("Search settings").performTextInput("dock")
         compose.waitForIdle()
-        assertTrue(compose.onAllNodesWithText("Dock lens").fetchSemanticsNodes().isNotEmpty())
+        assertTrue(compose.onAllNodesWithText("Dock animation").fetchSemanticsNodes().isNotEmpty())
         assertTrue(compose.onAllNodesWithText("Motion and feel · Dock", ignoreCase = true).fetchSemanticsNodes().isNotEmpty())
         // Each setting lives on one page only.
-        assertTrue(compose.onAllNodesWithText("Dock lens").fetchSemanticsNodes().size == 1)
+        assertTrue(compose.onAllNodesWithText("Dock animation").fetchSemanticsNodes().size == 1)
         save("settings-search")
     }
 

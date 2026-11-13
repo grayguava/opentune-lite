@@ -46,10 +46,8 @@ class SettingsDefaultsTest {
 
     @Test fun aDroppedDockMotionReadsBackAsTheDefault() {
         for (old in listOf("FOLD", "GLIDE", "RETRACT", "CASCADE")) {
-            val settings = json.decodeFromString<SettingsState>("""{"ui":{"dockMotion":"$old","dockLens":"JELLY"}}""")
+            val settings = json.decodeFromString<SettingsState>("""{"ui":{"dockMotion":"$old"}}""")
             assertEquals(com.grayguava.opentune.lite.data.settings.DockMotion.MINIMIZE, settings.ui.dockMotion)
-            // The rest of the file still reads.
-            assertEquals(com.grayguava.opentune.lite.data.settings.DockLens.JELLY, settings.ui.dockLens)
         }
     }
 

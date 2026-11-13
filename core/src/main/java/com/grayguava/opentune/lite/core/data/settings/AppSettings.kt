@@ -275,8 +275,6 @@ data class InterfaceSettings(
     /** Playlists pinned to the top of Library, first pinned first: a local playlist's id, or a YouTube Music browse id. */
     val pinnedPlaylists: List<String> = emptyList(),
     val reduceAnimation: Boolean = false,
-    /** The mark's dive into the app when it starts. */
-    val openingAnimation: Boolean = true,
     /** Solid fills instead of frosted glass. */
     val reduceBlur: Boolean = false,
     val hideVolumeBar: Boolean = false,
@@ -341,10 +339,6 @@ data class InterfaceSettings(
     val checkForUpdates: Boolean = true,
     /** Pages blur and fade out as they scroll under the status bar. */
     val frostedTopEdge: Boolean = true,
-    /** How the dock's highlight travels between tabs. */
-    val dockLens: DockLens = DockLens.STRETCH,
-    /** How one page gives way to the next. */
-    val pageTransition: PageTransition = PageTransition.SLIDE,
     val lyricsAlign: LyricsAlign = LyricsAlign.LEFT,
     /** A soft glow around the line being sung, whatever the lyrics animation. */
     val lyricsGlow: Boolean = false,
@@ -352,8 +346,6 @@ data class InterfaceSettings(
     val highRefreshRate: Boolean = true,
     /** The rate high performance mode asks for, in Hz; 0 for the screen's fastest. */
     val refreshRateHz: Int = 0,
-    /** How the full player rises over the page and drops away. */
-    val playerMotion: PlayerMotion = PlayerMotion.SPRING,
     /** The first-run welcome: whether it's still to be shown. See [com.grayguava.opentune.lite.data.Welcome]. */
     val welcome: WelcomeState = WelcomeState.UNDECIDED,
     /** On wide windows (tablets, unfolded phones, phones on their side): the tabs in a rail and pages in a readable column. */
@@ -378,33 +370,6 @@ enum class WelcomeState {
     DUE,
     /** Seen, skipped, or not needed because the app was already in use. */
     SEEN,
-}
-
-/** How the full player opens and closes. */
-@Serializable
-enum class PlayerMotion(val label: String, val summary: String) {
-    SPRING("Spring", "Rises quickly and settles with a hint of give"),
-    SMOOTH("Smooth", "One slow, even glide with no bounce"),
-    BOUNCY("Bouncy", "Overshoots the top a little and bounces into place"),
-    SNAPPY("Snappy", "Up and down in a blink"),
-    ECHO("Echo", "A soft spring that settles without bouncing"),
-}
-
-/** How the dock's highlight moves to the tab you pick. */
-@Serializable
-enum class DockLens(val label: String, val summary: String) {
-    STRETCH("Stretch", "The front edge leads and the back catches up, like a drop pulled along"),
-    JELLY("Jelly", "Stretches, overshoots and wobbles into place"),
-    GLIDE("Glide", "Slides across in one piece"),
-}
-
-/** How pages come and go. */
-@Serializable
-enum class PageTransition(val label: String, val summary: String) {
-    SLIDE("Push", "Pages push in from the side, as on iPhone"),
-    FADE("Fade through", "The page fades out, then the next fades in and settles"),
-    ZOOM("Depth", "Pages come forward from behind; going back, they sink away"),
-    RISE("Rise", "Pages rise like cards over the one before, which sinks back a little"),
 }
 
 @Serializable

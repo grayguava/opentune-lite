@@ -513,12 +513,6 @@ fun AppRoot(vm: PlayerViewModel) {
         nav.navigate("mood/${Uri.encode(mood.browseId)}?params=${Uri.encode(mood.params.orEmpty())}&title=${Uri.encode(mood.title)}")
     }
 
-    // The opening animation, once per launch: the app comes forward out of
-    // the mark as the screen dives into it.
-    var opening by remember { mutableStateOf(!com.grayguava.opentune.lite.ui.components.Opening.played && chromeUi.openingAnimation && !chromeUi.reduceAnimation) }
-    var dive by remember { androidx.compose.runtime.mutableFloatStateOf(if (opening) 0f else 1f) }
-    LaunchedEffect(Unit) { com.grayguava.opentune.lite.ui.components.Opening.played = true }
-
     // Back on the first page while music plays: the app shrinks up into a pill at the
     // top, towards the notification's player, and goes to the background. Coming
     // back finds it full size again.
@@ -547,11 +541,6 @@ fun AppRoot(vm: PlayerViewModel) {
     ) {
         com.grayguava.opentune.lite.ui.components.ConnectionBanner(
             Modifier.fillMaxSize().graphicsLayer {
-                if (dive < 1f) {
-                    val s = 1.14f - 0.14f * (1f - (1f - dive) * (1f - dive))
-                    scaleX = s
-                    scaleY = s
-                }
                 val p = leave.value
                 if (p > 0f) {
                     // Shrinking toward the top centre, cropped down to a pill as it goes.
@@ -593,10 +582,10 @@ fun AppRoot(vm: PlayerViewModel) {
                     navController = nav,
                     startDestination = Tab.HOME.route,
                     modifier = Modifier.align(Alignment.TopCenter).then(pageArea).fillMaxSize(),
-                    enterTransition = { PageMotion.enter(chromeUi.pageTransition, chromeUi.reduceAnimation) },
-                    exitTransition = { PageMotion.exit(chromeUi.pageTransition, chromeUi.reduceAnimation) },
-                    popEnterTransition = { PageMotion.popEnter(chromeUi.pageTransition, chromeUi.reduceAnimation) },
-                    popExitTransition = { PageMotion.popExit(chromeUi.pageTransition, chromeUi.reduceAnimation) },
+                    enterTransition = { PageMotion.enter(chromeUi.reduceAnimation) },
+                    exitTransition = { PageMotion.exit(chromeUi.reduceAnimation) },
+                    popEnterTransition = { PageMotion.popEnter(chromeUi.reduceAnimation) },
+                    popExitTransition = { PageMotion.popExit(chromeUi.reduceAnimation) },
                 ) {
                     page(Tab.HOME.route) {
                         HomeScreen(
@@ -778,7 +767,6 @@ fun AppRoot(vm: PlayerViewModel) {
                         MiniPlayerBar(vm, onExpand = { openPlayer(folded) }, modifier = m, inline = folded)
                     },
                     motion = chromeUi.dockMotion,
-                    lens = chromeUi.dockLens,
                     reduceMotion = chromeUi.reduceAnimation,
                 )
             }
@@ -792,7 +780,6 @@ fun AppRoot(vm: PlayerViewModel) {
                     searchSelected = route == SEARCH_ROUTE,
                     onSearch = openSearch,
                     modifier = Modifier.align(Alignment.CenterStart),
-                    lens = chromeUi.dockLens,
                     reduceMotion = chromeUi.reduceAnimation,
                 )
                 Column(
@@ -865,8 +852,8 @@ fun AppRoot(vm: PlayerViewModel) {
             } else {
                 AnimatedVisibility(
                     visible = sheetOpen && song != null,
-                    enter = PageMotion.playerIn(chromeUi.playerMotion, chromeUi.reduceAnimation),
-                    exit = PageMotion.playerOut(chromeUi.playerMotion, chromeUi.reduceAnimation),
+                    enter = PageMotion.playerIn(chromeUi.reduceAnimation),
+                    exit = PageMotion.playerOut(chromeUi.reduceAnimation),
                 ) {
                     playerSheet(transition.currentState == EnterExitState.Visible && transition.targetState == EnterExitState.Visible)
                 }
@@ -882,9 +869,6 @@ fun AppRoot(vm: PlayerViewModel) {
             ) {
                 com.grayguava.opentune.lite.ui.components.PillHost(chromeUi.reduceAnimation, Modifier.align(Alignment.TopCenter))
             }
-        }
-        if (opening) {
-            com.grayguava.opentune.lite.ui.components.OpeningReveal(onDive = { dive = it }, onDone = { opening = false; dive = 1f })
         }
     }
 }

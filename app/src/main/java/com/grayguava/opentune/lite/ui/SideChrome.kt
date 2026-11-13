@@ -49,7 +49,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.offset
-import com.grayguava.opentune.lite.data.settings.DockLens
 import com.grayguava.opentune.lite.ui.components.Haptics
 import com.grayguava.opentune.lite.ui.components.glass
 import com.grayguava.opentune.lite.ui.components.rememberHaptics
@@ -90,7 +89,6 @@ fun NavRail(
     searchSelected: Boolean,
     onSearch: () -> Unit,
     modifier: Modifier = Modifier,
-    lens: DockLens = DockLens.STRETCH,
     reduceMotion: Boolean = false,
 ) {
     val haptics = rememberHaptics()
@@ -125,7 +123,7 @@ fun NavRail(
                 // The lens rests where it last was while Search is open, faded out.
                 var resting by remember { mutableIntStateOf(shown ?: 0) }
                 if (shown != null) resting = shown
-                val (top, bottom) = rememberStretchingLens(resting, slot, if (reduceMotion) DockLens.GLIDE else lens)
+                val (top, bottom) = rememberStretchingLens(resting, slot, reduceMotion)
                 val lensAlpha by animateFloatAsState(if (shown != null) 1f else 0f, tween(260, easing = FastOutSlowInEasing), label = "railLensAlpha")
                 Box(
                     Modifier

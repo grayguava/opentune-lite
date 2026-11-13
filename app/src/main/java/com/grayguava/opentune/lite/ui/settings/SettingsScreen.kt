@@ -156,12 +156,9 @@ import com.grayguava.opentune.lite.data.local.LocalMusic
 import com.grayguava.opentune.lite.data.releases.NewReleases
 import com.grayguava.opentune.lite.data.settings.AppSettings
 import com.grayguava.opentune.lite.data.settings.AudioQuality
-import com.grayguava.opentune.lite.data.settings.DockLens
 import com.grayguava.opentune.lite.data.settings.DockMotion
 import com.grayguava.opentune.lite.data.settings.LyricsAlign
 import com.grayguava.opentune.lite.data.settings.LyricsAnimation
-import com.grayguava.opentune.lite.data.settings.PageTransition
-import com.grayguava.opentune.lite.data.settings.PlayerMotion
 import com.grayguava.opentune.lite.data.settings.Recommender
 import com.grayguava.opentune.lite.data.settings.VolumeLevel
 import com.grayguava.opentune.lite.data.sponsorblock.SponsorBlock
@@ -419,9 +416,6 @@ private fun settingsSections(
     val musicServer by Subsonic.server.collectAsState()
     var lyricsAnimationDialog by remember { mutableStateOf(false) }
     var dockMotionDialog by remember { mutableStateOf(false) }
-    var dockLensDialog by remember { mutableStateOf(false) }
-    var pageTransitionDialog by remember { mutableStateOf(false) }
-    var playerMotionDialog by remember { mutableStateOf(false) }
     val lyricsSettings by AppSettings.lyrics.collectAsState()
     var confirmSignOut by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -524,36 +518,6 @@ private fun settingsSections(
             label = { "${it.label} · ${it.summary}" },
             onSelect = { m -> AppSettings.updateUi { it.copy(dockMotion = m) } },
             onDismiss = { dockMotionDialog = false },
-        )
-    }
-    if (dockLensDialog) {
-        ChoiceSheet(
-            title = "Dock lens",
-            options = DockLens.entries,
-            selected = ui.dockLens,
-            label = { "${it.label} · ${it.summary}" },
-            onSelect = { l -> AppSettings.updateUi { it.copy(dockLens = l) } },
-            onDismiss = { dockLensDialog = false },
-        )
-    }
-    if (pageTransitionDialog) {
-        ChoiceSheet(
-            title = "Page transitions",
-            options = PageTransition.entries,
-            selected = ui.pageTransition,
-            label = { "${it.label} · ${it.summary}" },
-            onSelect = { t -> AppSettings.updateUi { it.copy(pageTransition = t) } },
-            onDismiss = { pageTransitionDialog = false },
-        )
-    }
-    if (playerMotionDialog) {
-        ChoiceSheet(
-            title = "Player opening",
-            options = PlayerMotion.entries,
-            selected = ui.playerMotion,
-            label = { "${it.label} · ${it.summary}" },
-            onSelect = { m -> AppSettings.updateUi { it.copy(playerMotion = m) } },
-            onDismiss = { playerMotionDialog = false },
         )
     }
     if (lyricsAnimationDialog) {
@@ -855,26 +819,8 @@ private fun settingsSections(
                 Entry("Dock animation", "navigation bar dock fold hide scroll animation motion squash pop") {
                     NavRow("Dock animation", { dockMotionDialog = true }, summary = ui.dockMotion.summary, icon = Icons.Rounded.Dock, value = ui.dockMotion.label)
                 },
-                Entry("Dock lens", "navigation bar dock tab highlight selection pill indicator jelly stretch glide") {
-                    NavRow("Dock lens", { dockLensDialog = true }, summary = ui.dockLens.summary, icon = Icons.Rounded.Lens, value = ui.dockLens.label)
-                },
-                Entry("Opening animation", "splash start launch intro logo reveal dive") {
-                    ToggleRow(
-                        "Opening animation",
-                        ui.openingAnimation,
-                        { v -> AppSettings.updateUi { it.copy(openingAnimation = v) } },
-                        summary = "When OpenTune starts, the screen dives into the logo and the app comes through it",
-                        icon = Icons.Rounded.AutoAwesome,
-                    )
-                },
-                Entry("Page transitions", "navigation animation screen open back slide fade zoom rise") {
-                    NavRow("Page transitions", { pageTransitionDialog = true }, summary = ui.pageTransition.summary, icon = Icons.Rounded.SwapHoriz, value = ui.pageTransition.label)
-                },
                 Entry("Double-tap to skip 10 seconds", "double tap cover seek forward back rewind ten seconds gesture") {
                     ToggleRow("Double-tap to skip 10 seconds", ui.doubleTapSeek, { v -> AppSettings.updateUi { it.copy(doubleTapSeek = v) } }, summary = "Double-tap the left of the cover to go back 10 seconds, the right to go on", icon = Icons.Rounded.TouchApp)
-                },
-                Entry("Player opening", "now playing sheet open close animation spring smooth bouncy snappy") {
-                    NavRow("Player opening", { playerMotionDialog = true }, summary = ui.playerMotion.summary, icon = Icons.Rounded.UnfoldMore, value = ui.playerMotion.label)
                 },
                 Entry("Moving cover art", "motion artwork canvas animated cover drift zoom") {
                     ToggleRow("Moving cover art", ui.movingCover, { v -> AppSettings.updateUi { it.copy(movingCover = v) } }, summary = "The cover drifts and zooms slowly in the player while a song plays", icon = Icons.Rounded.Animation)

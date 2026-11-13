@@ -82,7 +82,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.sizeIn
-import com.grayguava.opentune.lite.data.settings.DockLens
 import com.grayguava.opentune.lite.data.settings.DockMotion
 import com.grayguava.opentune.lite.ui.components.glass
 
@@ -197,10 +196,9 @@ fun BottomChrome(
     mini: (@Composable (inline: Boolean, modifier: Modifier) -> Unit)?,
     modifier: Modifier = Modifier,
     motion: DockMotion = DockMotion.MINIMIZE,
-    lens: DockLens = DockLens.STRETCH,
     reduceMotion: Boolean = false,
 ) {
-    val c = ChromeContent(tabs, selected, onSelect, onExpand, searchSelected, onSearch, mini, if (reduceMotion) DockLens.GLIDE else lens)
+    val c = ChromeContent(tabs, selected, onSelect, onExpand, searchSelected, onSearch, mini, reduceMotion)
     val chrome: @Composable (Boolean, () -> Float, Modifier) -> Unit = { folded, progress, m ->
         when (motion) {
             DockMotion.MINIMIZE -> MinimizeChrome(c, folded, progress, m)
@@ -234,7 +232,8 @@ private class ChromeContent(
     val searchSelected: Boolean,
     val onSearch: () -> Unit,
     val mini: (@Composable (inline: Boolean, modifier: Modifier) -> Unit)?,
-    val lens: DockLens,
+    /** Under reduced animation the lens stops wobbling. */
+    val reducedLens: Boolean,
 )
 
 /** The spring each [DockMotion] runs on, from open to folded and back. */
@@ -531,7 +530,7 @@ private fun DockPill(c: ChromeContent, full: Dp, folded: Boolean, fold: () -> Fl
             .dockHighlight(pill)
             .clip(pill),
     ) {
-        val (left, right) = rememberStretchingLens(resting, slot, c.lens)
+        val (left, right) = rememberStretchingLens(resting, slot, c.reducedLens)
         val lensAlpha by animateFloatAsState(if (shown != null) 1f else 0f, tween(260, easing = FastOutSlowInEasing), label = "lensAlpha")
         Box(
             Modifier
@@ -769,25 +768,26 @@ internal fun Modifier.dockShadow(shape: androidx.compose.ui.graphics.Shape): Mod
  * are critically damped, so it never overshoots.
  */
 @Composable
-internal fun rememberStretchingLens(index: Int, slot: Dp, style: DockLens = DockLens.STRETCH): Pair<() -> Dp, () -> Dp> {
+internal fun rememberStretchingLens(index: Int, slot: Dp, reduced: Boolean = false): Pair<() -> Dp, () -> Dp> {
     val left = remember { Animatable(slot.value * index) }
     val right = remember { Animatable(slot.value * (index + 1)) }
     LaunchedEffect(index, slot) {
         val toLeft = slot.value * index
         val toRight = slot.value * (index + 1)
         val movingRight = toLeft > left.value
-        val (lead, follow) = lensSprings(style)
+        val (lead, follow) = lensSprings(reduced)
         launch { left.animateTo(toLeft, if (movingRight) follow else lead) }
         launch { right.animateTo(toRight, if (movingRight) lead else follow) }
     }
     return ({ left.value.dp } to { right.value.dp })
 }
 
-/** The springs for the lens's leading and trailing edges, for each [DockLens]. */
-internal fun lensSprings(style: DockLens): Pair<SpringSpec<Float>, SpringSpec<Float>> = when (style) {
-    DockLens.STRETCH -> spring<Float>(dampingRatio = 1f, stiffness = 520f) to spring(dampingRatio = 1f, stiffness = 170f)
-    // Underdamped edges: the front overshoots, the back catches up late and both wobble home.
-    DockLens.JELLY -> spring<Float>(dampingRatio = 0.5f, stiffness = 480f) to spring(dampingRatio = 0.55f, stiffness = 190f)
-    // Both edges on the same spring, so the lens keeps its width.
-    DockLens.GLIDE -> spring<Float>(dampingRatio = 0.86f, stiffness = 360f).let { it to it }
-}
+/** The springs for the lens's leading and trailing edges. */
+internal fun lensSprings(reduced: Boolean): Pair<SpringSpec<Float>, SpringSpec<Float>> =
+    if (reduced) {
+        // No overshoot, so the lens never wobbles.
+        spring<Float>(dampingRatio = 1f, stiffness = 520f) to spring(dampingRatio = 1f, stiffness = 170f)
+    } else {
+        // Underdamped edges: the front overshoots, the back catches up late and both wobble home.
+        spring<Float>(dampingRatio = 0.5f, stiffness = 480f) to spring(dampingRatio = 0.55f, stiffness = 190f)
+    }

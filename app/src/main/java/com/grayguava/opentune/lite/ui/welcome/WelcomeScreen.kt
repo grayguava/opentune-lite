@@ -219,18 +219,9 @@ fun WelcomeScreen(
         if (signingIn) signingIn = false else step = WelcomeStep.entries[step.ordinal - 1]
     }
 
-    // The opening animation dives into the welcome, as it would into Home.
-    var opening by remember { mutableStateOf(!com.grayguava.opentune.lite.ui.components.Opening.played && ui.openingAnimation && !ui.reduceAnimation) }
-    var dive by remember { mutableFloatStateOf(if (opening) 0f else 1f) }
-    LaunchedEffect(Unit) { com.grayguava.opentune.lite.ui.components.Opening.played = true }
 
     Box(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).graphicsLayer {
-            if (dive < 1f) {
-                val s = 1.14f - 0.14f * (1f - (1f - dive) * (1f - dive))
-                scaleX = s
-                scaleY = s
-            }
         },
     ) {
         GlassPage(
@@ -260,8 +251,8 @@ fun WelcomeScreen(
                 step,
                 transitionSpec = {
                     val forward = targetState.ordinal > initialState.ordinal
-                    if (forward) PageMotion.enter(ui.pageTransition, ui.reduceAnimation) togetherWith PageMotion.exit(ui.pageTransition, ui.reduceAnimation)
-                    else PageMotion.popEnter(ui.pageTransition, ui.reduceAnimation) togetherWith PageMotion.popExit(ui.pageTransition, ui.reduceAnimation)
+                    if (forward) PageMotion.enter(ui.reduceAnimation) togetherWith PageMotion.exit(ui.reduceAnimation)
+                    else PageMotion.popEnter(ui.reduceAnimation) togetherWith PageMotion.popExit(ui.reduceAnimation)
                 },
                 label = "welcomeStep",
             ) { s ->
@@ -307,9 +298,6 @@ fun WelcomeScreen(
                 })
             }
         }
-    }
-    if (opening) {
-        com.grayguava.opentune.lite.ui.components.OpeningReveal(onDive = { dive = it }, onDone = { opening = false; dive = 1f })
     }
 }
 
@@ -763,7 +751,6 @@ internal fun LookPreview(picks: List<ExploreFeed.Artist>, modifier: Modifier = M
                 },
                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp),
                 motion = ui.dockMotion,
-                lens = ui.dockLens,
                 reduceMotion = ui.reduceAnimation,
             )
         },

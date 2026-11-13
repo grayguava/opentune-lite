@@ -294,12 +294,6 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
 
 ### Look and feel
 
-- **An opening that dives into the logo.** At start the mark takes over
-  from the system splash at the same size, settles with a glint of light,
-  then turns into a window onto the app, outlined in white so it shows
-  even over a dark app, and rushes toward you until the app fills the
-  screen. Off under Settings › Motion, and
-  skipped with reduced motion.
 - **Liquid Glass.** The floating bars and player buttons can frost and bend
   what's behind them, like Apple's material (Android 13 and newer; smoke
   glass below that, solid with "Reduce dynamic blur"). The glass blurs the
@@ -330,8 +324,7 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
   (the tabs and the song gather into one small capsule in the middle, the
   open tab at one end and the cover, ringed by progress, at the other) or
   Sink (the tabs sink away into a blur and the song settles into their
-  place). The lens can
-  Stretch like a drop, wobble like Jelly or Glide in one piece.
+  place). The lens stretches like a drop and wobbles into place.
 - **Smoke glass.** The dock, buttons and bars are dark smoked glass, over
   the real page as it scrolls under them. A switch in Settings › Appearance
   turns on Apple's Liquid Glass instead: hardly frosted, with a deep lens at
