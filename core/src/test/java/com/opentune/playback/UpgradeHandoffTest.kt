@@ -63,17 +63,6 @@ class UpgradeHandoffTest {
         for (drift in listOf(-251L, 251L, Long.MIN_VALUE, Long.MAX_VALUE)) assertEquals(UpgradeAlignment.SEEK, upgradeAlignment(drift))
     }
 
-    @Test fun verifiedFlacDoesNotCountAsPlayingWhileDecoderStillHasYouTubeAudio() {
-        assertFalse(upgradeFormatReady(true, "audio/mp4a-latm"))
-        assertFalse(upgradeFormatReady(true, "audio/opus"))
-        assertFalse(upgradeFormatReady(true, null))
-        assertFalse(upgradeFormatReady(false, null))
-        assertTrue(upgradeFormatReady(true, "audio/flac"))
-        assertTrue(upgradeFormatReady(true, "audio/alac"))
-        assertTrue(upgradeFormatReady(true, "audio/raw"))
-        assertTrue(upgradeFormatReady(false, "audio/mp4a-latm"))
-    }
-
     @Test fun loadedFlacStillReplacesYouTubeWhenSeamlessAlignmentFails() = runBlocking {
         var active = "YouTube"
         val switched = performUpgradeHandoff(

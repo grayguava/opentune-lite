@@ -34,16 +34,10 @@ object NerdStats {
     fun onUpgrade(mediaId: String?) { _upgrading.value = mediaId }
 
     data class Source(val provider: String, val bits: Int? = null, val sampleRate: Int? = null, val kbps: Int? = null,
-        val selectionDetail: String? = null, val mediaId: String? = null)
+        val mediaId: String? = null)
     private val _playbackSource = MutableStateFlow<Source?>(null)
     val playbackSource = _playbackSource.asStateFlow()
     fun onPlaybackSource(source: Source) { _playbackSource.value = source }
-
-    private val _externalSource = MutableStateFlow<String?>(null)
-    val externalSource = _externalSource.asStateFlow()
-
-    /** Provider of the playing external stream, never its requested-quality label. */
-    fun onExternalSource(provider: String?) { _externalSource.value = provider }
 
     private val _lastPicked = MutableStateFlow<Pair<String, Int>?>(null)
     val lastPicked = _lastPicked.asStateFlow()

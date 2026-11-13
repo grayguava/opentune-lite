@@ -134,7 +134,6 @@ private fun resourceFor(text: String): Int? = when (text) {
         "Your recently played songs will appear here" -> R.string.ui_88dedd349132
         "Pause sending new listens to YouTube Music. Your local history, listening stats and personal recommendations keep updating. Paused listens are never sent later; likes and connected scrobblers keep their own settings." -> R.string.ui_4a8982d05d70
         "Audio" -> R.string.ui_bc1b88907d3b
-        "Add-ons" -> R.string.ui_ccfc53fcbd49
         "Interface" -> R.string.ui_c26b3ed4ce70
         "Other devices" -> R.string.ui_4e027dbb70b2
         "Streaming quality" -> R.string.ui_452f50c331a8
@@ -148,7 +147,6 @@ private fun resourceFor(text: String): Int? = when (text) {
         "See more" -> R.string.ui_bab37d624729
         "Data usage" -> R.string.ui_437c5ebb8258
         "Support" -> R.string.ui_be91940b79f4
-        "Audio add-ons" -> R.string.ui_ca3fc732392f
         "Appearance & motion" -> R.string.ui_b2a1ac9af20e
         "Library & downloads" -> R.string.ui_b10e2450d87a
         "Privacy & data" -> R.string.ui_4391d8a99171

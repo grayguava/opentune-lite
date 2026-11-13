@@ -36,10 +36,6 @@ internal suspend fun performUpgradeHandoff(
     return stillCurrent() && replace()
 }
 
-/** A verified catalog candidate is not proof that the player's current format is lossless. */
-internal fun upgradeFormatReady(lossless: Boolean, codec: String?): Boolean =
-    codec != null && (!lossless || codec in setOf("audio/flac", "audio/alac", "audio/raw"))
-
 internal enum class UpgradeBufferResult { READY, SUPERSEDED, FAILED }
 
 /** A higher-quality answer can retire a silent intermediate load, never the audible stream. */
