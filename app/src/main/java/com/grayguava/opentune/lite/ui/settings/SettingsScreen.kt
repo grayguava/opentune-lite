@@ -157,8 +157,6 @@ import com.grayguava.opentune.lite.data.releases.NewReleases
 import com.grayguava.opentune.lite.data.settings.AppSettings
 import com.grayguava.opentune.lite.data.settings.AudioQuality
 import com.grayguava.opentune.lite.data.settings.DockMotion
-import com.grayguava.opentune.lite.data.settings.LyricsAlign
-import com.grayguava.opentune.lite.data.settings.LyricsAnimation
 import com.grayguava.opentune.lite.data.settings.Recommender
 import com.grayguava.opentune.lite.data.settings.VolumeLevel
 import com.grayguava.opentune.lite.data.sponsorblock.SponsorBlock
@@ -414,7 +412,6 @@ private fun settingsSections(
     val hidden by LibraryStore.hidden.collectAsState()
     val followedArtists by NewReleases.followed.collectAsState()
     val musicServer by Subsonic.server.collectAsState()
-    var lyricsAnimationDialog by remember { mutableStateOf(false) }
     var dockMotionDialog by remember { mutableStateOf(false) }
     val lyricsSettings by AppSettings.lyrics.collectAsState()
     var confirmSignOut by remember { mutableStateOf(false) }
@@ -518,16 +515,6 @@ private fun settingsSections(
             label = { "${it.label} · ${it.summary}" },
             onSelect = { m -> AppSettings.updateUi { it.copy(dockMotion = m) } },
             onDismiss = { dockMotionDialog = false },
-        )
-    }
-    if (lyricsAnimationDialog) {
-        ChoiceSheet(
-            title = "Lyrics animation",
-            options = LyricsAnimation.entries,
-            selected = ui.lyricsAnimation,
-            label = { "${it.label} · ${it.summary}" },
-            onSelect = { a -> AppSettings.updateUi { it.copy(lyricsAnimation = a) } },
-            onDismiss = { lyricsAnimationDialog = false },
         )
     }
     if (downloadQualityDialog) {
@@ -949,32 +936,6 @@ private fun settingsSections(
             listOf(
                 Entry("Synced lyrics", "karaoke words") {
                     ToggleRow("Synced lyrics", ui.syncedLyrics, { v -> AppSettings.updateUi { it.copy(syncedLyrics = v) } }, summary = "Lights up the words as they're sung", icon = Icons.Rounded.Lyrics)
-                },
-                Entry("Lyrics animation", "style karaoke slide zoom fluid motion") {
-                    NavRow("Lyrics animation", { lyricsAnimationDialog = true }, summary = ui.lyricsAnimation.summary, icon = Icons.Rounded.Animation, value = ui.lyricsAnimation.label)
-                },
-                Entry("Lyrics text size", "font bigger smaller") {
-                    SettingRow(
-                        "Lyrics text size",
-                        summary = "${(ui.lyricsTextScale * 100).roundToInt()}%" + if (ui.lyricsTextScale == 1f) " · Standard" else "",
-                        icon = Icons.Rounded.FormatSize,
-                        below = {
-                            Slider(
-                                value = ui.lyricsTextScale,
-                                onValueChange = { v -> AppSettings.updateUi { it.copy(lyricsTextScale = (v * 20).roundToInt() / 20f) } },
-                                valueRange = 0.7f..1.5f,
-                                steps = 15,
-                            )
-                        },
-                    )
-                },
-                Entry("Lyrics alignment", "lyrics center centre left align") {
-                    SettingRow("Lyrics alignment", icon = Icons.Rounded.FormatAlignCenter, below = {
-                        PillSegmented(LyricsAlign.entries, ui.lyricsAlign, { it.label }, { a -> AppSettings.updateUi { it.copy(lyricsAlign = a) } })
-                    })
-                },
-                Entry("Glow on the sung line", "lyrics glow shine highlight") {
-                    ToggleRow("Glow on the sung line", ui.lyricsGlow, { v -> AppSettings.updateUi { it.copy(lyricsGlow = v) } }, summary = "A soft halo around the line being sung, with any animation", icon = Icons.Rounded.Flare)
                 },
                 Entry("Blur unfocused lyrics", "spotlight") {
                     ToggleRow("Blur unfocused lyrics", ui.blurLyrics, { v -> AppSettings.updateUi { it.copy(blurLyrics = v) } }, summary = "Keeps the spotlight on the current line", icon = Icons.Rounded.BlurOn)

@@ -106,10 +106,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.rememberTextMeasurer
-import com.grayguava.opentune.lite.data.settings.LyricsAnimation
 import androidx.compose.runtime.collectAsState
 import com.grayguava.opentune.lite.data.settings.AppSettings
-import com.grayguava.opentune.lite.data.settings.LyricsAlign
 import kotlin.math.abs
 import kotlinx.coroutines.delay
 
@@ -332,7 +330,7 @@ private fun SyncedLyrics(
 ) {
     val ui by AppSettings.ui.collectAsState()
     val reduced = ui.reduceAnimation || !android.animation.ValueAnimator.areAnimatorsEnabled()
-    val animation = if (reduced) LyricsAnimation.MINIMAL else ui.lyricsAnimation
+    val style = if (reduced) LyricsStyle.MINIMAL else LyricsStyle.FLUID
     val listState = rememberLazyListState()
     val selecting = selection?.isNotEmpty() == true
     val haptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
@@ -455,7 +453,7 @@ private fun SyncedLyrics(
                             line = line,
                             distance = i - activeLine,
                             isActive = r == activeRow && !selecting,
-                            animation = animation,
+                            style = style,
                             blurEnabled = blur && following,
                             position = clock,
                             romanized = romanized.getOrNull(i),
@@ -704,7 +702,10 @@ private fun GapDots(visible: Boolean, progress: () -> Float) {
 }
 
 
-/** How one [LyricsAnimation] treats lines: sizes, blur per line away, and glow. */
+/** How the lines move: the fluid one, and the still one reduced motion gets. */
+internal enum class LyricsStyle { FLUID, MINIMAL }
+
+/** How one style treats lines: sizes, blur per line away, and glow. */
 /** How far, as a share of a row's height, a letter can reach past its row's box. */
 private const val GLYPH_OVERHANG = 0.35f
 
@@ -719,13 +720,9 @@ private class LineMotion(
     val inactiveAlpha: Float,
 )
 
-private fun motionOf(animation: LyricsAnimation) = when (animation) {
-    LyricsAnimation.FLUID -> LineMotion(1f, 0.97f, 1.8f, glow = false, inactiveAlpha = 0.8f)
-    LyricsAnimation.KARAOKE -> LineMotion(1f, 1f, 0f, glow = true, inactiveAlpha = 0.55f)
-    // The active line stays at 1.0; the others shrink more, so it still reads as zoomed
-    // without scaling the current line past its box, which chopped long lines.
-    LyricsAnimation.ZOOM -> LineMotion(1f, 0.84f, 1.9f, glow = false, inactiveAlpha = 0.6f)
-    LyricsAnimation.MINIMAL -> LineMotion(1f, 1f, 0f, glow = false, inactiveAlpha = 0.6f)
+private fun motionOf(style: LyricsStyle) = when (style) {
+    LyricsStyle.FLUID -> LineMotion(1f, 0.97f, 1.8f, glow = false, inactiveAlpha = 0.8f)
+    LyricsStyle.MINIMAL -> LineMotion(1f, 1f, 0f, glow = false, inactiveAlpha = 0.6f)
 }
 
 @Composable
@@ -733,7 +730,7 @@ internal fun LyricLineView(
     line: LyricLine,
     distance: Int,
     isActive: Boolean,
-    animation: LyricsAnimation,
+    style: LyricsStyle,
     blurEnabled: Boolean,
     position: () -> Long,
     onClick: () -> Unit,
@@ -743,7 +740,7 @@ internal fun LyricLineView(
     /** While lines are being picked to share: whether this one is. Null otherwise. */
     selected: Boolean? = null,
 ) {
-    val motion = motionOf(animation)
+    val motion = motionOf(style)
     val bright = MaterialTheme.colorScheme.onSurface
     val dim = bright.copy(alpha = 0.45f)
     val picking = selected != null
@@ -759,7 +756,7 @@ internal fun LyricLineView(
             isActive -> 1f
             else -> (motion.inactiveAlpha - 0.06f * (minOf(abs(distance), 5) - 1) - if (distance < 0) 0.1f else 0f).coerceAtLeast(0.18f)
         },
-        tween(if (animation == LyricsAnimation.MINIMAL) 200 else LINE_SETTLE_MS, easing = GLIDE_EASING),
+        tween(if (style == LyricsStyle.MINIMAL) 200 else LINE_SETTLE_MS, easing = GLIDE_EASING),
         label = "lineAlpha",
     )
     // Set, not animated, and read only while drawing (below): an animated blur was worked
@@ -779,11 +776,9 @@ internal fun LyricLineView(
         tween(220),
         label = "lineCard",
     )
-    val ui by AppSettings.ui.collectAsState()
-    val centred = ui.lyricsAlign == LyricsAlign.CENTER
     // In a duet the second voice's lines sit on the right and lines sung together in the middle.
     val align = when {
-        !duet || centred -> if (centred) TextAlign.Center else TextAlign.Start
+        !duet -> TextAlign.Start
         line.voice == VOICE_SECOND -> TextAlign.End
         line.voice == VOICE_TOGETHER -> TextAlign.Center
         else -> TextAlign.Start
@@ -792,7 +787,7 @@ internal fun LyricLineView(
     val rtl = remember(line) { com.grayguava.opentune.lite.data.lyrics.readsRightToLeft(line) }
     val origin = when (align) { TextAlign.Center -> 0.5f; TextAlign.End -> if (rtl) 0f else 1f; else -> if (rtl) 1f else 0f }
     val base = lyricsStyle().copy(textAlign = align, textDirection = if (rtl) TextDirection.Rtl else TextDirection.Ltr)
-    val style = if ((motion.glow || ui.lyricsGlow) && isActive) base.copy(shadow = Shadow(bright.copy(alpha = 0.55f), blurRadius = 24f)) else base
+    val lineStyle = if (isActive) base.copy(shadow = Shadow(bright.copy(alpha = 0.55f), blurRadius = 24f)) else base
     val text = remember(line) { if (line.words.isEmpty()) line.text else line.words.joinToString("") { it.text } }
     val layout = remember(text) { mutableStateOf<TextLayoutResult?>(null) }
     // Where each word sits, worked out once per layout rather than every frame.
@@ -855,7 +850,7 @@ internal fun LyricLineView(
         // the node made the first active frame draw without its word mask, then flash dim.
         Text(
             text = text,
-            style = style,
+            style = lineStyle,
             color = if (isActive) bright else dim,
             onTextLayout = { layout.value = it },
             modifier = Modifier.fillMaxWidth()
@@ -1096,15 +1091,14 @@ private const val LINE_ANCHOR = 0.085f
 /** How far ahead of its timestamp a line lights up. */
 private const val LINE_LEAD_MS = 150L
 
-/** The lyrics style at the size and alignment chosen in Settings. */
+/** The lyrics style: fixed size, always left-aligned. */
 @Composable
 private fun lyricsStyle(): androidx.compose.ui.text.TextStyle {
-    val ui = AppSettings.ui.collectAsState().value
-    val scale = ui.lyricsTextScale
+    val scale = 0.7f
     return LyricsTextStyle.copy(
         fontFamily = MaterialTheme.typography.bodyLarge.fontFamily,
         fontSize = LyricsTextStyle.fontSize * scale,
         lineHeight = LyricsTextStyle.lineHeight * scale,
-        textAlign = if (ui.lyricsAlign == LyricsAlign.CENTER) TextAlign.Center else TextAlign.Start,
+        textAlign = TextAlign.Start,
     )
 }

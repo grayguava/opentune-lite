@@ -12,7 +12,6 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.sp
 import com.grayguava.opentune.lite.data.lyrics.LyricLine
 import com.grayguava.opentune.lite.data.lyrics.LyricWord
-import com.grayguava.opentune.lite.data.settings.LyricsAnimation
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -32,7 +31,7 @@ class LyricLayoutTest {
         val line = line(listOf("A steady ", "line of lyrics"))
         compose.setContent {
             MaterialTheme {
-                LyricLineView(line, 0, active.value, LyricsAnimation.MINIMAL, false, { 400L }, {})
+                LyricLineView(line, 0, active.value, LyricsStyle.MINIMAL, false, { 400L }, {})
             }
         }
         val before = compose.onNodeWithText(line.text, useUnmergedTree = true).fetchSemanticsNode()

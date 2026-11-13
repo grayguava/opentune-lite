@@ -321,9 +321,6 @@ data class InterfaceSettings(
     val motionQuality: MotionQuality = MotionQuality.MEDIUM,
     /** Animated covers only load on Wi-Fi or another unmetered network. */
     val animatedCoversWifiOnly: Boolean = true,
-    val lyricsAnimation: LyricsAnimation = LyricsAnimation.FLUID,
-    /** Lyrics text size, as a fraction of the standard size. */
-    val lyricsTextScale: Float = 1f,
     val dockMotion: DockMotion = DockMotion.MINIMIZE,
     /** The cover drifts and zooms slowly in the player while a song plays. */
     val movingCover: Boolean = true,
@@ -335,9 +332,6 @@ data class InterfaceSettings(
     val checkForUpdates: Boolean = true,
     /** Pages blur and fade out as they scroll under the status bar. */
     val frostedTopEdge: Boolean = true,
-    val lyricsAlign: LyricsAlign = LyricsAlign.LEFT,
-    /** A soft glow around the line being sung, whatever the lyrics animation. */
-    val lyricsGlow: Boolean = false,
     /** High performance mode: ask for a fast refresh rate while the app is open. */
     val highRefreshRate: Boolean = true,
     /** The rate high performance mode asks for, in Hz; 0 for the screen's fastest. */
@@ -366,12 +360,6 @@ enum class WelcomeState {
     DUE,
     /** Seen, skipped, or not needed because the app was already in use. */
     SEEN,
-}
-
-@Serializable
-enum class LyricsAlign(val label: String) {
-    LEFT("Left"),
-    CENTER("Centre"),
 }
 
 @Serializable
@@ -469,13 +457,6 @@ enum class SeekbarTime(val label: String) {
     LEFT("Time left"),
     TOTAL("Length"),
     HIDDEN("Hidden"),
-}
-
-enum class LyricsAnimation(val label: String, val summary: String) {
-    FLUID("Fluid", "The current line grows and the rest soften"),
-    KARAOKE("Karaoke", "Words fill with a glow; lines stay still"),
-    ZOOM("Focus zoom", "A big current line, the rest blurred away"),
-    MINIMAL("Minimal", "Only the colour changes"),
 }
 
 /** Where lyrics can come from. */
