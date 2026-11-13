@@ -16,25 +16,6 @@ android {
         targetSdk = 36
         versionCode = 46
         versionName = "1.0.4"
-        // This version's store changelog, shown as What's new when a release
-        // goes out before the app's own notes for it are written.
-        val changelog = rootProject.file("fastlane/metadata/android/en-US/changelogs/$versionCode.txt")
-            .takeIf { it.exists() }?.readText().orEmpty().trim()
-        // Written into a generated Java source, so every character outside plain
-        // ASCII goes out as a unicode escape: the file stays readable whatever
-        // encoding the compiler assumes, and a bullet can't break the build.
-        val changelogLiteral = changelog.fold(StringBuilder()) { out, c ->
-            when {
-                c == '\\' -> out.append("\\\\")
-                c == '"' -> out.append("\\\"")
-                c == '\n' -> out.append("\\n")
-                c == '\r' -> out.append("\\r")
-                c == '\t' -> out.append("\\t")
-                c.code in 0x20..0x7e -> out.append(c)
-                else -> out.append("\\u%04x".format(c.code))
-            }
-        }.toString()
-        buildConfigField("String", "CHANGELOG", "\"$changelogLiteral\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

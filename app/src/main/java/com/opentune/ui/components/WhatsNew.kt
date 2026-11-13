@@ -186,26 +186,15 @@ object WhatsNew {
             info.firstInstallTime == info.lastUpdateTime
         }.getOrDefault(true)
         if (fresh) return emptyList()
-        return since(seen, version, com.opentune.BuildConfig.CHANGELOG)
+        return since(seen, version)
     }
 
     /**
      * The notes for versions after [seen] up to [version], at most three
-     * versions. When [version] has none of its own (it was released before
-     * they were written), its store [changelog] stands in, so an update
-     * from 0.4.5 to 0.4.7 never opens on 0.4.6's notes.
+     * versions.
      */
-    internal fun since(seen: String?, version: String, changelog: String = ""): List<Pair<String, List<Note>>> {
-        val notes = NOTES.filter { (v, _) -> compare(v, version) <= 0 && (seen == null || compare(v, seen) > 0) }
-        val own = notes.firstOrNull()?.first?.let { compare(it, version) == 0 } == true
-        val stand = if (own) null else fromChangelog(changelog).takeIf { it.isNotEmpty() }?.let { version to it }
-        return (listOfNotNull(stand) + notes).take(3)
-    }
-
-    /** A store changelog's "• line" items as notes. */
-    internal fun fromChangelog(text: String): List<Note> =
-        text.lineSequence().map { it.trim().removePrefix("•").removePrefix("-").trim() }.filter { it.isNotEmpty() }
-            .map { Note(Icons.Rounded.NewReleases, it, "") }.toList()
+    internal fun since(seen: String?, version: String): List<Pair<String, List<Note>>> =
+        NOTES.filter { (v, _) -> compare(v, version) <= 0 && (seen == null || compare(v, seen) > 0) }.take(3)
 
     internal fun compare(a: String, b: String): Int {
         val x = a.split('.', '-').map { it.toIntOrNull() ?: 0 }

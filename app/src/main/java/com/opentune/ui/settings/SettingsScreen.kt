@@ -499,7 +499,7 @@ private fun settingsSections(
     if (sponsorBlockDialog) SponsorBlockDialog(onDismiss = { sponsorBlockDialog = false })
     update?.let { UpdateDialog(it, onDismiss = { update = null }) }
     if (showWhatsNew) com.opentune.ui.components.WhatsNewSheet(
-        com.opentune.ui.components.WhatsNew.since(null, BuildConfig.VERSION_NAME, BuildConfig.CHANGELOG),
+        com.opentune.ui.components.WhatsNew.since(null, BuildConfig.VERSION_NAME),
         BuildConfig.VERSION_NAME, onDismiss = { showWhatsNew = false },
     )
     if (supportDialog) com.opentune.ui.components.SupportDialog(onDismiss = { supportDialog = false })
