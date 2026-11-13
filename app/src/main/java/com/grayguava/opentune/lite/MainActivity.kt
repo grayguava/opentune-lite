@@ -32,7 +32,7 @@ import com.grayguava.opentune.lite.ui.theme.rememberArtworkSeed
 
 class MainActivity : ComponentActivity() {
     override fun attachBaseContext(newBase: android.content.Context) {
-        super.attachBaseContext(com.grayguava.opentune.lite.ui.theme.AppLanguages.wrap(newBase))
+        super.attachBaseContext(newBase)
     }
 
     override fun onStop() {

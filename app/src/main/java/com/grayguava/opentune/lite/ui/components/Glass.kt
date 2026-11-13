@@ -56,7 +56,6 @@ import com.kyant.backdrop.shadow.Shadow
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.lerp
 import com.grayguava.opentune.lite.data.settings.AppSettings
-import com.grayguava.opentune.lite.data.settings.GlassStyle
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
@@ -71,9 +70,6 @@ val LocalHazeState = staticCompositionLocalOf<HazeState?> { null }
  * the layer it samples would sample itself.
  */
 val LocalBackdrop = staticCompositionLocalOf<LayerBackdrop?> { null }
-
-/** How much Liquid Glass frosts what's behind it; Apple's bars sit around here. */
-private val LIQUID_BLUR = 22.dp
 
 /** Lens refraction needs runtime shaders, which arrived in Android 13. */
 val liquidGlassSupported: Boolean get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
@@ -91,18 +87,18 @@ fun backdropBlurOn(): Boolean {
 @Composable
 fun liquidGlassOn(): Boolean {
     val ui by AppSettings.ui.collectAsState()
-    // The Liquid style is Liquid Glass by definition, whatever the switch says.
-    return liquidGlassSupported && (ui.liquidGlass || ui.glassStyle == GlassStyle.LIQUID) && !ui.reduceBlur
+    return liquidGlassSupported && ui.liquidGlass && !ui.reduceBlur
 }
 
 /**
  * Glass for floating controls, in three grades:
  *
- * - Liquid Glass (Android 13+, setting on): the content behind is blurred a
+ * - Liquid Glass (Android 13+, the setting on): the content behind is blurred a
  *   little, bent at the edges by a lens and lifted by vibrancy, with a rim
  *   highlight, like Apple's material.
- * - Frosted (Android 12+): a recorded copy of what's behind, blurred and
- *   tinted; through Haze where only that is provided (older phones too).
+ * - Smoke (the default): a recorded copy of what's behind, blurred and tinted
+ *   with a dark film; through Haze where only that is provided (older phones
+ *   too).
  * - Solid: with "Reduce dynamic blur" on, or inside the very layer glass
  *   would sample (a page's own buttons), where there's nothing to blur.
  *
@@ -115,10 +111,11 @@ fun Modifier.glass(shape: Shape, tint: Color = MaterialTheme.colorScheme.surface
     val backdrop = LocalBackdrop.current
     val edge = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)
     val dark = MaterialTheme.colorScheme.surface.luminance() <= 0.5f
-    val look = glassLook(ui.glassStyle)
-    // A caller's own see-through tint wins; otherwise the style colours the glass.
-    val colour = if (tint.alpha < 1f) tint else styleTint(ui.glassStyle, tint, MaterialTheme.colorScheme.primary, dark)
-    if (backdrop != null && liquidGlassOn() && ui.glassStyle == GlassStyle.LIQUID) {
+    val liquid = ui.liquidGlass
+    val look = if (liquid) LIQUID_LOOK else SMOKE_LOOK
+    // A caller's own see-through tint wins; otherwise the look colours the glass.
+    val colour = if (tint.alpha < 1f) tint else if (liquid) tint else smokeTint(tint, dark)
+    if (backdrop != null && liquidGlassOn()) {
         // Apple's material: what's behind is softly frosted, so colours read
         // as glowing fields rather than detail; a deep lens at the edges that
         // bends it and splits the light into a colour fringe; vibrancy so the
@@ -155,36 +152,9 @@ fun Modifier.glass(shape: Shape, tint: Color = MaterialTheme.colorScheme.surface
             shape,
         )
     }
-    if (backdrop != null && liquidGlassOn()) {
-        // A see-through dark (or light) film rather than the theme's grey, so
-        // the colour behind comes through. OpenTune's film carries a little of
-        // the accent, so the glass reads as part of the theme rather than plain smoke.
-        val neutral = if (dark) Color(0xFF101014) else Color(0xFFF7F7FA)
-        val film = when {
-            tint.alpha < 1f -> tint
-            ui.glassStyle == GlassStyle.FROSTED -> lerp(neutral, MaterialTheme.colorScheme.primary, 0.14f).copy(alpha = look.filmAlpha)
-            else -> lerp(neutral, colour, 0.6f).copy(alpha = look.filmAlpha)
-        }
-        return this.drawBackdrop(
-            backdrop = backdrop,
-            shape = { shape },
-            effects = {
-                // Saturated and frosted, then bent at the edges with a little
-                // colour fringing, the way Apple's glass reads over artwork.
-                colorControls(saturation = look.saturation)
-                blur(look.liquidBlur.toPx())
-                val depth = lensDepth(24.dp.toPx(), size.minDimension)
-                lens(depth, depth, depthEffect = true, chromaticAberration = true)
-            },
-            highlight = { Highlight.Default },
-            shadow = { Shadow.Default },
-            onDrawSurface = { drawRect(film) },
-        ).border(0.5.dp, Color.White.copy(alpha = 0.10f), shape)
-    }
     if (backdrop != null && backdropBlurOn()) {
-        // Frosted: the content behind, blurred and a little saturated, under
-        // the style's film. No lens, so nothing bends, but it is the real
-        // content, moving as it scrolls.
+        // Smoke: the content behind, blurred and a little saturated, under the
+        // dark film. It is the real content, moving as it scrolls.
         val film = if (tint.alpha < 1f) tint else colour.copy(alpha = look.tintAlpha)
         return this.drawBackdrop(
             backdrop = backdrop,
@@ -245,35 +215,29 @@ fun GlassPage(modifier: Modifier = Modifier, overlay: @Composable BoxScope.() ->
 /** How deep a lens may bend at the edge: [wanted], kept to under half the shape's short side. */
 private fun lensDepth(wanted: Float, shortSide: Float): Float = minOf(wanted, shortSide * 0.42f).coerceAtLeast(0f)
 
-/** The numbers behind a [GlassStyle], for frosted glass and for Liquid Glass. */
+/** The numbers behind a glass look. */
 internal data class GlassLook(
     val blur: Dp,
     val tintAlpha: Float,
     val noise: Float,
     val liquidBlur: Dp,
-    val filmAlpha: Float,
     val saturation: Float,
 )
 
-internal fun glassLook(style: GlassStyle): GlassLook = when (style) {
-    GlassStyle.FROSTED -> GlassLook(28.dp, 0.62f, 0.06f, LIQUID_BLUR, 0.42f, 1.5f)
-    GlassStyle.CLEAR -> GlassLook(16.dp, 0.30f, 0f, 10.dp, 0.22f, 1.7f)
-    GlassStyle.HEAVY -> GlassLook(44.dp, 0.82f, 0.09f, 36.dp, 0.64f, 1.2f)
-    GlassStyle.TINTED -> GlassLook(30.dp, 0.58f, 0.05f, LIQUID_BLUR, 0.46f, 1.6f)
-    GlassStyle.SMOKE -> GlassLook(34.dp, 0.70f, 0.04f, 26.dp, 0.58f, 1.1f)
-    // Without Liquid Glass (older Android, or blur reduced) it's the clearest frost.
-    // Liquid's own blur (the fourth figure) is heavy enough that what's behind
-    // reads as soft fields of colour, not detail, as on BitChord and iOS 26.
-    GlassStyle.LIQUID -> GlassLook(20.dp, 0.30f, 0f, 18.dp, 0.06f, 2.0f)
-}
+/** The app's glass: dark smoked glass with deep contrast. */
+internal val SMOKE_LOOK = GlassLook(34.dp, 0.70f, 0.04f, 26.dp, 1.1f)
 
-/** The colour a [GlassStyle] washes the glass with, from the surface [base] and the [accent]. */
-internal fun styleTint(style: GlassStyle, base: Color, accent: Color, dark: Boolean): Color = when (style) {
-    GlassStyle.FROSTED, GlassStyle.CLEAR, GlassStyle.HEAVY, GlassStyle.LIQUID -> base
-    GlassStyle.TINTED -> lerp(base, accent, if (dark) 0.32f else 0.22f)
+/**
+ * Apple's Liquid Glass. Its own blur (the fourth figure) is heavy enough that
+ * what's behind reads as soft fields of colour, not detail, as on BitChord
+ * and iOS 26.
+ */
+internal val LIQUID_LOOK = GlassLook(20.dp, 0.30f, 0f, 18.dp, 2.0f)
+
+/** The colour smoke washes the glass with, from the surface [base]. */
+internal fun smokeTint(base: Color, dark: Boolean): Color =
     // Smoke stays dark in both themes, a little lighter in the light one so it isn't a hole.
-    GlassStyle.SMOKE -> if (dark) lerp(base, Color.Black, 0.65f) else lerp(base, Color(0xFF3A3A42), 0.3f)
-}
+    if (dark) lerp(base, Color.Black, 0.65f) else lerp(base, Color(0xFF3A3A42), 0.3f)
 
 /**
  * A strip under the status bar where pages blur and fade out as they scroll

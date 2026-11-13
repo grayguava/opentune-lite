@@ -24,7 +24,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.runtime.collectAsState
 import com.grayguava.opentune.lite.data.settings.AppSettings
-import com.grayguava.opentune.lite.data.settings.GlassStyle
 import com.grayguava.opentune.lite.ui.components.LocalBackdrop
 import com.grayguava.opentune.lite.ui.components.liquidGlassOn
 import androidx.compose.ui.semantics.Role
@@ -635,7 +634,7 @@ internal fun DockItem(tab: ChromeTab, selected: Boolean, modifier: Modifier, col
             )
         }
         Text(
-            com.grayguava.opentune.lite.ui.theme.tr(tab.label),
+            tab.label,
             style = (if (roomy) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelSmall).let { if (ink.shade != null) it.copy(shadow = ink.shade) else it },
             // One weight either way, so the name doesn't change width as it's picked.
             fontWeight = FontWeight.SemiBold,
@@ -703,7 +702,7 @@ private fun TabOrb(tab: ChromeTab, searchSelected: Boolean, modifier: Modifier, 
     ) {
         Icon(
             if (searchSelected) tab.icon else tab.selectedIcon,
-            com.grayguava.opentune.lite.ui.theme.tr(tab.label),
+            tab.label,
             tint = if (searchSelected) ink.off else ink.on,
             modifier = Modifier.size(26.dp),
         )
@@ -732,8 +731,7 @@ internal class DockInk(
 @Composable
 internal fun dockInk(): DockInk {
     val scheme = MaterialTheme.colorScheme
-    val ui by AppSettings.ui.collectAsState()
-    val liquid = LocalBackdrop.current != null && liquidGlassOn() && ui.glassStyle == GlassStyle.LIQUID
+    val liquid = LocalBackdrop.current != null && liquidGlassOn()
     if (!liquid) {
         val a = scheme.primary
         // Over a glass dock with content showing through, the muted inactive tint

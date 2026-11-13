@@ -135,7 +135,7 @@ class ReadmeScreenshotTest {
         song = song, isPlaying = playing, isBuffering = false, hasNext = true, shuffle = false, repeatMode = Player.REPEAT_MODE_OFF,
         durationMs = 200_000, lyrics = lyrics, queue = queue, currentIndex = 0, upNext = listOf(1, 2, 3),
         sound = SoundSettings(), theme = theme, source = song.albumName,
-        // Liquid Glass needs the GPU's shaders, which this software drawing can't run; the frosted look stands in.
+        // Liquid Glass needs the GPU's shaders, which this software drawing can't run; the smoke glass stands in.
         // The new designs move every frame while playing; a still needs that held, or the test never goes idle.
         ui = com.grayguava.opentune.lite.data.settings.InterfaceSettings(liquidGlass = false, playerStyle = style, reduceAnimation = style != com.grayguava.opentune.lite.data.settings.PlayerStyle.CLASSIC, fullScreenCover = fullCover, controlStyle = controls),
     ).let { state -> @Composable { PlayerLayout(state, position = { position }, buffered = { position + 30_000 }, actions = noActions, initialLyrics = initialLyrics) } }

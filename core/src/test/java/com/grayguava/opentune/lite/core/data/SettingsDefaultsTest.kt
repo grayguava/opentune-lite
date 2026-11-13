@@ -30,10 +30,9 @@ class SettingsDefaultsTest {
             assertEquals(LyricsSource.entries.toList(), settings.lyrics.ordered.map { it.source })
             assertTrue(settings.lyrics.ordered.all { it.enabled })
         }
-        // The iOS 26 look: Liquid Glass and the dock that minimizes.
+        // Smoke glass by default, with the dock that minimizes.
         val ui = json.decodeFromString<SettingsState>("{}").ui
-        assertTrue(ui.liquidGlass)
-        assertEquals(com.grayguava.opentune.lite.data.settings.GlassStyle.LIQUID, ui.glassStyle)
+        assertFalse(ui.liquidGlass)
         assertEquals(com.grayguava.opentune.lite.data.settings.DockMotion.MINIMIZE, ui.dockMotion)
     }
 

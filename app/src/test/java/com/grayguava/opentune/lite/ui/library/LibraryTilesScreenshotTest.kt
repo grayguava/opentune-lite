@@ -100,10 +100,6 @@ class LibraryTilesScreenshotTest {
         }
     }
 
-    @Test fun appIcons() {
-        shoot("app-icons") { com.grayguava.opentune.lite.ui.settings.AppIconDialog(onDismiss = {}) }
-    }
-
     private fun topWindow(): View? = runCatching {
         val global = Class.forName("android.view.WindowManagerGlobal")
         val views = global.getDeclaredField("mViews").apply { isAccessible = true }.get(global.getMethod("getInstance").invoke(null)) as List<*>

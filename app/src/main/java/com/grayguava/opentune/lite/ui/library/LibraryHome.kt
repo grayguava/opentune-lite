@@ -264,7 +264,7 @@ fun LibraryScreen(contentPadding: PaddingValues, actions: SongActions, nav: Libr
 
     val page: @Composable () -> Unit = { LazyColumn(state = listState, contentPadding = contentPadding, modifier = Modifier.fillMaxSize()) {
         item {
-            PageHeader(com.grayguava.opentune.lite.ui.theme.tr("Library"), actions = {
+            PageHeader("Library", actions = {
                 // History and the account side by side in one glass pill.
                 Row(
                     Modifier.height(54.dp).glass(androidx.compose.foundation.shape.CircleShape).padding(horizontal = 5.dp),
@@ -413,7 +413,7 @@ fun AllPlaylistsScreen(contentPadding: PaddingValues, nav: LibraryNav, onBack: (
         modifier = Modifier.fillMaxSize().padding(horizontal = if (asList) 0.dp else 10.dp),
     ) {
         item(key = "header", span = { full }) {
-            PageHeader(com.grayguava.opentune.lite.ui.theme.tr("Playlists"), onBack = onBack, actions = {
+            PageHeader("Playlists", onBack = onBack, actions = {
                 // Sorting and the account in one glass pill, as on Library.
                 Row(
                     Modifier.height(54.dp).glass(androidx.compose.foundation.shape.CircleShape).padding(horizontal = 5.dp),
@@ -794,7 +794,7 @@ fun DownloadsScreen(contentPadding: PaddingValues, actions: SongActions, onBack:
     }
     var tab by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(DownloadsTab.SONGS) }
     LazyColumn(contentPadding = contentPadding, modifier = Modifier.fillMaxSize()) {
-        item { PageHeader(com.grayguava.opentune.lite.ui.theme.tr("Downloads"), onBack = onBack) }
+        item { PageHeader("Downloads", onBack = onBack) }
         if (list.isEmpty()) {
             item {
                 MessageState(Icons.Rounded.Download, "No downloads yet", Modifier.padding(top = 32.dp), message = "Pick Download from any song's menu to keep it for offline listening.")
@@ -1087,7 +1087,7 @@ fun LocalPlaylistScreen(id: String, contentPadding: PaddingValues, actions: Song
         }
         // Keyed by the song (and which copy of it), not its place, so a row taken out pops
         // alone and the rows below slide up rather than every row after it being redrawn.
-        if (shown.isEmpty()) item { Text(com.grayguava.opentune.lite.ui.theme.tr("No matching songs"), Modifier.padding(24.dp)) }
+        if (shown.isEmpty()) item { Text("No matching songs", Modifier.padding(24.dp)) }
         val keys = songKeys(songs)
         itemsIndexed(shown, key = { i, _ -> keys[matching[i]] }) { i, song ->
             SongListItem(

@@ -213,7 +213,7 @@ private fun PlayShuffleButtons(enabled: Boolean, onPlay: () -> Unit, onShuffle: 
         Button(onClick = onPlay, enabled = enabled, modifier = Modifier.weight(1f).height(52.dp)) {
             Icon(Icons.Filled.PlayArrow, null)
             Spacer(Modifier.width(8.dp))
-            Text(com.grayguava.opentune.lite.ui.theme.tr("Play"))
+            Text("Play")
         }
         ShuffleButton(onShuffle, onSmartShuffle, Modifier.weight(1f), enabled = enabled)
     }
@@ -260,7 +260,7 @@ internal fun ShuffleButton(onShuffle: () -> Unit, onSmartShuffle: (() -> Unit)?,
             Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.Shuffle, null)
                 Spacer(Modifier.width(8.dp))
-                Text(com.grayguava.opentune.lite.ui.theme.tr("Shuffle"), style = MaterialTheme.typography.labelLarge)
+                Text("Shuffle", style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -439,7 +439,7 @@ internal fun ListPlayRow(
         ) {
             Icon(Icons.Filled.PlayArrow, null)
             Spacer(Modifier.width(8.dp))
-            Text(com.grayguava.opentune.lite.ui.theme.tr("Play"), style = MaterialTheme.typography.titleMedium)
+            Text("Play", style = MaterialTheme.typography.titleMedium)
         }
         if (onSave != null) Box(
             Modifier.size(56.dp).glass(androidx.compose.foundation.shape.CircleShape).clip(androidx.compose.foundation.shape.CircleShape).clickable(enabled = enabled, onClick = onSave),
@@ -464,7 +464,7 @@ internal fun ListSearchField(query: String, onQuery: (String) -> Unit, onClear: 
         Icon(Icons.Filled.Search, null, tint = colors.onSurfaceVariant)
         Spacer(Modifier.width(12.dp))
         Box(Modifier.weight(1f)) {
-            if (query.isEmpty()) Text(com.grayguava.opentune.lite.ui.theme.tr("Search this list"), style = MaterialTheme.typography.bodyLarge, color = colors.onSurfaceVariant)
+            if (query.isEmpty()) Text("Search this list", style = MaterialTheme.typography.bodyLarge, color = colors.onSurfaceVariant)
             androidx.compose.foundation.text.BasicTextField(
                 query, onQuery,
                 singleLine = true,

@@ -33,7 +33,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.TouchApp
@@ -161,7 +160,6 @@ import com.grayguava.opentune.lite.data.settings.ControlStyle
 import com.grayguava.opentune.lite.data.settings.CoverChange
 import com.grayguava.opentune.lite.data.settings.DockLens
 import com.grayguava.opentune.lite.data.settings.DockMotion
-import com.grayguava.opentune.lite.data.settings.GlassStyle
 import com.grayguava.opentune.lite.data.settings.LyricsAlign
 import com.grayguava.opentune.lite.data.settings.LyricsAnimation
 import com.grayguava.opentune.lite.data.settings.PageTransition
@@ -230,7 +228,6 @@ fun SettingsScreen(
     val open = SETTINGS_CATEGORIES.firstOrNull { it.key == openKey }
     androidx.activity.compose.BackHandler(enabled = open != null) { openKey = null }
     val q = query.trim()
-    val languageContext = LocalContext.current
     // Kept out here, so coming back from a page finds the main list where it was left.
     val mainList = androidx.compose.foundation.lazy.rememberLazyListState()
     // Which folded subsections have been opened with "See more".
@@ -252,7 +249,7 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxSize(),
         ) {
             if (page != null) {
-                item { PageHeader(com.grayguava.opentune.lite.ui.theme.tr(page.title), onBack = { openKey = null }) }
+                item { PageHeader(page.title, onBack = { openKey = null }) }
                 placed.filter { it.category == page }.groupBy { it.group }.forEach { (group, rows) ->
                     item(key = "label:$group") { GroupLabel(group) }
                     item(key = "card:$group") {
@@ -272,13 +269,13 @@ fun SettingsScreen(
                     }
                 }
             } else {
-                item { PageHeader(com.grayguava.opentune.lite.ui.theme.tr("Settings"), onBack = onBack) }
+                item { PageHeader("Settings", onBack = onBack) }
                 item {
                     TextField(
                         value = query,
                         onValueChange = { query = it },
                         singleLine = true,
-                        placeholder = { Text(com.grayguava.opentune.lite.ui.theme.tr("Search settings")) },
+                        placeholder = { Text("Search settings") },
                         leadingIcon = { Icon(Icons.Rounded.Search, null) },
                         trailingIcon = { if (query.isNotEmpty()) IconButton(onClick = { query = "" }) { Icon(Icons.Rounded.Close, "Clear") } },
                         shape = RoundedCornerShape(20.dp),
@@ -293,7 +290,7 @@ fun SettingsScreen(
                 }
                 if (q.isNotEmpty()) {
                     val hits = placed.filter {
-                        it.entry.title.contains(q, true) || com.grayguava.opentune.lite.ui.theme.translated(languageContext, it.entry.title).contains(q, true) || it.entry.summary.contains(q, true) ||
+                        it.entry.title.contains(q, true) || it.entry.summary.contains(q, true) ||
                             it.group.contains(q, true) || it.category.title.contains(q, true)
                     }
                     if (hits.isEmpty()) {
@@ -418,8 +415,6 @@ private fun settingsSections(
     val pendingUpdate by UpdateCheck.pending.collectAsState()
     var updateBytes by remember { mutableStateOf(0L) }
     var playerStyleDialog by remember { mutableStateOf(false) }
-    var appIconDialog by remember { mutableStateOf(false) }
-    var languageDialog by remember { mutableStateOf(false) }
     var recommenderDialog by remember { mutableStateOf(false) }
     var historyTargetDialog by remember { mutableStateOf(false) }
     var followedDialog by remember { mutableStateOf(false) }
@@ -430,7 +425,6 @@ private fun settingsSections(
     var lyricsAnimationDialog by remember { mutableStateOf(false) }
     var dockMotionDialog by remember { mutableStateOf(false) }
     var dockLensDialog by remember { mutableStateOf(false) }
-    var glassStyleDialog by remember { mutableStateOf(false) }
     var pageTransitionDialog by remember { mutableStateOf(false) }
     var playerMotionDialog by remember { mutableStateOf(false) }
     var coverChangeDialog by remember { mutableStateOf(false) }
@@ -505,7 +499,6 @@ private fun settingsSections(
     if (supportDialog) com.grayguava.opentune.lite.ui.components.SupportDialog(onDismiss = { supportDialog = false })
     if (followedDialog) FollowedArtistsDialog(onDismiss = { followedDialog = false })
     if (hiddenDialog) HiddenDialog(onDismiss = { hiddenDialog = false })
-    if (appIconDialog) AppIconDialog { appIconDialog = false }
     if (playerStyleDialog) {
         ChoiceSheet(
             title = "Player layout",
@@ -514,16 +507,6 @@ private fun settingsSections(
             label = { "${it.label} · ${it.summary}" },
             onSelect = { v -> AppSettings.updateUi { it.copy(playerStyle = v) } },
             onDismiss = { playerStyleDialog = false },
-        )
-    }
-    if (languageDialog) {
-        ChoiceSheet(
-            title = com.grayguava.opentune.lite.ui.theme.tr("App language"),
-            options = com.grayguava.opentune.lite.ui.theme.AppLanguage.entries,
-            selected = com.grayguava.opentune.lite.ui.theme.AppLanguages.selected(context),
-            label = { it.label },
-            onSelect = { language -> languageDialog = false; com.grayguava.opentune.lite.ui.theme.AppLanguages.select(context, language) },
-            onDismiss = { languageDialog = false },
         )
     }
     if (historyTargetDialog) {
@@ -578,16 +561,6 @@ private fun settingsSections(
             label = { "${it.label} · ${it.summary}" },
             onSelect = { l -> AppSettings.updateUi { it.copy(dockLens = l) } },
             onDismiss = { dockLensDialog = false },
-        )
-    }
-    if (glassStyleDialog) {
-        ChoiceSheet(
-            title = "Glass style",
-            options = GlassStyle.entries,
-            selected = ui.glassStyle,
-            label = { "${it.label} · ${it.summary}" },
-            onSelect = { g -> AppSettings.updateUi { it.copy(glassStyle = g) } },
-            onDismiss = { glassStyleDialog = false },
         )
     }
     if (pageTransitionDialog) {
@@ -903,13 +876,6 @@ private fun settingsSections(
                         enabled = supported,
                     )
                 },
-                Entry("App language", "language locale hindi punjabi english भाषा ਭਾਸ਼ਾ") {
-                    NavRow("App language", { languageDialog = true }, icon = Icons.Rounded.Language,
-                        value = com.grayguava.opentune.lite.ui.theme.AppLanguages.selected(context).label)
-                },
-                Entry("App icon", "launcher icon design glass pearl midnight rose ocean") {
-                    NavRow("App icon", { appIconDialog = true }, summary = "Choose the OpenTune icon on your home screen", icon = Icons.Rounded.Palette)
-                },
                 Entry("Pure black", "oled amoled") {
                     ToggleRow("Pure black", theme.pureBlack, { v -> AppSettings.updateTheme { it.copy(pureBlack = v) } }, summary = "Black backgrounds with neutral gray cards in dark theme", icon = Icons.Rounded.Wallpaper)
                 },
@@ -1042,19 +1008,16 @@ private fun settingsSections(
                 Entry("Reduce animation", "motion") {
                     ToggleRow("Reduce animation", ui.reduceAnimation, { v -> AppSettings.updateUi { it.copy(reduceAnimation = v) } }, summary = "Freezes decorative motion and simplifies player and lyric transitions", icon = Icons.Rounded.Animation)
                 },
-                Entry("Liquid Glass", "glass refraction apple lens") {
+                Entry("Liquid", "glass liquid refraction apple lens smoke frosted blur") {
                     ToggleRow(
-                        "Liquid Glass",
+                        "Liquid",
                         ui.liquidGlass && liquidGlassSupported,
                         { v -> AppSettings.updateUi { it.copy(liquidGlass = v) } },
-                        summary = if (liquidGlassSupported) "Bends and lifts what's behind the floating bars, like Apple's glass"
-                        else "Needs Android 13 or newer; frosted glass is used instead",
+                        summary = if (liquidGlassSupported) "Apple's Liquid Glass: softly frosted, the edges bend and split the light, with a bright rim"
+                        else "Needs Android 13 or newer; smoke glass is used instead",
                         icon = Icons.Rounded.AutoAwesome,
                         enabled = liquidGlassSupported && !ui.reduceBlur,
                     )
-                },
-                Entry("Glass style", "glass frosted blur clear heavy tinted smoke theme material") {
-                    NavRow("Glass style", { glassStyleDialog = true }, summary = ui.glassStyle.summary, icon = Icons.Rounded.BlurOn, value = ui.glassStyle.label)
                 },
                 Entry("Frosted top edge", "status bar blur fade top scroll glass") {
                     ToggleRow("Frosted top edge", ui.frostedTopEdge, { v -> AppSettings.updateUi { it.copy(frostedTopEdge = v) } }, summary = "Pages blur and fade as they scroll under the status bar", icon = Icons.Rounded.Gradient)

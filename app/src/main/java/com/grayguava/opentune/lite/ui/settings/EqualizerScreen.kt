@@ -113,7 +113,7 @@ fun EqualizerScreen(contentPadding: PaddingValues, onBack: () -> Unit) {
     val setBand: (Int, Float) -> Unit = { i, v -> AppSettings.updateEqualizer { s -> s.copy(enabled = true, bands = s.bands.toMutableList().also { it[i] = v }) } }
 
     LazyColumn(contentPadding = contentPadding, modifier = Modifier.fillMaxSize()) {
-        item { PageHeader(com.grayguava.opentune.lite.ui.theme.tr("Equalizer"), onBack = onBack) }
+        item { PageHeader("Equalizer", onBack = onBack) }
         item {
             GroupCard {
                 ToggleRow(

@@ -1047,7 +1047,7 @@ fun PlayerLayout(
                                             controlsVisible = !controlsHidden,
                                         )
                                     } else {
-                                        Text(com.grayguava.opentune.lite.ui.theme.tr("Queue"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp))
+                                        Text("Queue", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp))
                                         QueuePane(
                                             queue = state.queue,
                                             currentIndex = state.currentIndex,
@@ -1323,7 +1323,7 @@ private fun LyricsOffsetDialog(videoId: String, autoMs: Long, onDismiss: () -> U
     fun set(v: Long) = AppSettings.setLyricsOffset(videoId, v.coerceIn(-10_000, 10_000), keepZero = autoMs != 0L)
     FloatingDialog(
         onDismissRequest = onDismiss,
-        title = { Text(com.grayguava.opentune.lite.ui.theme.tr("Lyrics offset")) },
+        title = { Text("Lyrics offset") },
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Text(

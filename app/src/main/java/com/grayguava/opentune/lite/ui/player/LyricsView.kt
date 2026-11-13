@@ -242,7 +242,7 @@ private fun SelectionBar(count: Int, onCancel: () -> Unit, onShare: () -> Unit, 
         ) {
             Icon(Icons.Rounded.Close, null, tint = Color.White, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(8.dp))
-            Text(com.grayguava.opentune.lite.ui.theme.tr("Cancel"), color = Color.White, style = MaterialTheme.typography.titleMedium)
+            Text("Cancel", color = Color.White, style = MaterialTheme.typography.titleMedium)
         }
         Row(
             Modifier.height(52.dp).width(130.dp).clip(RoundedCornerShape(24.dp)).background(Color.White).clickable(enabled = count > 0, onClick = onShare),
@@ -251,7 +251,7 @@ private fun SelectionBar(count: Int, onCancel: () -> Unit, onShare: () -> Unit, 
         ) {
             Icon(Icons.Rounded.IosShare, null, tint = Color.Black, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(8.dp))
-            Text(com.grayguava.opentune.lite.ui.theme.tr("Share"), color = Color.Black, style = MaterialTheme.typography.titleMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
+            Text("Share", color = Color.Black, style = MaterialTheme.typography.titleMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
         }
     }
 }

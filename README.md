@@ -300,8 +300,8 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
   even over a dark app, and rushes toward you until the app fills the
   screen. Off under Settings › Motion, and
   skipped with reduced motion.
-- **Liquid Glass.** The floating bars and player buttons frost and bend
-  what's behind them, like Apple's material (Android 13 and newer; frosted
+- **Liquid Glass.** The floating bars and player buttons can frost and bend
+  what's behind them, like Apple's material (Android 13 and newer; smoke
   glass below that, solid with "Reduce dynamic blur"). The glass blurs the
   real page as it scrolls under it, not a flat colour. Album, playlist and
   artist pages get a frosted top bar once the header scrolls away, which
@@ -332,13 +332,13 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
   Sink (the tabs sink away into a blur and the song settles into their
   place). The lens can
   Stretch like a drop, wobble like Jelly or Glide in one piece.
-- **Glass styles.** The dock, buttons and bars come in Frosted, Clear,
-  Heavy frost, Tinted (washed with the accent) or Smoke, for Liquid Glass
-  and frosted glass alike, or Liquid: Apple's clear glass, hardly frosted,
-  with a deep lens at the edges that bends and splits the light, vibrant
-  colour through it, a bright specular rim and a soft inner shade
-  (Android 13 and newer). Pages also blur and fade as they scroll under
-  the status bar; that's a switch of its own.
+- **Smoke glass.** The dock, buttons and bars are dark smoked glass, over
+  the real page as it scrolls under them. A switch in Settings › Appearance
+  turns on Apple's Liquid Glass instead: hardly frosted, with a deep lens at
+  the edges that bends and splits the light, vibrant colour through it, a
+  bright specular rim and a soft inner shade (Android 13 and newer). Pages
+  also blur and fade as they scroll under the status bar; that's a switch of
+  its own.
 - **Motion to taste.** Pages can Slide, Fade, Zoom or Rise into view, and
   the player can open on a Spring, a Smooth glide, a Bouncy overshoot or
   Snappy. On phones with 90 or 120 Hz screens the app asks for the fastest
@@ -463,7 +463,7 @@ lossy. Source availability varies. See the
 OpenTune does not decrypt Deezer streams. Animated covers use the token
 Apple Music's web player ships in its own page.
 
-Not built yet: lyric translation and an in-app language setting.
+Not built yet: lyric translation. The app speaks one language, English.
 
 ## Building
 

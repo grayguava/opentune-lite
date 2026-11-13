@@ -72,8 +72,8 @@ class DockScreenshotTest {
         save("dock")
     }
 
-    /** The dock in each glass style, over a bright cover-like background. */
-    @Test fun glassStyles() {
+    /** The dock in each glass look, over a bright cover-like background. */
+    @Test fun glassLooks() {
         com.grayguava.opentune.lite.data.settings.AppSettings.init(compose.activity)
         compose.setContent {
             MaterialTheme(darkColorScheme(primary = Color(0xFFFF8A65))) { androidx.compose.material3.Surface(color = Color(0xFF0B0B0E)) {
@@ -92,12 +92,12 @@ class DockScreenshotTest {
             }
             }
         }
-        com.grayguava.opentune.lite.data.settings.GlassStyle.entries.forEach { g ->
-            com.grayguava.opentune.lite.data.settings.AppSettings.updateUi { it.copy(glassStyle = g) }
+        for (liquid in listOf(false, true)) {
+            com.grayguava.opentune.lite.data.settings.AppSettings.updateUi { it.copy(liquidGlass = liquid) }
             compose.mainClock.advanceTimeBy(1_000)
-            save("glass/${g.name.lowercase()}")
+            save("glass/${if (liquid) "liquid" else "smoke"}")
         }
-        com.grayguava.opentune.lite.data.settings.AppSettings.updateUi { it.copy(glassStyle = com.grayguava.opentune.lite.data.settings.GlassStyle.FROSTED) }
+        com.grayguava.opentune.lite.data.settings.AppSettings.updateUi { it.copy(liquidGlass = false) }
     }
 
     /**

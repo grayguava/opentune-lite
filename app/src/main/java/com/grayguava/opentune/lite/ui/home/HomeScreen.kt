@@ -202,7 +202,7 @@ fun HomeScreen(
         androidx.compose.material3.ModalBottomSheet(onDismissRequest = { historyOpen = false }) {
             // Frosted behind, like the long-press menus and the other sheets.
             com.grayguava.opentune.lite.ui.components.FrostBehind(enabled = !com.grayguava.opentune.lite.data.settings.AppSettings.ui.collectAsState().value.reduceBlur)
-            if (recents.isEmpty()) Text(com.grayguava.opentune.lite.ui.theme.tr("Your recently played songs will appear here"), Modifier.padding(24.dp))
+            if (recents.isEmpty()) Text("Your recently played songs will appear here", Modifier.padding(24.dp))
             else Recents(recents, ui.recentsAsGrid, actions) {
                 AppSettings.updateUi { it.copy(recentsAsGrid = !it.recentsAsGrid) }
             }
@@ -260,7 +260,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Column(Modifier.weight(1f)) {
                             if (firstName != null) {
-                                Text(com.grayguava.opentune.lite.ui.theme.tr(greeting), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                                Text(greeting, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                                 Text(
                                     firstName,
                                     style = MaterialTheme.typography.displaySmall,
@@ -269,7 +269,7 @@ fun HomeScreen(
                                     modifier = Modifier.padding(top = 2.dp),
                                 )
                             } else {
-                                Text(com.grayguava.opentune.lite.ui.theme.tr(greeting), style = MaterialTheme.typography.displaySmall, maxLines = 2)
+                                Text(greeting, style = MaterialTheme.typography.displaySmall, maxLines = 2)
                             }
                         }
                         if (onRecognize != null) {

@@ -77,8 +77,7 @@ internal val SETTINGS_CATEGORIES = listOf(
         listOf(
             "Dark" to listOf("Pure black"),
             "Colour" to listOf("Color from artwork", "Mini player takes the cover's colour", "Artist pages take the photo's colour", "Material You"),
-            "Glass" to listOf("Liquid Glass", "Glass style", "Frosted top edge", "Reduce dynamic blur"),
-            "Language and icon" to listOf("App language", "App icon"),
+            "Glass" to listOf("Liquid", "Frosted top edge", "Reduce dynamic blur"),
         ),
     ),
     SettingsCategory(

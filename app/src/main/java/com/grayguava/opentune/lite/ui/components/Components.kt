@@ -513,7 +513,7 @@ fun SectionHeader(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Text(com.grayguava.opentune.lite.ui.theme.tr(title), style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(title, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         action?.invoke()
     }

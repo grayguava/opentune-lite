@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun GroupLabel(text: String, modifier: Modifier = Modifier) {
     Text(
-        com.grayguava.opentune.lite.ui.theme.tr(text).uppercase(),
+        text.uppercase(),
         style = MaterialTheme.typography.labelLarge,
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -108,12 +108,12 @@ fun SettingRow(
             }
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(com.grayguava.opentune.lite.ui.theme.tr(title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Normal, color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha), modifier = Modifier.weight(1f, fill = false))
+                    Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Normal, color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha), modifier = Modifier.weight(1f, fill = false))
                     if (beta) BetaTag(Modifier.padding(start = 8.dp))
                 }
                 if (!summary.isNullOrBlank()) {
                     Text(
-                        com.grayguava.opentune.lite.ui.theme.tr(summary),
+                        summary,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha),
                         modifier = Modifier.padding(top = 2.dp),
@@ -151,7 +151,7 @@ fun NavRow(title: String, onClick: () -> Unit, summary: String? = null, icon: Im
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (dot) UpdateDot(Modifier.padding(end = 6.dp))
             if (value != null) {
-                Text(com.grayguava.opentune.lite.ui.theme.tr(value), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Normal, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Normal, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -221,7 +221,7 @@ fun <T> PillSegmented(options: List<T>, selected: T, label: (T) -> String, onSel
                     Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(12.dp)).clickable { onSelect(option) },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(com.grayguava.opentune.lite.ui.theme.tr(label(option)), color = color, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center, maxLines = 1)
+                    Text(label(option), color = color, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center, maxLines = 1)
                 }
             }
         }

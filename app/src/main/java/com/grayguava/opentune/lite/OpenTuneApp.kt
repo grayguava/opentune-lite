@@ -46,7 +46,6 @@ class OpenTuneApp : Application(), SingletonImageLoader.Factory {
         // The home-screen widget follows the shared player service.
         com.grayguava.opentune.lite.data.AppHooks.onPlayerChanged = { context, player -> com.grayguava.opentune.lite.widget.NowPlayingWidget.refresh(context, player) }
         com.grayguava.opentune.lite.data.AppHooks.onPlayerStopped = { context -> com.grayguava.opentune.lite.widget.NowPlayingWidget.stopped(context) }
-        java.util.Locale.setDefault(com.grayguava.opentune.lite.ui.theme.AppLanguages.wrap(this).resources.configuration.locales[0])
         com.grayguava.opentune.lite.data.Core.init(this)
         // Last session's Home, shown at once and refreshed in the background.
         MusicRepository.init(this)?.let { ScreenCache.put("home:${com.grayguava.opentune.lite.data.settings.AppSettings.playback.value.recommender.name}", it, at = 0L) }

@@ -322,8 +322,8 @@ data class InterfaceSettings(
     val recentsAsGrid: Boolean = false,
     /** Speed dial at the top of Home: the most-played songs, albums and artists. */
     val speedDial: Boolean = true,
-    /** Refracting Liquid Glass on Android 13+; frosted blur otherwise. */
-    val liquidGlass: Boolean = true,
+    /** Apple's Liquid Glass on Android 13+; the app's smoke glass otherwise. */
+    val liquidGlass: Boolean = false,
     /** Draw the played part of the seek bar as a moving wave. */
     val wavySeekbar: Boolean = false,
     /** How thick the seek bar's track is. */
@@ -374,8 +374,6 @@ data class InterfaceSettings(
     val hapticStrength: Float = 0.6f,
     /** Look for a new release once a day when the app opens. */
     val checkForUpdates: Boolean = true,
-    /** How the glass of the dock, buttons and bars looks. */
-    val glassStyle: GlassStyle = GlassStyle.LIQUID,
     /** Pages blur and fade out as they scroll under the status bar. */
     val frostedTopEdge: Boolean = true,
     /** How the dock's highlight travels between tabs. */
@@ -441,17 +439,6 @@ enum class PlayerMotion(val label: String, val summary: String) {
     BOUNCY("Bouncy", "Overshoots the top a little and bounces into place"),
     SNAPPY("Snappy", "Up and down in a blink"),
     ECHO("Echo", "A soft spring that settles without bouncing"),
-}
-
-/** The glass the floating parts of the app are made of. */
-@Serializable
-enum class GlassStyle(val label: String, val summary: String) {
-    FROSTED("Frosted", "Soft blur under a light film"),
-    CLEAR("Clear", "Thin glass that lets most of the colour through"),
-    HEAVY("Heavy frost", "Thick, milky glass that hides what's behind it"),
-    TINTED("Tinted", "Glass washed with your accent colour"),
-    SMOKE("Smoke", "Dark smoked glass with deep contrast"),
-    LIQUID("Liquid", "Apple's Liquid Glass: softly frosted, the edges bend and split the light, with a bright rim (Android 13+)"),
 }
 
 /** How the dock's highlight moves to the tab you pick. */

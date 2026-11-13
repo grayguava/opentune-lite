@@ -17,13 +17,10 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -113,16 +110,17 @@ import com.grayguava.opentune.lite.data.model.Song
 import com.grayguava.opentune.lite.data.model.artworkAt
 import com.grayguava.opentune.lite.data.releases.NewReleases
 import com.grayguava.opentune.lite.data.settings.AppSettings
-import com.grayguava.opentune.lite.data.settings.GlassStyle
 import com.grayguava.opentune.lite.ui.BottomChrome
 import com.grayguava.opentune.lite.ui.ChromeTab
 import com.grayguava.opentune.lite.ui.PageMotion
 import com.grayguava.opentune.lite.ui.ScreenCache
 import com.grayguava.opentune.lite.ui.account.LoginScreen
 import com.grayguava.opentune.lite.ui.components.Artwork
+import com.grayguava.opentune.lite.ui.components.AppSwitch
 import com.grayguava.opentune.lite.ui.components.GlassBackButton
 import com.grayguava.opentune.lite.ui.components.GlassPage
 import com.grayguava.opentune.lite.ui.components.glass
+import com.grayguava.opentune.lite.ui.components.liquidGlassSupported
 import com.grayguava.opentune.lite.ui.components.pressable
 import com.grayguava.opentune.lite.ui.components.rememberHaptics
 import com.grayguava.opentune.lite.ui.player.MiniPlayer
@@ -670,7 +668,6 @@ private fun ArtistPlaceholder() {
 
 // ---- Step 2: look ---------------------------------------------------------
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun LookStep(picks: List<ExploreFeed.Artist>) {
     val ui by AppSettings.ui.collectAsState()
@@ -679,21 +676,25 @@ private fun LookStep(picks: List<ExploreFeed.Artist>) {
         StepTitle("Make it yours", "Change these any time in Settings › Look and feel.")
         LookPreview(picks, Modifier.padding(horizontal = 16.dp))
         Label("Glass")
-        FlowRow(
-            Modifier.padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            GlassStyle.entries.forEach { g ->
-                ChoicePill(g.label, g == ui.glassStyle) { AppSettings.updateUi { it.copy(glassStyle = g) } }
+            Column(Modifier.weight(1f).padding(end = 16.dp)) {
+                Text("Liquid", style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    if (liquidGlassSupported) "Apple's Liquid Glass: softly frosted, the edges bend and split the light"
+                    else "Needs Android 13 or newer; smoke glass is used instead",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
+            AppSwitch(
+                ui.liquidGlass && liquidGlassSupported,
+                { v -> AppSettings.updateUi { it.copy(liquidGlass = v) } },
+                liquidGlassSupported,
+            )
         }
-        Text(
-            ui.glassStyle.summary,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp),
-        )
         Spacer(Modifier.height(bottomInset() + 16.dp))
     }
 }
@@ -706,21 +707,6 @@ private fun Label(text: String) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 10.dp),
     )
-}
-
-@Composable
-private fun ChoicePill(label: String, selected: Boolean, onClick: () -> Unit) {
-    val bg by animateColorAsState(if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.surfaceContainerHigh, label = "pillBg")
-    val fg by animateColorAsState(if (selected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface, label = "pillFg")
-    Box(
-        Modifier.height(44.dp).clip(CircleShape).background(bg)
-            .clickable(onClick = onClick)
-            .semantics { this.selected = selected; role = Role.RadioButton }
-            .padding(horizontal = 18.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(label, style = MaterialTheme.typography.labelLarge, color = fg)
-    }
 }
 
 private val previewTabs = listOf(
@@ -791,7 +777,7 @@ internal fun LookPreview(picks: List<ExploreFeed.Artist>, modifier: Modifier = M
             ),
         )
         Column(Modifier.fillMaxSize().padding(20.dp)) {
-            Text(com.grayguava.opentune.lite.ui.theme.tr("Home"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+            Text("Home", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
             Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 val faces = picks.take(4)
                 if (faces.isEmpty()) {

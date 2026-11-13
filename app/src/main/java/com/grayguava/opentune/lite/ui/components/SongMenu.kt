@@ -327,7 +327,7 @@ private fun QuickAction(icon: ImageVector, label: String, active: Boolean, progr
         ) {
             Icon(icon, null, tint = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface)
         }
-        Text(com.grayguava.opentune.lite.ui.theme.tr(label), style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 6.dp), maxLines = 1)
+        Text(label, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 6.dp), maxLines = 1)
     }
 }
 
@@ -339,7 +339,7 @@ fun MenuRow(icon: ImageVector, label: String, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(22.dp),
     ) {
         Icon(icon, null, Modifier.size(24.dp))
-        Text(com.grayguava.opentune.lite.ui.theme.tr(label), style = MaterialTheme.typography.bodyLarge)
+        Text(label, style = MaterialTheme.typography.bodyLarge)
     }
 }
 
