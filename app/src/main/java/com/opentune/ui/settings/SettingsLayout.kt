@@ -75,8 +75,8 @@ internal val SETTINGS_CATEGORIES = listOf(
     SettingsCategory(
         "look", "Appearance", "Theme, colour, glass, language and icon", Icons.Rounded.Palette,
         listOf(
-            "Theme" to listOf("Theme", "Pure black", "Fonts & readability"),
-            "Colour" to listOf("Color from artwork", "Mini player takes the cover's colour", "Artist pages take the photo's colour", "Material You", "Accent color", "Palette style"),
+            "Dark" to listOf("Pure black"),
+            "Colour" to listOf("Color from artwork", "Mini player takes the cover's colour", "Artist pages take the photo's colour", "Material You"),
             "Glass" to listOf("Liquid Glass", "Glass style", "Frosted top edge", "Reduce dynamic blur"),
             "Language and icon" to listOf("App language", "App icon"),
         ),

@@ -96,10 +96,6 @@ private fun resourceFor(text: String): Int? = when (text) {
         "Player layout" -> R.string.ui_bef9404fb65d
         "Player background" -> R.string.ui_917c0ca4a898
         "Player buttons" -> R.string.ui_e089f7778ed4
-        "Theme" -> R.string.ui_efb52e7172b7
-        "Dark" -> R.string.ui_60acc53f13a5
-        "Light" -> R.string.ui_dbcd5e7bb7a0
-        "System" -> R.string.ui_6725e7bbcd28
         "AMOLED black" -> R.string.ui_4f22ef352892
         "Classic" -> R.string.ui_ae25d6481fc1
         "Apple Music inspired" -> R.string.ui_6bff0539b14d

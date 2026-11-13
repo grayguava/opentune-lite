@@ -114,7 +114,6 @@ import com.opentune.data.model.artworkAt
 import com.opentune.data.releases.NewReleases
 import com.opentune.data.settings.AppSettings
 import com.opentune.data.settings.GlassStyle
-import com.opentune.data.settings.ThemeMode
 import com.opentune.ui.BottomChrome
 import com.opentune.ui.ChromeTab
 import com.opentune.ui.PageMotion
@@ -123,7 +122,6 @@ import com.opentune.ui.account.LoginScreen
 import com.opentune.ui.components.Artwork
 import com.opentune.ui.components.GlassBackButton
 import com.opentune.ui.components.GlassPage
-import com.opentune.ui.components.PillSegmented
 import com.opentune.ui.components.glass
 import com.opentune.ui.components.pressable
 import com.opentune.ui.components.rememberHaptics
@@ -675,20 +673,11 @@ private fun ArtistPlaceholder() {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun LookStep(picks: List<ExploreFeed.Artist>) {
-    val theme by AppSettings.theme.collectAsState()
     val ui by AppSettings.ui.collectAsState()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Spacer(Modifier.height(topInset()))
         StepTitle("Make it yours", "Change these any time in Settings › Look and feel.")
         LookPreview(picks, Modifier.padding(horizontal = 16.dp))
-        Label("Theme")
-        PillSegmented(
-            ThemeMode.entries,
-            theme.mode,
-            { it.label },
-            { m -> AppSettings.updateTheme { it.copy(mode = m) } },
-            Modifier.padding(horizontal = 16.dp),
-        )
         Label("Glass")
         FlowRow(
             Modifier.padding(horizontal = 16.dp),

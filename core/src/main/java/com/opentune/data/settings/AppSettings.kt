@@ -26,23 +26,6 @@ enum class AudioQuality(val label: String, val summary: String, val maxKbps: Int
 }
 
 @Serializable
-enum class ThemeMode(val label: String) { SYSTEM("System"), LIGHT("Light"), DARK("Dark") }
-
-/** Mirrors com.materialkolor.PaletteStyle by name, so this layer stays free of UI types. */
-@Serializable
-enum class PaletteStyleOption(val label: String) {
-    TonalSpot("Tonal"),
-    Vibrant("Vibrant"),
-    Expressive("Expressive"),
-    Fidelity("Fidelity"),
-    Content("Content"),
-    Rainbow("Rainbow"),
-    FruitSalad("Fruit salad"),
-    Neutral("Neutral"),
-    Monochrome("Monochrome"),
-}
-
-@Serializable
 enum class PlayerBackground(val label: String) {
     /** The cover itself, blurred smooth and drifting slowly, as the album and playlist pages' headers. */
     BLUR("Cover blur"),
@@ -69,12 +52,8 @@ enum class PlayerStyle(val label: String, val summary: String) {
 
 @Serializable
 data class ThemeSettings(
-    val mode: ThemeMode = ThemeMode.SYSTEM,
     /** Material You wallpaper colors, on Android 12 and later. */
     val dynamicColor: Boolean = false,
-    /** ARGB seed for the generated scheme when [dynamicColor] is off. */
-    val seedColor: Int = SEED_COLORS.first(),
-    val paletteStyle: PaletteStyleOption = PaletteStyleOption.TonalSpot,
     /** True black surfaces in dark mode, for OLED screens. */
     val pureBlack: Boolean = true,
     /** Re-seed the whole app from the playing track's artwork. */
@@ -679,19 +658,8 @@ data class SettingsState(
     val recentSearches: List<String> = emptyList(),
 )
 
-/** Accent choices offered when Material You is off. */
-val SEED_COLORS = listOf(
-    0xFFE53935.toInt(), // red
-    0xFFFF6F00.toInt(), // amber
-    0xFFFDD835.toInt(), // yellow
-    0xFF43A047.toInt(), // green
-    0xFF00897B.toInt(), // teal
-    0xFF039BE5.toInt(), // sky
-    0xFF3949AB.toInt(), // indigo
-    0xFF8E24AA.toInt(), // purple
-    0xFFD81B60.toInt(), // pink
-    0xFF6D4C41.toInt(), // brown
-)
+/** The colour the app's own scheme starts from when nothing else supplies one. */
+val SEED_COLOR = 0xFF039BE5.toInt()
 
 /**
  * App-wide settings, stored as one JSON document in SharedPreferences and
@@ -815,10 +783,7 @@ object AppSettings {
         if (!p.contains("theme_mode")) return SettingsState()
         return SettingsState(
             theme = ThemeSettings(
-                mode = enumOf(ThemeMode.entries.toTypedArray(), p.getString("theme_mode", null), ThemeMode.SYSTEM),
                 dynamicColor = p.getBoolean("dynamic_color", false),
-                seedColor = p.getInt("seed_color", SEED_COLORS.first()),
-                paletteStyle = enumOf(PaletteStyleOption.entries.toTypedArray(), p.getString("palette_style", null), PaletteStyleOption.TonalSpot),
                 pureBlack = p.getBoolean("pure_black", true),
                 colorFromArtwork = p.getBoolean("color_from_artwork", true),
                 playerBackground = enumOf(PlayerBackground.entries.toTypedArray(), p.getString("player_background", null), PlayerBackground.BLUR),

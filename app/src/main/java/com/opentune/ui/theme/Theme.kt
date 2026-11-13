@@ -3,14 +3,12 @@ package com.opentune.ui.theme
 import android.os.Build
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
@@ -24,18 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.materialkolor.PaletteStyle
 import com.materialkolor.rememberDynamicColorScheme
-import com.opentune.data.settings.PaletteStyleOption
-import com.opentune.data.settings.ThemeMode
+import com.opentune.data.settings.SEED_COLOR
 import com.opentune.data.settings.ThemeSettings
-
-@Composable
-fun ThemeSettings.isDark(): Boolean = when (mode) {
-    ThemeMode.SYSTEM -> isSystemInDarkTheme()
-    ThemeMode.LIGHT -> false
-    ThemeMode.DARK -> true
-}
-
-fun PaletteStyleOption.toPaletteStyle(): PaletteStyle = PaletteStyle.valueOf(name)
 
 /**
  * The app theme. The scheme comes from, in order: the playing track's artwork
@@ -73,23 +61,23 @@ fun OpenTuneTheme(
     artworkSeed: Color? = null,
     content: @Composable () -> Unit,
 ) {
-    val dark = settings.isDark()
     val seed = artworkSeed?.takeIf { settings.colorFromArtwork }
     val useWallpaper = seed == null && settings.dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
+    // The app's own colours are monochrome; the playing cover keeps its own.
     val generated = rememberDynamicColorScheme(
-        seedColor = seed ?: Color(settings.seedColor),
-        isDark = dark,
+        seedColor = seed ?: Color(SEED_COLOR),
+        isDark = true,
         isAmoled = settings.pureBlack,
-        style = settings.paletteStyle.toPaletteStyle(),
+        style = if (seed != null) PaletteStyle.TonalSpot else PaletteStyle.Monochrome,
     )
     val base = if (useWallpaper) {
         val context = LocalContext.current
-        if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        dynamicDarkColorScheme(context)
     } else {
         generated
     }
-    val scheme = if (dark && settings.pureBlack) base.toPureBlack() else base
+    val scheme = if (settings.pureBlack) base.toPureBlack() else base
 
     MaterialTheme(
         colorScheme = scheme.animated(),
@@ -112,7 +100,7 @@ fun OpenTuneTheme(
 @Composable
 fun PlayerTheme(seed: Color?, settings: ThemeSettings, neutral: Boolean = false, active: Boolean = true, content: @Composable () -> Unit) {
     val scheme = rememberDynamicColorScheme(
-        seedColor = seed ?: Color(settings.seedColor),
+        seedColor = seed ?: Color(SEED_COLOR),
         isDark = true,
         isAmoled = settings.pureBlack,
         style = PaletteStyle.Vibrant,

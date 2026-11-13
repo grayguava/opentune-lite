@@ -451,8 +451,8 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
 - **Haptic feedback you can tune**, from off to strong. Taps use the phone's
   crisp haptic primitives where it has them, and follow the system's touch
   feedback switch.
-- **Themes:** light, dark or system, Material You, accent colors, palette
-  styles, pure black, color from artwork, and reduced motion and blur.
+- **One dark look.** The app is dark throughout, with Material You, pure
+  black, color from artwork, and reduced motion and blur.
 
 YouTube's audio is lossy, so there's no lossless or Dolby Atmos stream
 option from YouTube. Lossless can come from your own music server, which

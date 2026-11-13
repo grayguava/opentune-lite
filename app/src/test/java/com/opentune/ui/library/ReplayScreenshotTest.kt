@@ -8,7 +8,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.core.app.ApplicationProvider
 import com.opentune.data.history.History
-import com.opentune.data.settings.ThemeMode
 import com.opentune.data.settings.ThemeSettings
 import com.opentune.ui.browse.SongActions
 import com.opentune.ui.theme.OpenTuneTheme
@@ -51,7 +50,7 @@ class ReplayScreenshotTest {
     @Test fun page() {
         listens()
         compose.setContent {
-            OpenTuneTheme(ThemeSettings(mode = ThemeMode.DARK, dynamicColor = false)) {
+            OpenTuneTheme(ThemeSettings(dynamicColor = false)) {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     ReplayScreen(PaddingValues(), SongActions(null, false, { _, _, _, _ -> }, {}, {}), onBack = {})
                 }
@@ -66,7 +65,7 @@ class ReplayScreenshotTest {
         compose.mainClock.autoAdvance = false
         val summary = History.replay(History.records.value, ReplayRange.WEEK.since())
         compose.setContent {
-            OpenTuneTheme(ThemeSettings(mode = ThemeMode.DARK, dynamicColor = false)) {
+            OpenTuneTheme(ThemeSettings(dynamicColor = false)) {
                 ReplayStory(summary, ReplayRange.WEEK, onDismiss = {})
             }
         }

@@ -10,7 +10,6 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.core.app.ApplicationProvider
 import com.opentune.data.library.LibraryStore
 import com.opentune.data.model.Song
-import com.opentune.data.settings.ThemeMode
 import com.opentune.data.settings.ThemeSettings
 import com.opentune.ui.browse.SongActions
 import com.opentune.ui.theme.OpenTuneTheme
@@ -43,7 +42,7 @@ class LibraryTilesScreenshotTest {
 
     private fun shoot(name: String, content: @Composable () -> Unit) {
         compose.setContent {
-            OpenTuneTheme(ThemeSettings(mode = ThemeMode.DARK, dynamicColor = false)) {
+            OpenTuneTheme(ThemeSettings(dynamicColor = false)) {
                 Surface(color = MaterialTheme.colorScheme.background) { content() }
             }
         }
@@ -68,7 +67,7 @@ class LibraryTilesScreenshotTest {
         com.opentune.data.settings.AppSettings.updateUi { it.copy(playlistList = true) }
         try {
             compose.setContent {
-                OpenTuneTheme(ThemeSettings(mode = ThemeMode.DARK, dynamicColor = false)) {
+                OpenTuneTheme(ThemeSettings(dynamicColor = false)) {
                     Surface(color = MaterialTheme.colorScheme.background) {
                         LibraryScreen(PaddingValues(), SongActions(null, false, { _, _, _, _ -> }, {}, {}), nav)
                     }

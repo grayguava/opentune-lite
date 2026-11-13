@@ -44,7 +44,7 @@ class SettingsScreenshotTest {
         AppSettings.init(context)
         LibraryStore.init(context)
         compose.setContent {
-            OpenTuneTheme(ThemeSettings().copy(mode = com.opentune.data.settings.ThemeMode.DARK, dynamicColor = false)) {
+            OpenTuneTheme(ThemeSettings(dynamicColor = false)) {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     SettingsScreen(PaddingValues(), onBack = {}, onOpenEqualizer = {}, onOpenReplay = {})
                 }

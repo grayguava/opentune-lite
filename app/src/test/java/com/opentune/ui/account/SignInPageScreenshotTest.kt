@@ -34,7 +34,7 @@ class SignInPageScreenshotTest {
     private fun show() {
         AppSettings.init(ApplicationProvider.getApplicationContext<android.app.Application>())
         compose.setContent {
-            OpenTuneTheme(ThemeSettings().copy(mode = com.opentune.data.settings.ThemeMode.DARK, dynamicColor = false)) {
+            OpenTuneTheme(ThemeSettings(dynamicColor = false)) {
                 SignInPage(
                     service = "YouTube Music",
                     brand = YouTubeMusicRed,

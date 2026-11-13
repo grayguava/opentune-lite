@@ -91,9 +91,9 @@ class ReadmeScreenshotTest {
         )
     }
 
-    private fun shoot(name: String, dark: Boolean = true, content: @Composable () -> Unit) {
+    private fun shoot(name: String, content: @Composable () -> Unit) {
         compose.setContent {
-            OpenTuneTheme(ThemeSettings().copy(mode = if (dark) com.opentune.data.settings.ThemeMode.DARK else com.opentune.data.settings.ThemeMode.LIGHT, dynamicColor = false)) {
+            OpenTuneTheme(ThemeSettings(dynamicColor = false)) {
                 Surface(color = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground) {
                     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(top = 28.dp)) { content() }
                 }

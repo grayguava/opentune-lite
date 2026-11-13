@@ -156,9 +156,6 @@ import com.opentune.data.library.LibraryStore
 import com.opentune.data.local.LocalMusic
 import com.opentune.data.releases.NewReleases
 import com.opentune.data.settings.AppSettings
-import com.opentune.data.settings.PaletteStyleOption
-import com.opentune.data.settings.SEED_COLORS
-import com.opentune.data.settings.ThemeMode
 import com.opentune.data.settings.AudioQuality
 import com.opentune.data.settings.ControlStyle
 import com.opentune.data.settings.CoverChange
@@ -886,11 +883,6 @@ private fun settingsSections(
         Section(
             "Appearance",
             listOf(
-                Entry("Theme", "dark light system") {
-                    SettingRow("Theme", icon = Icons.Rounded.Palette, below = {
-                        PillSegmented(ThemeMode.entries, theme.mode, { it.label }, { m -> AppSettings.updateTheme { it.copy(mode = m) } })
-                    })
-                },
                 Entry("Color from artwork", "tint album cover") {
                     ToggleRow("Color from artwork", theme.colorFromArtwork, { v -> AppSettings.updateTheme { it.copy(colorFromArtwork = v) } }, summary = "Tint the app with the playing song's cover", icon = Icons.Rounded.AutoAwesome)
                 },
@@ -910,30 +902,6 @@ private fun settingsSections(
                         icon = Icons.Rounded.Wallpaper,
                         enabled = supported,
                     )
-                },
-                Entry("Accent color", "color") {
-                    SettingRow("Accent color", icon = Icons.Rounded.Palette, below = {
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            SEED_COLORS.forEach { argb ->
-                                val selected = theme.seedColor == argb
-                                Box(
-                                    Modifier.size(38.dp).clip(CircleShape).background(Color(argb))
-                                        .border(if (selected) 3.dp else 0.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
-                                        .clickable { AppSettings.updateTheme { it.copy(seedColor = argb) } },
-                                    contentAlignment = Alignment.Center,
-                                ) { if (selected) Icon(Icons.Rounded.Check, null, tint = Color.White, modifier = Modifier.size(20.dp)) }
-                            }
-                        }
-                    })
-                },
-                Entry("Palette style", "tonal vibrant expressive") {
-                    SettingRow("Palette style", icon = Icons.Rounded.Palette, below = {
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            PaletteStyleOption.entries.forEach { s ->
-                                FilterChip(theme.paletteStyle == s, { AppSettings.updateTheme { it.copy(paletteStyle = s) } }, label = { Text(s.label) })
-                            }
-                        }
-                    })
                 },
                 Entry("App language", "language locale hindi punjabi english भाषा ਭਾਸ਼ਾ") {
                     NavRow("App language", { languageDialog = true }, icon = Icons.Rounded.Language,
