@@ -17,7 +17,7 @@ val appVersionName = Regex("""versionName = "([^"]+)"""").find(appBuild)!!.group
 val appVersionCode = Regex("""versionCode = (\d+)""").find(appBuild)!!.groupValues[1]
 
 android {
-    namespace = "com.opentune.core"
+    namespace = "com.grayguava.opentune.lite.core"
     compileSdk = 37
 
     defaultConfig {

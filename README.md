@@ -500,13 +500,13 @@ already on the phone, and a CI runner's debug key changes from run to run.
 ## Project layout
 
 ```
-core/src/main/java/com/opentune/
+core/src/main/java/com/grayguava/opentune/lite/core/
   data/innertube/   Innertube client and parser, StreamResolver (engine switch),
                     InnerTubeXResolver, PoToken WebView
   data/             account, downloads, library, history, lyrics, loudness, settings
   playback/         PlaybackService (ExoPlayer, cache, loudness, upgrade, sleep timer),
                     Crossfade, DSP
-app/src/main/java/com/opentune/
+app/src/main/java/com/grayguava/opentune/lite/
   ui/               Compose screens: home, explore, search, library, player, settings
 docs/               README banner, screenshots and the 40-second video
 ```

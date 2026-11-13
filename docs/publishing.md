@@ -27,7 +27,7 @@ There is no store listing and no Play bundle in this build.
 ## Release notes in the app
 
 The app's "What's new" sheet reads the notes in
-`app/src/main/java/com/opentune/ui/components/WhatsNew.kt`. Add the coming
+`app/src/main/java/com/grayguava/opentune/lite/ui/components/WhatsNew.kt`. Add the coming
 version's notes at the top of that list when releasing. The sheet shows
 nothing new for a version with no notes of its own.
 
