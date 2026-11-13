@@ -368,7 +368,14 @@ private fun ArtistHero(browseId: String, page: ArtistPage?, photo: String?, list
             if (page == null) {
                 Placeholder(Modifier.width(220.dp).height(44.dp))
             } else {
-                ArtistNameOrSignature(page.name.orEmpty())
+                Text(
+                    page.name.orEmpty(),
+                    style = MaterialTheme.typography.displaySmall.copy(fontSize = 40.sp, lineHeight = 44.sp),
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                )
             }
             HeroButtons(browseId, page, actions, Modifier.padding(top = 18.dp, bottom = 12.dp))
         }

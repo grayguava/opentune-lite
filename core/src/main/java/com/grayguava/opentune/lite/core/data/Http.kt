@@ -113,10 +113,10 @@ object Http {
     // ---- End temporary instrumentation ----------------------------------
 
     /**
-     * Wikimedia (artist signatures, some artist photos) answers 403 to a
-     * generic client: its policy asks every client to name itself and say
-     * where to reach whoever runs it. Only its hosts are given this name; every
-     * other request keeps the headers its caller set, YouTube's above all.
+     * Wikimedia (some artist photos) answers 403 to a generic client: its
+     * policy asks every client to name itself and say where to reach whoever
+     * runs it. Only its hosts are given this name; every other request keeps
+     * the headers its caller set, YouTube's above all.
      */
     private val WIKIMEDIA_AGENT = "OpenTune (https://github.com/grayguava/opentune-lite) okhttp/${okhttp3.OkHttp.VERSION}"
     private val namedForWikimedia = okhttp3.Interceptor { chain ->

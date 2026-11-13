@@ -103,7 +103,6 @@ internal val SETTINGS_CATEGORIES = listOf(
         listOf(
             "Home and tabs" to listOf("Separate Explore tab", "Speed dial", "Wide-screen layout"),
             "Playlists and songs" to listOf("Playlists in Library", "Import a playlist", "Swipe songs to queue them"),
-            "Artist pages" to listOf("Artist signatures"),
             "New releases" to listOf("New-release alerts", "Followed artists"),
             "What's hidden" to listOf("Hide explicit content", "Hidden songs and artists"),
         ),
