@@ -289,10 +289,10 @@ internal fun AddRow(song: Song, added: Boolean, onAdd: () -> Unit) {
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(song.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(if (added) "Added" else progress?.message ?: song.artist,
+            Text(if (added) "Added" else song.artist,
                 style = MaterialTheme.typography.bodySmall,
-                color = if (!added && progress?.failed == true) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = if (progress?.failed == true) 3 else 2, overflow = TextOverflow.Ellipsis)
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         Box(
             Modifier
@@ -302,12 +302,10 @@ internal fun AddRow(song: Song, added: Boolean, onAdd: () -> Unit) {
                 .background(if (added) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest),
             contentAlignment = Alignment.Center,
         ) {
-            if (!added && progress?.busy == true) {
-                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-            } else AnimatedContent(added, transitionSpec = { (fadeIn(tween(180)) + scaleIn(tween(220), 0.6f)) togetherWith fadeOut(tween(120)) }, label = "addIcon") { a ->
+            AnimatedContent(added, transitionSpec = { (fadeIn(tween(180)) + scaleIn(tween(220), 0.6f)) togetherWith fadeOut(tween(120)) }, label = "addIcon") { a ->
                 Icon(
                     if (a) Icons.Rounded.Check else Icons.Rounded.Add,
-                    if (a) "Added" else if (progress?.failed == true) "Retry adding to playlist" else "Add to playlist",
+                    if (a) "Added" else "Add to playlist",
                     tint = if (a) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(20.dp),
                 )

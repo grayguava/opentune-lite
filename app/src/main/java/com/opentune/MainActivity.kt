@@ -86,6 +86,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    }
 
     override fun onStart() {
         super.onStart()

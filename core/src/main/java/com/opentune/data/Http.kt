@@ -11,9 +11,12 @@ import okio.BufferedSource
 import okio.ForwardingSource
 import okio.Source
 import okio.buffer
+import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * One OkHttp client for the whole app.
@@ -139,19 +142,20 @@ object Http {
 
     /**
      * A GET whose answer is read as text, bounded so an endless or enormous
-     * body cannot use up memory. Null when the request fails or answers with
-     * something too big to be what the caller asked for.
+     * body cannot use up memory. Throws when the request fails.
+     *
+     * Suspends: the call happens off the caller's thread, so it can be asked
+     * for from the main one.
      */
-    fun text(url: String, headers: Map<String, String> = emptyMap(), limit: Long = 1_048_576): String? = try {
-        val request = Request.Builder().url(url).apply { headers.forEach { (k, v) -> header(k, v) } }.build()
-        client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) null
-            else response.body?.source()?.let { source ->
-                source.request(limit + 1)
-                if (source.buffer.size > limit) null else source.readUtf8()
+    suspend fun text(url: String, headers: Map<String, String> = emptyMap(), limit: Long = 1_048_576): String =
+        withContext(Dispatchers.IO) {
+            val request = Request.Builder().url(url).apply { headers.forEach { (k, v) -> header(k, v) } }.build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw IOException("HTTP ${response.code} for $url")
+                val source = response.body?.source() ?: throw IOException("Empty answer from $url")
+                val bytes = source.readByteArray(limit + 1)
+                if (bytes.size > limit) throw IOException("The answer from $url is too large")
+                bytes.toString(Charsets.UTF_8)
             }
         }
-    } catch (_: Exception) {
-        null
-    }
 }

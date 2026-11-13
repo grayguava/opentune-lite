@@ -8,18 +8,22 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class RecommendationSourceTest {
-    private val picks = listOf(Song("one", "First", "Artist", null), Song("two", "Second", "Artist", null))
+    private val picks = listOf(
+        Song("one", "First", "Artist", null),
+        Song("two", "Second", "Artist", null),
+        Song("three", "Third", "Artist", null),
+    )
 
-    @Test fun shortResultsKeepTheirSourceAndOrder() = runBlocking {
+    @Test fun enoughResultsKeepTheirSourceAndOrder() = runBlocking {
         val result = Recommendations.resolve(Recommender.JIOSAAVN, { picks }, { error("Must not fetch YouTube recommendations") })
         assertEquals(Recommender.JIOSAAVN, result.engine)
         assertEquals(picks, result.songs)
     }
 
-    @Test fun emptyResultsDoNotSilentlySwitchProviders() = runBlocking {
-        val result = Recommendations.resolve(Recommender.JIOSAAVN, { emptyList() }, { error("Must not fetch YouTube recommendations") })
+    @Test fun tooFewResultsFallBackToYouTubeMusic() = runBlocking {
+        val result = Recommendations.resolve(Recommender.JIOSAAVN, { picks.take(2) }, { picks })
         assertEquals(Recommender.YOUTUBE, result.engine)
-        assertTrue(result.songs.isEmpty())
+        assertEquals(picks, result.songs)
     }
 
     @Test fun anUnavailableSourceFallsBackToYouTubeMusic() = runBlocking {

@@ -37,7 +37,7 @@ class AppLanguageTest {
     @Test fun urduChromeUsesAndroidResources() = language("ur", "ہوم")
     @Test fun traditionalChineseIsNotSimplified() = language("zh-TW", "首頁")
     @Test fun ukrainianChromeUsesAndroidResources() = language("uk", "Головна")
-    @Test fun portugueseNoLongerFallsBackToEnglish() = language("pt", "Streaming sem perdas", english = "Lossless streaming")
+    @Test fun portugueseNoLongerFallsBackToEnglish() = language("pt", "Sem perdas", english = "Lossless")
 
     /** Every language offered in the app is one Android is told the app has, and the other way round. */
     @Test fun theListMatchesTheLocaleConfig() {

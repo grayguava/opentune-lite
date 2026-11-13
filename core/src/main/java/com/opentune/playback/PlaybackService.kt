@@ -1352,8 +1352,7 @@ class PlaybackService : MediaLibraryService() {
                     player.currentMediaItem?.localConfiguration?.uri != uri || player.playerError != null ||
                     player.playbackState == Player.STATE_ENDED) return@withTimeoutOrNull false
                 if (player.playbackState == Player.STATE_READY) {
-                    val codec = player.audioFormat?.sampleMimeType
-                    if (upgradeFormatReady(lossless, codec)) return@withTimeoutOrNull true
+                    if (player.audioFormat?.sampleMimeType != null) return@withTimeoutOrNull true
                 }
                 delay(30)
             }
@@ -1541,7 +1540,7 @@ class PlaybackService : MediaLibraryService() {
         }
         NerdStats.onPlaybackSource(NerdStats.Source(provider, downloaded?.bits, downloaded?.sampleRate,
             if (item != null && uri?.let(::videoIdOf) != null) StreamResolver.bitrateFor(item.mediaId, isUpgradedUri(uri)) else null,
-            selectionDetail = null, mediaId = item?.mediaId))
+            mediaId = item?.mediaId))
     }
 
     // ---- Latency -----------------------------------------------------------------
@@ -1950,7 +1949,7 @@ class PlaybackService : MediaLibraryService() {
         scope.launch {
             delay(FALLBACK_RETRY_MS)
             val player = mediaSession?.player ?: return@launch
-            if (player.currentMediaItem?.mediaId == mediaId && upgradeJob?.isActive != true) scheduleUpgrade(quiet = true)
+            if (player.currentMediaItem?.mediaId == mediaId && upgradeJob?.isActive != true) scheduleUpgrade()
         }
     }
 

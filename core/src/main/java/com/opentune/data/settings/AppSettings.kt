@@ -558,7 +558,7 @@ object RecommenderSerializer : kotlinx.serialization.KSerializer<Recommender> {
     override val descriptor = kotlinx.serialization.descriptors.PrimitiveSerialDescriptor(
         "Recommender", kotlinx.serialization.descriptors.PrimitiveKind.STRING,
     )
-    override fun deserialize(decoder: kotlinx.serialization.decoder.Decoder): Recommender =
+    override fun deserialize(decoder: kotlinx.serialization.encoding.Decoder): Recommender =
         runCatching { Recommender.valueOf(decoder.decodeString()) }.getOrDefault(Recommender.YOUTUBE)
     override fun serialize(encoder: kotlinx.serialization.encoding.Encoder, value: Recommender) =
         encoder.encodeString(value.name)

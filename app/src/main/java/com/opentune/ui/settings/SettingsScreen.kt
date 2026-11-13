@@ -330,10 +330,10 @@ fun SettingsScreen(
                                     }
                                     // The account row wears the signed-in Google photo in place of the icon.
                                     val avatar = account?.thumbnailUrl?.takeIf { c.key == "account" && signedIn }
-                                    androidx.compose.foundation.layout.Box(if (c.key == cameFrom) Modifier.focusRequester(returnTo) else Modifier) {
+                                    androidx.compose.foundation.layout.Box(Modifier) {
                                     NavRow(
                                         c.title,
-                                        { cameFrom = c.key; openKey = c.key },
+                                        { openKey = c.key },
                                         summary = summary,
                                         icon = if (avatar == null) c.icon else null,
                                         dot = c.key == "about" && updatePending,
