@@ -9,6 +9,8 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
@@ -58,7 +60,8 @@ class SettingsScreenshotTest {
         compose.onNodeWithText("Appearance").performClick()
         compose.mainClock.advanceTimeBy(600)
         compose.waitForIdle()
-        compose.onNodeWithText("Theme").assertIsDisplayed()
+
+        compose.onNodeWithText("DARK").assertIsDisplayed()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("COLOUR", ignoreCase = true))
         compose.onNodeWithText("COLOUR", ignoreCase = true).assertExists()
         save("settings-look")
