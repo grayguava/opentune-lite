@@ -25,8 +25,7 @@ are used as libraries under GPLv3. Liquid Glass uses Kyant's
 [backdrop](https://github.com/Kyant0/AndroidLiquidGlass) library, and
 frosted glass uses [Haze](https://github.com/chrisbanes/haze). Album covers
 come from the [Cover Art Archive](https://coverartarchive.org) through
-[MusicBrainz](https://musicbrainz.org), and recommendations from
-[ListenBrainz](https://listenbrainz.org), all run by the MetaBrainz
+[MusicBrainz](https://musicbrainz.org), both run by the MetaBrainz
 Foundation. Headphone corrections come from
 [AutoEq](https://github.com/jaakkopasanen/AutoEq) by Jaakko Pasanen (MIT).
 Skip segments come from [SponsorBlock](https://sponsor.ajay.app) (data

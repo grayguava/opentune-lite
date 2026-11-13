@@ -152,12 +152,13 @@ import com.opentune.data.account.AccountStore
 import com.opentune.data.download.DownloadState
 import com.opentune.data.download.Downloads
 import com.opentune.data.history.History
-import com.opentune.data.lastfm.LastFm
 import com.opentune.data.library.LibraryStore
-import com.opentune.data.listenbrainz.ListenBrainz
 import com.opentune.data.local.LocalMusic
 import com.opentune.data.releases.NewReleases
 import com.opentune.data.settings.AppSettings
+import com.opentune.data.settings.PaletteStyleOption
+import com.opentune.data.settings.SEED_COLORS
+import com.opentune.data.settings.ThemeMode
 import com.opentune.data.settings.AudioQuality
 import com.opentune.data.settings.ControlStyle
 import com.opentune.data.settings.CoverChange
@@ -167,13 +168,10 @@ import com.opentune.data.settings.GlassStyle
 import com.opentune.data.settings.LyricsAlign
 import com.opentune.data.settings.LyricsAnimation
 import com.opentune.data.settings.PageTransition
-import com.opentune.data.settings.PaletteStyleOption
 import com.opentune.data.settings.PlayerBackground
 import com.opentune.data.settings.PlayerMotion
 import com.opentune.data.settings.PlayerStyle
 import com.opentune.data.settings.Recommender
-import com.opentune.data.settings.SEED_COLORS
-import com.opentune.data.settings.ThemeMode
 import com.opentune.data.settings.VolumeLevel
 import com.opentune.data.sponsorblock.SponsorBlock
 import com.opentune.data.subsonic.Subsonic
@@ -415,9 +413,7 @@ private fun settingsSections(
     val done by Downloads.done.collectAsState(Downloads.doneNow())
     var downloadQualityDialog by remember { mutableStateOf(false) }
     var lyricsSourcesDialog by remember { mutableStateOf(false) }
-    var lastFmDialog by remember { mutableStateOf(false) }
     var serverDialog by remember { mutableStateOf(false) }
-    var listenBrainzDialog by remember { mutableStateOf(false) }
     var sponsorBlockDialog by remember { mutableStateOf(false) }
     var update by remember { mutableStateOf<UpdateCheck.Release?>(null) }
     var showWhatsNew by remember { mutableStateOf(false) }
@@ -433,8 +429,6 @@ private fun settingsSections(
     var hiddenDialog by remember { mutableStateOf(false) }
     val hidden by LibraryStore.hidden.collectAsState()
     val followedArtists by NewReleases.followed.collectAsState()
-    val listenBrainz by ListenBrainz.account.collectAsState()
-    val listensWaiting by ListenBrainz.queued.collectAsState()
     val musicServer by Subsonic.server.collectAsState()
     var lyricsAnimationDialog by remember { mutableStateOf(false) }
     var dockMotionDialog by remember { mutableStateOf(false) }
@@ -444,8 +438,6 @@ private fun settingsSections(
     var playerMotionDialog by remember { mutableStateOf(false) }
     var coverChangeDialog by remember { mutableStateOf(false) }
     var controlStyleDialog by remember { mutableStateOf(false) }
-    val lastFm by LastFm.account.collectAsState()
-    val scrobblesWaiting by LastFm.queued.collectAsState()
     val lyricsSettings by AppSettings.lyrics.collectAsState()
     var confirmSignOut by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -506,9 +498,7 @@ private fun settingsSections(
         )
     }
     if (lyricsSourcesDialog) LyricsSourcesDialog(onDismiss = { lyricsSourcesDialog = false })
-    if (lastFmDialog) LastFmDialog(onDismiss = { lastFmDialog = false })
     if (serverDialog) ServerDialog(onDismiss = { serverDialog = false })
-    if (listenBrainzDialog) ListenBrainzDialog(onDismiss = { listenBrainzDialog = false })
     if (sponsorBlockDialog) SponsorBlockDialog(onDismiss = { sponsorBlockDialog = false })
     update?.let { UpdateDialog(it, onDismiss = { update = null }) }
     if (showWhatsNew) com.opentune.ui.components.WhatsNewSheet(
@@ -848,7 +838,7 @@ private fun settingsSections(
                 },
                 Entry("Sync listening history", "youtube account privacy sync history") {
                     NavRow("Sync listening history", { historyTargetDialog = true },
-                        summary = "YouTube Music needs a signed-in account. Connected scrobblers keep their own settings.",
+                        summary = "YouTube Music needs a signed-in account.",
                         icon = Icons.Rounded.History, value = pb.listeningHistoryTarget.label)
                 },
                 Entry("Pause account sync", "private pause youtube history recommendations") {
@@ -1374,46 +1364,6 @@ private fun settingsSections(
                 },
                 if (musicServer != null) Entry("Disconnect server", "sign out subsonic") {
                     SettingRow("Disconnect server", icon = Icons.AutoMirrored.Rounded.Logout, onClick = { Subsonic.disconnect() })
-                } else null,
-            ),
-        ),
-        Section(
-            "Last.fm (optional)",
-            listOfNotNull(
-                Entry("Last.fm scrobbling", "scrobble lastfm audioscrobbler history") {
-                    val who = lastFm
-                    if (who == null) {
-                        NavRow("Connect Last.fm", { lastFmDialog = true }, summary = "Scrobble what you play with your own Last.fm API account", icon = Icons.Rounded.History)
-                    } else {
-                        SettingRow(
-                            "Scrobbling as ${who.user}",
-                            summary = if (scrobblesWaiting > 0) "$scrobblesWaiting scrobbles waiting to send" else "Songs are scrobbled after half their length or 4 minutes",
-                            icon = Icons.Rounded.History,
-                        )
-                    }
-                },
-                if (lastFm != null) Entry("Disconnect Last.fm", "sign out lastfm") {
-                    SettingRow("Disconnect Last.fm", icon = Icons.AutoMirrored.Rounded.Logout, onClick = { LastFm.signOut() })
-                } else null,
-            ),
-        ),
-        Section(
-            "ListenBrainz (optional)",
-            listOfNotNull(
-                Entry("ListenBrainz", "listenbrainz scrobble history recommendations metabrainz") {
-                    val who = listenBrainz
-                    if (who == null) {
-                        NavRow("Connect ListenBrainz", { listenBrainzDialog = true }, summary = "Free, open listening history, and recommendations on Home", icon = Icons.Rounded.History)
-                    } else {
-                        SettingRow(
-                            "Sending listens as ${who.user}",
-                            summary = if (listensWaiting > 0) "$listensWaiting listens waiting to send" else "Recommendations from your listens show on Home",
-                            icon = Icons.Rounded.History,
-                        )
-                    }
-                },
-                if (listenBrainz != null) Entry("Disconnect ListenBrainz", "sign out listenbrainz") {
-                    SettingRow("Disconnect ListenBrainz", icon = Icons.AutoMirrored.Rounded.Logout, onClick = { ListenBrainz.signOut() })
                 } else null,
             ),
         ),

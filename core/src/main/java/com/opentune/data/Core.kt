@@ -8,9 +8,7 @@ import com.opentune.data.download.Downloads
 import com.opentune.data.history.History
 import com.opentune.data.innertube.InnerTubeXResolver
 import com.opentune.data.innertube.UpgradedTracks
-import com.opentune.data.lastfm.LastFm
 import com.opentune.data.library.LibraryStore
-import com.opentune.data.listenbrainz.ListenBrainz
 import com.opentune.data.settings.AppSettings
 import com.opentune.data.subsonic.Subsonic
 import com.opentune.playback.QueueStore
@@ -45,9 +43,7 @@ object Core {
         LoudnessStore.init(app)
         UpgradedTracks.init(app)
         QueueStore.init(app)
-        LastFm.init(app)
         Subsonic.init(app)
-        ListenBrainz.init(app)
         com.opentune.data.radio.Radio.init(app)
         com.opentune.data.releases.NewReleases.init(app)
         com.opentune.data.UpdateCheck.init(app)

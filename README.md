@@ -32,7 +32,7 @@ Built with Kotlin, Jetpack Compose and Media3. Android 8.0 and newer.
 Questions, ideas or bug reports: join the
 [Discord](https://discord.gg/6udrCVh5n).
 
-Build-owner setup and current Last.fm and Discord limits are
+Build-owner setup and current Discord limits are
 documented in [service integrations](docs/service-integrations.md).
 
 ## See it
@@ -258,9 +258,8 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
   as they're stored, so FLAC and hi-res files stay lossless. Also in
   Android Auto. Only a sign-in token is kept, never the password, and it's
   left out of backups.
-- **ListenBrainz** (optional): send what you play to your open
-  ListenBrainz history with your user token, and get its recommendations
-  as a shelf on Home.
+- **Your listening, where it counts**: signed in to YouTube Music, plays
+  go into your YouTube Music history.
 - **Sharper album covers**: the player shows the album's cover from Apple
   Music (up to 3000px), Deezer (1200px) or the Cover Art Archive, in place
   of YouTube's smaller cover or a video frame. A cover is only taken when
@@ -268,11 +267,6 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
 - **Animated covers** (optional): when Apple Music has a moving cover for
   the album, it loops silently in the player's cover. They can be limited
   to Wi-Fi.
-- **Your listening, where it counts**: signed in to YouTube Music, plays
-  go into your YouTube Music history; Last.fm and ListenBrainz (optional)
-  get them as scrobbles.
-- **Last.fm scrobbling** (optional), with your own free Last.fm API key.
-  The password is only used once to get a session and isn't stored.
 - **New-release alerts.** Follow an artist from their page (no account
   needed) and a notification tells you when they put out an album or
   single. Checked twice a day.

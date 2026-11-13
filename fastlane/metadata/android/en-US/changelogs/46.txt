@@ -5,4 +5,3 @@
 • Artist signatures (beta), with fewer wrong matches.
 • Library playlists as tiles or a list, in Settings.
 • Settings rearranged so each page holds what you'd look for.
-• Last.fm scrobbling.

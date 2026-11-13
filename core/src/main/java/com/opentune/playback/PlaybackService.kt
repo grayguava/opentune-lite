@@ -47,9 +47,7 @@ import kotlinx.coroutines.guava.future
 import com.opentune.data.DebugLog as Log
 import com.opentune.data.isYouTubeId
 import com.opentune.data.subsonic.Subsonic
-import com.opentune.data.listenbrainz.ListenBrainz
 import com.opentune.data.download.Downloads
-import com.opentune.data.lastfm.LastFm
 import com.opentune.data.library.LibraryStore
 import com.opentune.data.library.SongRef
 import com.opentune.data.NerdStats
@@ -885,9 +883,6 @@ class PlaybackService : MediaLibraryService() {
         val song = listenSong ?: return
         if (nowPlayingSent) return
         nowPlayingSent = true
-        val duration = mediaSession?.player?.duration?.takeIf { it > 0 } ?: 0L
-        LastFm.nowPlaying(song, duration)
-        ListenBrainz.playingNow(song, duration)
         if (Subsonic.isSubsonic(song.videoId)) scope.launch { Subsonic.scrobble(song.videoId, System.currentTimeMillis(), submission = false) }
     }
 
@@ -935,11 +930,9 @@ class PlaybackService : MediaLibraryService() {
                 val syncHeard = (heard - youtubeSyncStartMs).coerceAtLeast(0)
                 youtubeReport = scope.launch(historyWork + Dispatchers.IO) { session.heard(syncHeard, known) }
             }
-            // Last.fm's rule: a song over 30 s, heard for half its length or 4 minutes.
+            // The usual scrobble rule: a song over 30 s, heard for half its length or 4 minutes.
             if (!scrobbled && known != null && known > 30_000 && heard >= minOf(known / 2, 240_000L)) {
                 scrobbled = true
-                LastFm.scrobble(song, listenStartedAt, known)
-                ListenBrainz.listened(song, listenStartedAt, known)
                 if (Subsonic.isSubsonic(song.videoId)) scope.launch { Subsonic.scrobble(song.videoId, listenStartedAt, submission = true) }
             }
             if (listenRecord != null) continue
