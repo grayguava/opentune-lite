@@ -285,23 +285,16 @@ fun SettingsScreen(
                 } else {
                     SETTINGS_HOME.forEach { (label, keys) ->
                         val cats = keys.mapNotNull { k -> SETTINGS_CATEGORIES.firstOrNull { it.key == k } }
-                        item(key = "home:$label") { GroupLabel(label) }
                         item(key = "homecard:$label") {
                             GroupCard {
                                 cats.forEachIndexed { i, c ->
                                     if (i > 0) RowDivider()
-                                    val summary = if (c.key == "account") {
-                                        if (signedIn) account?.name ?: "Signed in to YouTube Music" else "Not signed in"
-                                    } else {
-                                        c.summary
-                                    }
                                     // The account row wears the signed-in Google photo in place of the icon.
                                     val avatar = account?.thumbnailUrl?.takeIf { c.key == "account" && signedIn }
                                     androidx.compose.foundation.layout.Box(Modifier) {
                                     NavRow(
                                         c.title,
                                         { openKey = c.key },
-                                        summary = summary,
                                         icon = if (avatar == null) c.icon else null,
                                         leading = avatar?.let { url -> { Artwork(url, Modifier.size(28.dp), CircleShape) } },
                                     )
@@ -311,14 +304,7 @@ fun SettingsScreen(
                         }
                     }
                 }
-                item {
-                    Text(
-                        "OpenTune ${BuildConfig.VERSION_NAME} • GNU GPL v3 • Lyrics from LRCLIB",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(28.dp),
-                    )
-                }
+
             }
         }
     }
