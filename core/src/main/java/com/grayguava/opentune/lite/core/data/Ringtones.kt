@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
-import com.grayguava.opentune.lite.data.download.Downloads
 import com.grayguava.opentune.lite.data.local.LocalMusic
 import com.grayguava.opentune.lite.data.model.Song
 import java.io.File
@@ -31,7 +30,7 @@ object Ringtones {
     }
 
     /** Whether [song] has audio on the phone to make a ringtone from. */
-    fun canUse(song: Song) = LocalMusic.isLocal(song.videoId) || Downloads.fileFor(song.videoId) != null
+    fun canUse(song: Song) = LocalMusic.isLocal(song.videoId)
 
     /** Android only lets an app change the default sounds once the user allows "Modify system settings". */
     fun allowed(context: Context) = Settings.System.canWrite(context)
@@ -41,12 +40,7 @@ object Ringtones {
 
     /** Sets [song] as the default sound of [kind]; the URI it was set from. */
     suspend fun set(context: Context, song: Song, kind: Kind): Uri = withContext(Dispatchers.IO) {
-        val uri = if (LocalMusic.isLocal(song.videoId)) {
-            LocalMusic.contentUri(song.videoId)
-        } else {
-            val file = Downloads.fileFor(song.videoId) ?: error("The song isn't downloaded")
-            publish(context, song, file, kind)
-        }
+        val uri = LocalMusic.contentUri(song.videoId)
         RingtoneManager.setActualDefaultRingtoneUri(context, kind.type, uri)
         uri
     }

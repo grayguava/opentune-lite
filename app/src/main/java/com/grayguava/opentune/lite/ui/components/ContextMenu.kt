@@ -87,8 +87,6 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.grayguava.opentune.lite.data.download.DownloadState
-import com.grayguava.opentune.lite.data.download.Downloads
 import com.grayguava.opentune.lite.data.isYouTubeId
 import com.grayguava.opentune.lite.data.library.LibraryStore
 import com.grayguava.opentune.lite.data.model.BrowseType
@@ -329,9 +327,7 @@ fun SongContextMenu(
     val actions = LocalSongMenu.current
     val context = LocalContext.current
     val liked by LibraryStore.liked.collectAsState()
-    val downloads by Downloads.entries.collectAsState()
     val isLiked = liked.any { it.videoId == song.videoId }
-    val download = downloads[song.videoId]
     val local = !isYouTubeId(song.videoId)
     // What follows the menu once it's gone: a playlist picker, or the full menu.
     var next by remember { mutableStateOf<String?>(null) }
@@ -347,15 +343,7 @@ fun SongContextMenu(
         if (actions != null) add(MenuEntry("Dislike", Icons.Rounded.ThumbDownOffAlt, 0) { actions.dislike(song) })
         add(MenuEntry("Add to playlist", Icons.AutoMirrored.Rounded.PlaylistAdd, 0) { next = "playlist" })
         onRemoveFromPlaylist?.let { add(MenuEntry("Remove from this playlist", Icons.Rounded.RemoveCircleOutline, 0) { it() }) }
-        if (!local) add(
-            when (download?.state) {
-                DownloadState.DONE -> MenuEntry("Remove download", Icons.Rounded.DeleteOutline) { Downloads.remove(context, song.videoId) }
-                DownloadState.QUEUED, DownloadState.DOWNLOADING -> MenuEntry("Cancel download", Icons.Rounded.DeleteOutline) { Downloads.remove(context, song.videoId) }
-                DownloadState.FAILED -> MenuEntry("Retry download", Icons.Rounded.Download) { Downloads.retry(context, song.videoId) }
-                null -> MenuEntry("Download", Icons.Rounded.Download) { Downloads.enqueue(context, song) }
-            },
-        )
-        if (cached && download?.state != DownloadState.DONE) add(MenuEntry("Remove from cache", Icons.Rounded.DeleteSweep) {
+        if (cached) add(MenuEntry("Remove from cache", Icons.Rounded.DeleteSweep) {
             com.grayguava.opentune.lite.playback.AudioCache.remove(context, song.videoId)
         })
         if (actions != null) {
@@ -383,7 +371,6 @@ class CollectionMenuActions(
     val play: (browseId: String, title: String, shuffle: Boolean) -> Unit,
     val playNext: (browseId: String) -> Unit,
     val addToQueue: (browseId: String) -> Unit,
-    val downloadAll: (browseId: String) -> Unit,
     val open: (browseId: String, type: BrowseType) -> Unit,
 )
 
@@ -406,7 +393,6 @@ fun CollectionContextMenu(list: MenuList, anchor: Rect, onDismiss: () -> Unit, p
             add(MenuEntry("Shuffle", Icons.Rounded.Shuffle) { actions.play(list.browseId, list.title, true) })
             add(MenuEntry("Play next", Icons.AutoMirrored.Rounded.PlaylistPlay) { actions.playNext(list.browseId) })
             add(MenuEntry("Add to queue", Icons.AutoMirrored.Rounded.QueueMusic) { actions.addToQueue(list.browseId) })
-            add(MenuEntry("Download all", Icons.Rounded.Download) { actions.downloadAll(list.browseId) })
             add(MenuEntry("Open $kind", Icons.AutoMirrored.Rounded.KeyboardArrowRight) { actions.open(list.browseId, list.type) })
         }
         add(MenuEntry("Share", Icons.Rounded.Share) { com.grayguava.opentune.lite.ui.share.ListShare.shareList(context, list.title, list.browseId, listOf(list.thumbnailUrl), list.subtitle) })

@@ -505,11 +505,7 @@ private fun ListMoreSheet(c: com.grayguava.opentune.lite.data.Collection, isAlbu
             com.grayguava.opentune.lite.ui.components.MenuRow(Icons.Filled.Refresh, "Refresh") { close(); onRefresh() }
             com.grayguava.opentune.lite.ui.components.MenuRow(Icons.AutoMirrored.Filled.PlaylistPlay, "Play next") { close(); c.songs.asReversed().forEach(actions.playNext) }
             com.grayguava.opentune.lite.ui.components.MenuRow(Icons.AutoMirrored.Filled.QueueMusic, "Add to queue") { close(); c.songs.forEach(actions.addToQueue) }
-            com.grayguava.opentune.lite.ui.components.MenuRow(Icons.Filled.Download, "Download all") {
-                close()
-                c.songs.forEach { com.grayguava.opentune.lite.data.download.Downloads.enqueue(context, it) }
-                com.grayguava.opentune.lite.data.Pills.done("Downloading ${c.songs.size} songs", context)
-            }
+
             com.grayguava.opentune.lite.ui.components.MenuRow(Icons.Filled.Share, "Share") { close(); com.grayguava.opentune.lite.ui.share.ListShare.shareList(context, c.title, c.browseId, com.grayguava.opentune.lite.ui.share.ListShare.coversFor(c.thumbnailUrl, c.songs, album = c.browseId.startsWith("MPRE")), c.subtitle) }
             com.grayguava.opentune.lite.ui.components.MenuRow(if (saved) Icons.Filled.BookmarkRemove else Icons.Filled.PushPin, if (saved) "Unpin" else "Pin") {
                 close()
@@ -641,7 +637,6 @@ fun CollectionScreen(
                                     // Your own playlist keeps its tools: privacy, sharing your copy.
                                     if (own != null) com.grayguava.opentune.lite.ui.library.ListTools(
                                         c.songs, onAddSongs = null, Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                                        list = com.grayguava.opentune.lite.ui.library.DownloadedListInfo(c.browseId, c.title, c.subtitle, c.thumbnailUrl),
                                         // No heart here: the plus beside Play already saves it.
                                         onShare = { own.share() },
                                         privacy = own.privacy,

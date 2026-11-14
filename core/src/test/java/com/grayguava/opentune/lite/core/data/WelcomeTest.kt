@@ -7,7 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class WelcomeTest {
-    private val fresh = Welcome.Signals(plays = 0, libraryItems = 0, downloads = 0, signedIn = false, updated = false)
+    private val fresh = Welcome.Signals(plays = 0, libraryItems = 0, signedIn = false, updated = false)
 
     @Test fun aFreshInstallGetsTheWelcome() {
         assertEquals(WelcomeState.DUE, Welcome.decide(WelcomeState.UNDECIDED, fresh))
@@ -17,7 +17,6 @@ class WelcomeTest {
         listOf(
             fresh.copy(plays = 1),
             fresh.copy(libraryItems = 2),
-            fresh.copy(downloads = 3),
             fresh.copy(signedIn = true),
             // Updated from an older version, even one never played from.
             fresh.copy(updated = true),

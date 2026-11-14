@@ -102,7 +102,7 @@ fun LocalMusicScreen(contentPadding: PaddingValues, actions: SongActions, onBack
     }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted = it }
     var songs by remember { mutableStateOf<List<Song>?>(null) }
-    LaunchedEffect(granted, library.localFolder, library.filterNonMusic) {
+    LaunchedEffect(granted, library.localFolder) {
         if (granted) songs = runCatching { LocalMusic.tracks(context, library) }.getOrDefault(emptyList())
     }
 

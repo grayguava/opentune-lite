@@ -3,7 +3,6 @@ package com.grayguava.opentune.lite.data
 import android.content.Context
 import android.os.Build
 import com.grayguava.opentune.lite.data.account.AccountStore
-import com.grayguava.opentune.lite.data.download.Downloads
 import com.grayguava.opentune.lite.data.history.History
 import com.grayguava.opentune.lite.data.library.LibraryStore
 import com.grayguava.opentune.lite.data.settings.AppSettings
@@ -25,14 +24,13 @@ object Welcome {
         val plays: Int,
         /** Liked songs, local playlists and saved albums and playlists. */
         val libraryItems: Int,
-        val downloads: Int,
         val signedIn: Boolean,
         /** The app was installed as an older version and updated since. */
         val updated: Boolean,
     )
 
     internal fun alreadyInUse(s: Signals): Boolean =
-        s.plays > 0 || s.libraryItems > 0 || s.downloads > 0 || s.signedIn || s.updated
+        s.plays > 0 || s.libraryItems > 0 || s.signedIn || s.updated
 
     /** What [state] becomes at start, given what's on the phone. */
     internal fun decide(state: WelcomeState, signals: Signals): WelcomeState = when (state) {
@@ -47,7 +45,6 @@ object Welcome {
         val signals = Signals(
             plays = History.records.value.size,
             libraryItems = LibraryStore.liked.value.size + LibraryStore.playlists.value.size + LibraryStore.savedLists.value.size,
-            downloads = Downloads.entries.value.size,
             signedIn = AccountStore.signedIn.value,
             updated = updatedSinceInstall(context),
         )

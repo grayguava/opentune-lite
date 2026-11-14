@@ -29,24 +29,11 @@ object LocalMusic {
     suspend fun tracks(context: Context, settings: LibrarySettings): List<Song> = withContext(Dispatchers.IO) {
         query(context)
             .filter { settings.localFolder == null || it.folder == settings.localFolder }
-            .filter { !settings.filterNonMusic || looksLikeMusic(it) }
             .map { it.song }
     }
 
     suspend fun folders(context: Context): List<Pair<String, Int>> = withContext(Dispatchers.IO) {
         query(context).groupingBy { it.folder }.eachCount().toList().sortedBy { it.first.lowercase() }
-    }
-
-    /**
-     * Short clips, WAV recordings, voice notes and system sounds aren't music,
-     * even when they sit in a music folder.
-     */
-    fun looksLikeMusic(t: Track): Boolean {
-        val folder = t.folder.lowercase()
-        return t.isMusic &&
-            t.durationMs >= 30_000 &&
-            t.mimeType?.contains("wav") != true &&
-            listOf("recording", "voice", "whatsapp audio", "notifications", "ringtones", "alarms", "call").none { it in folder }
     }
 
     // Lint's Recycle check doesn't see Kotlin's use {}, which closes the cursor.

@@ -1,6 +1,5 @@
 package com.grayguava.opentune.lite.data.covers
 
-import com.grayguava.opentune.lite.data.download.Downloads
 import com.grayguava.opentune.lite.data.model.PLAYER_ART_PX
 import com.grayguava.opentune.lite.data.model.Song
 import com.grayguava.opentune.lite.data.model.artworkAt
@@ -13,7 +12,6 @@ import com.grayguava.opentune.lite.data.model.artworkAt
 class PlaybackArtwork(
     // A catalogue cover found before isn't started with: it comes as [better] once it has
     // loaded, as a link that no longer worked left the player with no cover at all.
-    private val preferred: (Song) -> String? = { song -> Downloads.artFor(song.videoId)?.toURI()?.toString() },
 ) {
     private var id: String? = null
     private var url: String? = null
@@ -22,10 +20,10 @@ class PlaybackArtwork(
         if (id != song.videoId || url == null) {
             id = song.videoId
             upgraded = false
-            url = (preferred(song) ?: song.thumbnailUrl).artworkAt(PLAYER_ART_PX)
+            url = song.thumbnailUrl.artworkAt(PLAYER_ART_PX)
         }
         // A downloaded song's own saved cover stays: it's what was kept with the file.
-        if (better != null && !upgraded && url?.startsWith("file:") != true) {
+        if (better != null && !upgraded) {
             upgraded = true
             url = better.artworkAt(PLAYER_ART_PX)
         }

@@ -7,7 +7,6 @@ import android.net.Uri
 import android.os.ParcelFileDescriptor
 import com.grayguava.opentune.lite.data.DebugLog as Log
 import com.grayguava.opentune.lite.data.Http
-import com.grayguava.opentune.lite.data.download.Downloads
 import com.grayguava.opentune.lite.data.subsonic.Subsonic
 import java.io.File
 import java.io.FileNotFoundException
@@ -33,7 +32,6 @@ class ArtworkProvider : ContentProvider() {
     override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor {
         if (mode != "r") throw SecurityException("Artwork is read-only")
         val file = when (uri.pathSegments.firstOrNull()) {
-            "download" -> uri.pathSegments.getOrNull(1)?.let(Downloads::artFor)
             "web" -> uri.getQueryParameter("u")?.let(::cached)
             else -> null
         } ?: throw FileNotFoundException(uri.toString())

@@ -87,8 +87,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.grayguava.opentune.lite.data.MusicRepository
 import com.grayguava.opentune.lite.data.account.AccountStore
-import com.grayguava.opentune.lite.data.download.DownloadState
-import com.grayguava.opentune.lite.data.download.Downloads
 import com.grayguava.opentune.lite.data.history.History
 import com.grayguava.opentune.lite.data.library.LibraryStore
 import com.grayguava.opentune.lite.data.library.PlaylistLinks
@@ -121,7 +119,7 @@ import kotlinx.coroutines.launch
 
 /** Where Library's tiles lead. */
 class LibraryNav(
-    val downloads: () -> Unit,
+    val downloads: () -> Unit = {},
     val local: () -> Unit,
     val replay: () -> Unit,
     val settings: () -> Unit,
@@ -181,7 +179,6 @@ private val TILE_WIDTH = 164.dp
 private fun rememberPlaylistRows(nav: LibraryNav): List<LibraryPlaylistRow> {
     val records by History.records.collectAsState()
     val playlists by LibraryStore.playlists.collectAsState()
-    val downloadEntries by Downloads.entries.collectAsState()
     val hearted by LibraryStore.savedLists.collectAsState()
     val signedIn by AccountStore.signedIn.collectAsState()
     val pinned = AppSettings.ui.collectAsState().value.pinnedPlaylists
@@ -192,9 +189,8 @@ private fun rememberPlaylistRows(nav: LibraryNav): List<LibraryPlaylistRow> {
     val rows = mutableListOf<LibraryPlaylistRow>()
     for (p in playlists) {
         val source = if (p.synced) "YouTube Music" else "On this phone"
-        val saved = p.songs.count { downloadEntries[it.videoId]?.state == DownloadState.DONE }
         rows += LibraryPlaylistRow(p.id, p.name,
-            (if (p.songs.size == 1) "1 song" else "${p.songs.size} songs") + if (saved > 0) " · $saved downloaded" else "",
+            if (p.songs.size == 1) "1 song" else "${p.songs.size} songs",
             null, p, pin = p.id, source = source,
             plays = p.songs.sumOf { playCounts[it.videoId] ?: 0 }, onClick = { nav.playlist(p.id) })
     }
@@ -214,7 +210,6 @@ private fun rememberPlaylistRows(nav: LibraryNav): List<LibraryPlaylistRow> {
 fun LibraryScreen(contentPadding: PaddingValues, actions: SongActions, nav: LibraryNav) {
     val records by History.records.collectAsState()
     val liked by LibraryStore.liked.collectAsState()
-    val finished by Downloads.done.collectAsState(Downloads.doneNow())
     val signedIn by AccountStore.signedIn.collectAsState()
     val account by AccountStore.account.collectAsState()
     val libraryUi by AppSettings.ui.collectAsState()
@@ -251,7 +246,6 @@ fun LibraryScreen(contentPadding: PaddingValues, actions: SongActions, nav: Libr
     }
     var naming by remember { mutableStateOf(false) }
     if (naming) NewPlaylistDialog(signedIn, onDismiss = { naming = false }) { name, privacy -> naming = false; nav.playlist(LibraryStore.createPlaylist(name, privacy = privacy)) }
-    val doneCount = finished.size
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     val rows = rememberPlaylistRows(nav)
     // The pinned ones, then the most played; Show all has the rest.
@@ -283,7 +277,6 @@ fun LibraryScreen(contentPadding: PaddingValues, actions: SongActions, nav: Libr
             Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Shortcut(Icons.Rounded.Favorite, "Liked", "${liked.size} songs", nav.liked, Modifier.weight(1f))
-                    Shortcut(Icons.Rounded.Download, "Downloads", if (doneCount == 0) "Offline songs" else "$doneCount songs", nav.downloads, Modifier.weight(1f))
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Shortcut(Icons.Rounded.LibraryMusic, "On this phone", "Local files", nav.local, Modifier.weight(1f))
@@ -624,157 +617,6 @@ private fun SaveToAccountDialog(name: String, onDismiss: () -> Unit, onSave: (Pl
     )
 }
 
-/**
- * An album or playlist downloaded as a whole: its downloaded songs in the
- * list's order, playable offline, with any still on their way.
- */
-@Composable
-fun DownloadedListScreen(id: String, contentPadding: PaddingValues, actions: SongActions, onBack: () -> Unit) {
-    val context = LocalContext.current
-    val lists by com.grayguava.opentune.lite.data.download.DownloadedLists.lists.collectAsState()
-    val entries by Downloads.entries.collectAsState()
-    val saved = lists.firstOrNull { it.id == id }
-    val inList = remember(saved, entries) { saved?.songIds.orEmpty().mapNotNull { entries[it] } }
-    val ready = remember(inList) { inList.filter { it.state == DownloadState.DONE }.map { it.song.toSong() } }
-    var query by androidx.compose.runtime.saveable.rememberSaveable(id) { mutableStateOf("") }
-    var confirmRemove by remember { mutableStateOf(false) }
-    if (confirmRemove && saved != null) com.grayguava.opentune.lite.ui.components.FloatingDialog(
-        onDismissRequest = { confirmRemove = false },
-        title = { Text("Remove this download?") },
-        text = { Text("Deletes the downloaded songs of ${saved.title} from this phone and takes it out of your library's downloads.") },
-        confirmButton = { com.grayguava.opentune.lite.ui.components.SheetButton("Remove", tone = com.grayguava.opentune.lite.ui.components.SheetTone.Danger, onClick = {
-            Downloads.removeAll(context, inList.map { it.song.toSong() })
-            com.grayguava.opentune.lite.data.download.DownloadedLists.remove(saved.id)
-            confirmRemove = false
-            onBack()
-        }) },
-        dismissButton = { com.grayguava.opentune.lite.ui.components.SheetButton("Keep", onClick = { confirmRemove = false }, closes = true) },
-    )
-    LazyColumn(contentPadding = contentPadding, modifier = Modifier.fillMaxSize()) {
-        item { PageHeader(saved?.title ?: "Downloaded", onBack = onBack) }
-        if (saved == null || inList.isEmpty()) {
-            item { MessageState(Icons.Rounded.Download, "Nothing downloaded here", Modifier.padding(top = 32.dp), message = "Its songs were removed from Downloads.") }
-            return@LazyColumn
-        }
-        item {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Artwork(saved.thumbnailUrl, Modifier.size(96.dp), RoundedCornerShape(16.dp))
-                Spacer(Modifier.width(16.dp))
-                Column(Modifier.weight(1f)) {
-                    if (saved.subtitle.isNotBlank()) Text(saved.subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
-                    Text("${ready.size} of ${saved.songIds.size} songs downloaded", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    TextButton(onClick = { confirmRemove = true }, contentPadding = PaddingValues(0.dp)) { Text("Remove download") }
-                }
-            }
-        }
-        item {
-            PlayButtons(
-                onPlay = { actions.playAll(ready, 0, false, saved.title) },
-                onShuffle = { actions.playAll(ready, 0, true, saved.title) },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-            )
-        }
-        item { com.grayguava.opentune.lite.ui.browse.ListSearchField(query, { query = it }, { query = "" }, Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) }
-        items(inList.filter { it.song.title.contains(query.trim(), true) || it.song.artist.contains(query.trim(), true) }, key = { it.song.videoId }) { e ->
-            val song = e.song.toSong()
-            SongListItem(
-                song = when (e.state) {
-                    DownloadState.FAILED -> song.copy(durationText = "Failed · tap to retry")
-                    DownloadState.QUEUED -> song.copy(durationText = if (com.grayguava.opentune.lite.data.download.Downloads.waitingForWifi(context)) "Waiting for Wi-Fi" else "Waiting")
-                    DownloadState.DOWNLOADING -> song.copy(durationText = "Downloading ${(e.progress * 100).toInt()}%")
-                    else -> song
-                },
-                onClick = {
-                    when (e.state) {
-                        DownloadState.DONE -> actions.playAll(ready, ready.indexOfFirst { it.videoId == song.videoId }.coerceAtLeast(0), false, saved.title)
-                        DownloadState.FAILED -> Downloads.retry(context, song.videoId)
-                        else -> Unit
-                    }
-                },
-                modifier = Modifier.animateItem(),
-                isCurrent = song.videoId == actions.currentVideoId,
-                isPlaying = actions.isPlaying,
-                onPlayNext = { actions.playNext(song) },
-                onAddToQueue = { actions.addToQueue(song) },
-            )
-        }
-    }
-}
-
-/** Songs saved for offline listening, newest first, including ones still on their way; and the playlists downloaded whole. */
-@Composable
-fun DownloadsScreen(contentPadding: PaddingValues, actions: SongActions, onBack: () -> Unit, onOpenList: (String) -> Unit = {}) {
-    val context = LocalContext.current
-    val entries by Downloads.entries.collectAsState()
-    val downloadedLists by com.grayguava.opentune.lite.data.download.DownloadedLists.lists.collectAsState()
-    val list = remember(entries) { entries.values.sortedByDescending { it.addedAt } }
-    val ready = remember(list) { list.filter { it.state == DownloadState.DONE }.map { it.song.toSong() } }
-    // Downloaded lists with something of theirs still downloaded, and how much.
-    val lists = remember(downloadedLists, entries) {
-        downloadedLists.mapNotNull { l ->
-            val have = l.songIds.count { entries[it]?.state == DownloadState.DONE }
-            if (l.songIds.any { it in entries }) l to have else null
-        }
-    }
-    var tab by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(DownloadsTab.SONGS) }
-    LazyColumn(contentPadding = contentPadding, modifier = Modifier.fillMaxSize()) {
-        item { PageHeader("Downloads", onBack = onBack) }
-        if (list.isEmpty()) {
-            item {
-                MessageState(Icons.Rounded.Download, "No downloads yet", Modifier.padding(top = 32.dp), message = "Pick Download from any song's menu to keep it for offline listening.")
-            }
-            return@LazyColumn
-        }
-        item {
-            com.grayguava.opentune.lite.ui.components.PillSegmented(DownloadsTab.entries, tab, { it.label(list.size, lists.size) }, { tab = it },
-                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp))
-        }
-        if (tab == DownloadsTab.PLAYLISTS) {
-            if (lists.isEmpty()) item {
-                MessageState(Icons.AutoMirrored.Rounded.QueueMusic, "No playlists downloaded", Modifier.padding(top = 32.dp),
-                    message = "Use Download on a playlist or album page to keep the whole list offline.")
-            }
-            items(lists, key = { "list:${it.first.id}" }) { (l, have) ->
-                PlaylistRow(l.thumbnailUrl, l.title, "$have of ${l.songIds.size} downloaded · plays offline", { onOpenList(l.id) }, Modifier.animateItem())
-            }
-            return@LazyColumn
-        }
-        item {
-            PlayButtons(
-                onPlay = { actions.playAll(ready, 0, false, "Downloads") },
-                onShuffle = { actions.playAll(ready, 0, true, "Downloads") },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-            )
-        }
-        items(list, key = { it.song.videoId }) { e ->
-            val song = e.song.toSong()
-            SongListItem(
-                song = if (e.state == DownloadState.FAILED) song.copy(durationText = "Failed · tap to retry") else song,
-                onClick = {
-                    when (e.state) {
-                        DownloadState.DONE -> actions.playAll(ready, ready.indexOfFirst { it.videoId == song.videoId }.coerceAtLeast(0), false, "Downloads")
-                        DownloadState.FAILED -> Downloads.retry(context, song.videoId)
-                        else -> Unit
-                    }
-                },
-                modifier = Modifier.animateItem(),
-                isCurrent = song.videoId == actions.currentVideoId,
-                isPlaying = actions.isPlaying,
-                onPlayNext = { actions.playNext(song) },
-                onAddToQueue = { actions.addToQueue(song) },
-            )
-        }
-    }
-}
-
-private enum class DownloadsTab {
-    SONGS, PLAYLISTS;
-    fun label(songs: Int, lists: Int) = when (this) {
-        SONGS -> "Songs · $songs"
-        PLAYLISTS -> "Playlists · $lists"
-    }
-}
-
 /** Songs liked in the app (and on YouTube Music, when signed in). */
 @Composable
 fun LikedScreen(contentPadding: PaddingValues, actions: SongActions, onBack: () -> Unit, onOpenYouTubeLikes: () -> Unit) {
@@ -1070,11 +912,7 @@ private fun LocalListMoreSheet(
             com.grayguava.opentune.lite.ui.components.MenuRow(Icons.Rounded.Refresh, "Refresh") { close(); onRefresh() }
             com.grayguava.opentune.lite.ui.components.MenuRow(Icons.AutoMirrored.Rounded.PlaylistPlay, "Play next") { close(); songs.asReversed().forEach(actions.playNext) }
             com.grayguava.opentune.lite.ui.components.MenuRow(Icons.AutoMirrored.Rounded.QueueMusic, "Add to queue") { close(); songs.forEach(actions.addToQueue) }
-            com.grayguava.opentune.lite.ui.components.MenuRow(Icons.Rounded.Download, "Download all") {
-                close()
-                songs.forEach { Downloads.enqueue(context, it) }
-                com.grayguava.opentune.lite.data.Pills.done("Downloading ${songs.size} songs", context)
-            }
+
             com.grayguava.opentune.lite.ui.components.MenuRow(Icons.Rounded.Add, "Add songs") { close(); onAddSongs() }
             com.grayguava.opentune.lite.ui.components.MenuRow(Icons.Rounded.Edit, "Rename") { close(); onRename() }
             com.grayguava.opentune.lite.ui.components.MenuRow(Icons.Rounded.Share, "Share") { close(); onShare() }

@@ -59,8 +59,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.grayguava.opentune.lite.data.MusicRepository
-import com.grayguava.opentune.lite.data.download.DownloadState
-import com.grayguava.opentune.lite.data.download.Downloads
 import com.grayguava.opentune.lite.data.history.History
 import com.grayguava.opentune.lite.data.library.LibraryStore
 import com.grayguava.opentune.lite.data.model.SearchFilter
@@ -73,102 +71,7 @@ import com.grayguava.opentune.lite.ui.components.FloatingCard
 import com.grayguava.opentune.lite.ui.components.FloatingDialog
 import com.grayguava.opentune.lite.ui.components.MenuRow
 import com.grayguava.opentune.lite.ui.components.SheetButton
-import com.grayguava.opentune.lite.data.download.downloadSelection
 import kotlinx.coroutines.delay
-
-/**
- * Download every song in a list, with how far it's got: "Download",
- * "Downloading 4 of 12", then "Downloaded". Files on the phone and songs
- * already saved are left as they are. A rising run of taps says when the
- * last one is done.
- */
-/** The list a [DownloadAllButton] downloads, kept so the library can show it as a list of its downloads. */
-data class DownloadedListInfo(val id: String, val title: String, val subtitle: String, val thumbnailUrl: String?)
-
-@Composable
-fun DownloadAllButton(songs: List<Song>, modifier: Modifier = Modifier, list: DownloadedListInfo? = null) {
-    val context = LocalContext.current
-    val entries by Downloads.entries.collectAsState()
-    val selection = remember(songs, entries) { downloadSelection(songs, entries) }
-    val wanted = selection.wanted
-    val done = selection.complete.size
-    val going = selection.active.size
-    var options by remember { mutableStateOf(false) }
-    var confirmRemove by remember { mutableStateOf(false) }
-    val all = wanted.isNotEmpty() && done == wanted.size
-    var started by remember { mutableStateOf(false) }
-    // A list downloaded in full before lists were kept: keep it now, so it shows in the library too.
-    LaunchedEffect(list?.id, selection.stored.size, wanted.size) {
-        if (list != null && wanted.isNotEmpty() && selection.stored.size == wanted.size && com.grayguava.opentune.lite.data.download.DownloadedLists.get(list.id) == null) {
-            com.grayguava.opentune.lite.data.download.DownloadedLists.save(list.id, list.title, list.subtitle, list.thumbnailUrl, songs.map { it.videoId })
-        }
-    }
-    val progress by animateFloatAsState(if (wanted.isEmpty()) 0f else done.toFloat() / wanted.size, tween(500), label = "downloaded")
-    val scheme = MaterialTheme.colorScheme
-    val downloadRemaining = {
-        started = true
-        wanted.forEach { Downloads.enqueue(context, it) }
-        list?.let { com.grayguava.opentune.lite.data.download.DownloadedLists.save(it.id, it.title, it.subtitle, it.thumbnailUrl, songs.map { s -> s.videoId }) }
-    }
-    if (options) FloatingCard(onDismiss = { options = false }, title = "Playlist downloads", icon = Icons.Rounded.Download) {
-        Text("$done of ${wanted.size} songs saved · $going pending", Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-            style = MaterialTheme.typography.bodyMedium)
-        if (done + going < wanted.size) MenuRow(Icons.Rounded.Download, "Download remaining songs") {
-            downloadRemaining()
-            options = false
-        }
-        if (going > 0) MenuRow(Icons.Rounded.Close, "Cancel downloads") {
-            started = false
-            Downloads.cancelAll(context, wanted)
-            options = false
-        }
-        if (selection.stored.isNotEmpty()) MenuRow(Icons.Rounded.DeleteOutline, "Remove all downloads") {
-            options = false
-            confirmRemove = true
-        }
-    }
-    if (confirmRemove) FloatingDialog(
-        onDismissRequest = { confirmRemove = false },
-        title = { Text("Remove playlist downloads?") },
-        text = { Text("Removes this list’s downloaded audio and cancels unfinished downloads. Your playlist stays in your library. Songs shared with other playlists will also need a connection to play.") },
-        confirmButton = { SheetButton("Remove downloads", onClick = {
-            started = false
-            Downloads.removeAll(context, wanted)
-            list?.let { com.grayguava.opentune.lite.data.download.DownloadedLists.remove(it.id) }
-            confirmRemove = false
-        }) },
-        dismissButton = { SheetButton("Keep downloads", onClick = { confirmRemove = false }, closes = true) },
-    )
-    Row(
-        modifier
-            .height(44.dp)
-            .clip(CircleShape)
-            .background(scheme.surfaceContainerHighest)
-            .clickable(enabled = wanted.isNotEmpty()) {
-                if (selection.stored.isNotEmpty()) options = true else downloadRemaining()
-            }
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.size(22.dp), contentAlignment = Alignment.Center) {
-            when {
-                all -> Icon(Icons.Rounded.DownloadDone, null, tint = scheme.primary, modifier = Modifier.size(22.dp))
-                going > 0 -> CircularProgressIndicator(progress = { progress }, strokeWidth = 2.5.dp, modifier = Modifier.size(20.dp), trackColor = scheme.onSurface.copy(alpha = 0.15f))
-                else -> Icon(Icons.Rounded.Download, null, modifier = Modifier.size(22.dp))
-            }
-        }
-        Spacer(Modifier.width(8.dp))
-        Text(
-            when {
-                all -> "Downloaded · Manage"
-                going > 0 -> "Downloading · $done/${wanted.size}"
-                done > 0 -> "Download the other ${wanted.size - done}"
-                else -> "Download all"
-            },
-            style = MaterialTheme.typography.labelLarge,
-        )
-    }
-}
 
 /** Opens [AddSongsSheet]; for a playlist made in the app. */
 @Composable
@@ -351,7 +254,6 @@ fun ListTools(
     songs: List<Song>,
     onAddSongs: (() -> Unit)?,
     modifier: Modifier = Modifier,
-    list: DownloadedListInfo? = null,
     /** Whether the list's heart is on; null shows no heart (the app's own playlists). */
     saved: Boolean? = null,
     onSave: () -> Unit = {},
@@ -364,7 +266,6 @@ fun ListTools(
         if (saved != null) ListHeart(saved, onSave)
         if (onPrivacy != null) com.grayguava.opentune.lite.ui.components.PrivacyButton(privacy, onPrivacy)
         if (onAddSongs != null) AddSongsButton(onAddSongs)
-        if (songs.isNotEmpty()) DownloadAllButton(songs, list = list)
         if (onShare != null) RoundToolButton(Icons.Rounded.Share, "Share", onShare)
     }
 }

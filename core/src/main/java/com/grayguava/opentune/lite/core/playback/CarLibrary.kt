@@ -13,7 +13,6 @@ import androidx.media3.session.MediaSession
 import com.grayguava.opentune.lite.data.DebugLog as Log
 import com.grayguava.opentune.lite.data.MusicRepository
 import com.grayguava.opentune.lite.data.account.AccountStore
-import com.grayguava.opentune.lite.data.download.Downloads
 import com.grayguava.opentune.lite.data.history.History
 import com.grayguava.opentune.lite.data.library.LibraryStore
 import com.grayguava.opentune.lite.data.model.BrowseType
@@ -73,7 +72,7 @@ class CarLibrary(private val context: Context) {
             parentId == RECENT -> songs(RECENT, History.recents(History.records.value, MAX_SONGS))
             parentId == LIBRARY -> libraryItems()
             parentId == LIKED -> songs(LIKED, LibraryStore.liked.value.map { it.toSong() })
-            parentId == DOWNLOADS -> songs(DOWNLOADS, Downloads.doneNow().map { it.song.toSong() })
+
             // Favourite stations, then others played lately; next and previous change station.
             parentId == RADIO -> songs(RADIO, radioStations().map { it.toSong() })
             parentId.startsWith(PLAYLIST) -> {
@@ -182,8 +181,7 @@ class CarLibrary(private val context: Context) {
     private suspend fun libraryItems(): List<MediaItem> = buildList {
         val liked = LibraryStore.liked.value
         add(folder(LIKED, "Liked songs", subtitle = "${liked.size} songs", artwork = liked.firstOrNull()?.thumbnailUrl))
-        val downloads = Downloads.doneNow()
-        add(folder(DOWNLOADS, "Downloads", subtitle = "${downloads.size} songs", artwork = downloads.firstOrNull()?.song?.thumbnailUrl))
+
         LibraryStore.playlists.value.forEach { p ->
             add(folder("$PLAYLIST${p.id}", p.name, subtitle = "${p.songs.size} songs", artwork = p.songs.firstOrNull()?.thumbnailUrl, type = MediaMetadata.MEDIA_TYPE_PLAYLIST))
         }
@@ -321,7 +319,6 @@ class CarLibrary(private val context: Context) {
         const val RECENT = "recent"
         const val LIBRARY = "library"
         const val LIKED = "liked"
-        const val DOWNLOADS = "downloads"
         const val SEARCH = "search"
         private const val HOME_SHELF = "home:"
         private const val PLAYLIST = "playlist:"
@@ -349,9 +346,7 @@ class CarLibrary(private val context: Context) {
 object CarArtwork {
     fun uriFor(context: Context, videoId: String?, url: String?): Uri? {
         val authority = "${context.packageName}.artwork"
-        if (videoId != null && Downloads.artFor(videoId) != null) {
-            return Uri.Builder().scheme("content").authority(authority).appendPath("download").appendPath(videoId).build()
-        }
+
         val web = Subsonic.resolveCover(url, CARD_ART_PX)?.artworkAt(CARD_ART_PX) ?: return null
         return Uri.Builder().scheme("content").authority(authority).appendPath("web").appendQueryParameter("u", web).build()
     }

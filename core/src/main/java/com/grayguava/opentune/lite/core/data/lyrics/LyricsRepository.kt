@@ -7,7 +7,6 @@ import com.grayguava.opentune.lite.data.innertube.Innertube
 import com.grayguava.opentune.lite.data.local.LocalMusic
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
-import com.grayguava.opentune.lite.data.download.Downloads
 import com.grayguava.opentune.lite.data.settings.LyricsSource
 import com.grayguava.opentune.lite.data.settings.AppSettings
 import kotlin.math.abs
@@ -74,21 +73,6 @@ object LyricsRepository {
     private val json = Json { ignoreUnknownKeys = true }
     private val cache = ConcurrentHashMap<String, Lyrics>()
 
-    /** Lyrics saved with a download, so they show offline. */
-    private fun offlineFile(videoId: String): File? = Downloads.lyricsFileFor(videoId)
-
-    private fun readOffline(videoId: String, durationMs: Long): Lyrics? =
-        offlineFile(videoId)?.takeIf { it.exists() }?.let { f ->
-            runCatching { json.decodeFromString(Lyrics.serializer(), f.readText()) }.getOrNull()
-        }?.let { LyricsQuality.tidy(it, durationMs) }
-
-    /** Fetches and keeps the lyrics for a downloaded song; called by the download job. */
-    suspend fun saveOffline(videoId: String, title: String, artist: String, durationMs: Long) {
-        val f = offlineFile(videoId) ?: return
-        val found = lyricsFor(videoId, title, artist, durationMs) ?: return
-        withContext(Dispatchers.IO) { runCatching { f.writeText(json.encodeToString(Lyrics.serializer(), found)) } }
-    }
-
     suspend fun lyricsFor(videoId: String, title: String, artist: String, durationMs: Long): Lyrics? =
         find(videoId, title, artist, durationMs).lyrics
 
@@ -123,7 +107,6 @@ object LyricsRepository {
         // Songs saved before the fix carry a card's "Song" or "Video" as their artist: looked up
         // under it, the lyrics found were another song's.
         val artist = credited.takeUnless { it.trim().lowercase() in NOT_AN_ARTIST }.orEmpty()
-        withContext(Dispatchers.IO) { readOffline(videoId, durationMs) }?.let { return Found(it, true) }
         val settings = AppSettings.lyrics.value
         val chosen = settings.chosen[videoId]
         // The duration is in the key: lyrics found for one length aren't reused for another.

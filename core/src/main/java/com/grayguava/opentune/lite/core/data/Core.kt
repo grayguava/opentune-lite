@@ -4,7 +4,6 @@ import android.app.Application
 import com.grayguava.opentune.lite.data.account.AccountStore
 import com.grayguava.opentune.lite.data.autoeq.AutoEq
 import com.grayguava.opentune.lite.data.covers.AlbumCovers
-import com.grayguava.opentune.lite.data.download.Downloads
 import com.grayguava.opentune.lite.data.history.History
 import com.grayguava.opentune.lite.data.innertube.InnerTubeXResolver
 import com.grayguava.opentune.lite.data.innertube.UpgradedTracks
@@ -55,8 +54,6 @@ object Core {
         AutoEq.init(app)
         com.grayguava.opentune.lite.data.library.LibraryArtwork.init(app)
         LibraryStore.init(app)
-        Downloads.init(app)
-        com.grayguava.opentune.lite.data.download.DownloadedLists.init(app)
         AccountStore.init(app)
         com.grayguava.opentune.lite.data.library.LibraryCache.init(app)
         // After library and account: it sends playlist changes still waiting, when signed in.
@@ -73,6 +70,5 @@ object Core {
         LibraryStore.flush()
         History.flush()
         com.grayguava.opentune.lite.data.history.ListenedCollections.flush()
-        Downloads.flush()
     }
 }

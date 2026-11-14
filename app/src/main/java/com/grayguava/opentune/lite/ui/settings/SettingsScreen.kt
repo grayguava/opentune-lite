@@ -145,8 +145,6 @@ import coil3.SingletonImageLoader
 import com.grayguava.opentune.lite.BuildConfig
 import com.grayguava.opentune.lite.data.LogExport
 import com.grayguava.opentune.lite.data.account.AccountStore
-import com.grayguava.opentune.lite.data.download.DownloadState
-import com.grayguava.opentune.lite.data.download.Downloads
 import com.grayguava.opentune.lite.data.history.History
 import com.grayguava.opentune.lite.data.library.LibraryStore
 import com.grayguava.opentune.lite.data.local.LocalMusic
@@ -203,13 +201,12 @@ fun SettingsScreen(
     onOpenReplay: () -> Unit,
     onOpenWrapped: () -> Unit = {},
     onSignIn: () -> Unit = {},
-    onOpenDownloads: () -> Unit = {},
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     var openKey by rememberSaveable { mutableStateOf<String?>(null) }
     val signedIn by AccountStore.signedIn.collectAsState()
     val account by AccountStore.account.collectAsState()
-    val sections = settingsSections(onOpenEqualizer, onOpenReplay, onOpenWrapped, onSignIn, onOpenDownloads)
+    val sections = settingsSections(onOpenEqualizer, onOpenReplay, onOpenWrapped, onSignIn)
     val placed = remember(sections) { place(sections) }
     val open = SETTINGS_CATEGORIES.firstOrNull { it.key == openKey }
     androidx.activity.compose.BackHandler(enabled = open != null) { openKey = null }
@@ -358,13 +355,10 @@ private fun settingsSections(
     onOpenReplay: () -> Unit,
     onOpenWrapped: () -> Unit,
     onSignIn: () -> Unit,
-    onOpenDownloads: () -> Unit,
 ): List<Section> {
     val signedIn by AccountStore.signedIn.collectAsState()
     val account by AccountStore.account.collectAsState()
     val accounts by AccountStore.accounts.collectAsState()
-    val done by Downloads.done.collectAsState(Downloads.doneNow())
-    var downloadQualityDialog by remember { mutableStateOf(false) }
     var lyricsSourcesDialog by remember { mutableStateOf(false) }
     var serverDialog by remember { mutableStateOf(false) }
     var sponsorBlockDialog by remember { mutableStateOf(false) }
@@ -389,39 +383,6 @@ private fun settingsSections(
     var cacheBytes by remember { mutableLongStateOf(0L) }
     var message by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) { cacheBytes = withContext(Dispatchers.IO) { AudioCache.usedBytes(context) } }
-
-    val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
-        uri ?: return@rememberLauncherForActivityResult
-        scope.launch {
-            message = runCatching {
-                withContext(Dispatchers.IO) {
-                    val doc = buildJsonObject {
-                        put("app", "OpenTune")
-                        put("version", 1)
-                        put("settings", AppSettings.exportJson())
-                        put("history", History.exportJson())
-                        put("library", LibraryStore.exportJson())
-                    }
-                    context.contentResolver.openOutputStream(uri)?.use { it.write(doc.toString().toByteArray()) }
-                }
-                "Exported settings, history, likes and playlists."
-            }.getOrElse { "Export failed: ${it.message}" }
-        }
-    }
-    val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri ?: return@rememberLauncherForActivityResult
-        scope.launch {
-            message = runCatching {
-                val doc = withContext(Dispatchers.IO) {
-                    context.contentResolver.openInputStream(uri)?.use { AppSettings.json.parseToJsonElement(it.readBytes().decodeToString()) }
-                } as? JsonObject ?: error("not an OpenTune export")
-                doc["settings"]?.let(AppSettings::importJson)
-                doc["history"]?.let(History::importJson)
-                doc["library"]?.let(LibraryStore::importJson)
-                "Imported settings, history, likes and playlists."
-            }.getOrElse { "Import failed: ${it.message}" }
-        }
-    }
 
     qualityDialog?.let { wifi ->
         ChoiceSheet(
@@ -474,16 +435,6 @@ private fun settingsSections(
             label = { "${it.label} · ${it.summary}" },
             onSelect = { m -> AppSettings.updateUi { it.copy(dockMotion = m) } },
             onDismiss = { dockMotionDialog = false },
-        )
-    }
-    if (downloadQualityDialog) {
-        ChoiceSheet(
-            title = "Download quality",
-            options = AudioQuality.entries,
-            selected = lib.downloadQuality,
-            label = { "${it.label} · ${it.summary}" },
-            onSelect = { q -> AppSettings.updateLibrary { it.copy(downloadQuality = q) } },
-            onDismiss = { downloadQualityDialog = false },
         )
     }
     if (confirmSignOut) {
@@ -834,60 +785,10 @@ private fun settingsSections(
             ),
         ),
         Section(
-            "Downloads",
-            listOf(
-                Entry("Downloaded songs", "offline saved") {
-                    NavRow(
-                        "Downloaded songs",
-                        onOpenDownloads,
-                        summary = "${done.size} songs · ${Formatter.formatShortFileSize(context, done.sumOf { it.bytes })}",
-                        icon = Icons.Rounded.DownloadDone,
-                    )
-                },
-                Entry("Download quality", "offline bitrate") {
-                    NavRow("Download quality", { downloadQualityDialog = true }, icon = Icons.Rounded.Download, value = lib.downloadQuality.label)
-                },
-                Entry("Download on Wi-Fi only", "mobile data metered") {
-                    ToggleRow("Download on Wi-Fi only", lib.downloadWifiOnly, { v -> AppSettings.updateLibrary { it.copy(downloadWifiOnly = v) }; com.grayguava.opentune.lite.data.download.Downloads.requeueWaiting(context) }, summary = "Waits for Wi-Fi before saving songs", icon = Icons.Rounded.Wifi)
-                },
-                Entry("Stream downloads when online", "offline file internet play quality") {
-                    val pbd by AppSettings.playback.collectAsState()
-                    ToggleRow("Stream downloads when online", pbd.streamDownloadsOnline, { v -> AppSettings.updatePlayback { it.copy(streamDownloadsOnline = v) } }, summary = "Downloaded songs stream in their best quality with internet and play from the file offline", icon = Icons.Rounded.Wifi)
-                },
-                Entry("Export compatible downloads", "music folder other apps files save export mp4 aac copy") {
-                    ToggleRow(
-                        "Export compatible downloads",
-                        lib.exportDownloads && com.grayguava.opentune.lite.data.download.DownloadExport.supported,
-                        { v ->
-                            AppSettings.updateLibrary { it.copy(exportDownloads = v) }
-                            // Turned on: the songs already downloaded go into the Music folder too.
-                            if (v) scope.launch {
-                                val (copied, skipped) = com.grayguava.opentune.lite.data.download.Downloads.exportExisting(context.applicationContext)
-                                val note = buildString {
-                                    append(if (copied == 1) "1 song" else "$copied songs")
-                                    append(" copied to Music/OpenTune")
-                                    if (skipped > 0) append("; $skipped in a format other apps can't play, download them again to export")
-                                }
-                                if (copied > 0 || skipped > 0) com.grayguava.opentune.lite.data.Pills.done(note, context)
-                            }
-                        },
-                        summary = if (com.grayguava.opentune.lite.data.download.DownloadExport.supported)
-                            "Also saves each download to Music/OpenTune as AAC (M4A) or FLAC, so other music apps can play it"
-                        else "Needs Android 10 or newer",
-                        icon = Icons.Rounded.DownloadDone,
-                        enabled = com.grayguava.opentune.lite.data.download.DownloadExport.supported,
-                    )
-                },
-            ),
-        ),
-        Section(
             "Local music",
             listOf(
                 Entry("Local music folder", "device files") {
                     NavRow("Local music folder", { folderDialog = true }, summary = lib.localFolder ?: "All audio folders", icon = Icons.Rounded.Folder)
-                },
-                Entry("Filter non-music audio", "recordings voice notes") {
-                    ToggleRow("Filter non-music audio", lib.filterNonMusic, { v -> AppSettings.updateLibrary { it.copy(filterNonMusic = v) } }, summary = "Hides clips under 30 seconds, WAV files, voice notes, recordings and system sounds", icon = Icons.Rounded.FilterAlt)
                 },
             ),
         ),
@@ -906,7 +807,7 @@ private fun settingsSections(
                                 value = draft,
                                 onValueChange = { draft = (it / 128).toInt().coerceAtLeast(1) * 128f },
                                 onValueChangeFinished = { AppSettings.updateLibrary { it.copy(songCacheMb = draft.toInt()) } },
-                                valueRange = 128f..4096f,
+                                valueRange = 128f..5120f,
                             )
                         },
                     )
@@ -937,12 +838,6 @@ private fun settingsSections(
                 },
                 Entry("Wrapped", "wrapped story year review stats recap top artists") {
                     NavRow("Wrapped", onOpenWrapped, summary = "Your listening as an animated story", icon = Icons.Rounded.AutoAwesome)
-                },
-                Entry("Export data", "backup json") {
-                    NavRow("Export data", { exporter.launchSafely(context, "opentune-backup.json") }, summary = "Settings, history, likes and playlists, as one JSON file", icon = Icons.Rounded.Upload)
-                },
-                Entry("Import data", "restore json") {
-                    NavRow("Import data", { importer.launchSafely(context, arrayOf("application/json")) }, summary = "Replaces the settings, history, likes and playlists on this device", icon = Icons.Rounded.Download)
                 },
                 Entry("Clear listening history", "delete history") {
                     NavRow("Clear listening history", { History.clear(); com.grayguava.opentune.lite.data.history.ListenedCollections.clear(); message = "Listening history cleared." }, summary = "Removes Recents and Replay data", icon = Icons.Rounded.DeleteSweep)

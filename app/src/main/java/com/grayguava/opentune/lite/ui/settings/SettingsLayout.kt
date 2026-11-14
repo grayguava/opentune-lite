@@ -96,12 +96,10 @@ internal val SETTINGS_CATEGORIES = listOf(
         ),
     ),
     SettingsCategory(
-        "data", "Downloads and storage", "Downloads, music on this phone, space used and backups", Icons.Rounded.Storage,
+        "data", "Music and storage", "Music on this phone and the space it uses", Icons.Rounded.Storage,
         listOf(
-            "Downloads" to listOf("Downloaded songs", "Stream downloads when online", "Export compatible downloads"),
-            "Music on this phone" to listOf("Local music folder", "Filter non-music audio"),
-            "Space used" to listOf("Song cache limit", "Clear song cache", "Clear image cache", "Delete downloaded updates"),
-            "Backup" to listOf("Export data", "Import data"),
+            "Music on this phone" to listOf("Local music folder"),
+            "Space used" to listOf("Song cache limit", "Clear song cache", "Clear image cache"),
         ),
     ),
     SettingsCategory(

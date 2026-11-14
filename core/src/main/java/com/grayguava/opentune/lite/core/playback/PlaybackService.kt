@@ -47,7 +47,6 @@ import kotlinx.coroutines.guava.future
 import com.grayguava.opentune.lite.data.DebugLog as Log
 import com.grayguava.opentune.lite.data.isYouTubeId
 import com.grayguava.opentune.lite.data.subsonic.Subsonic
-import com.grayguava.opentune.lite.data.download.Downloads
 import com.grayguava.opentune.lite.data.library.LibraryStore
 import com.grayguava.opentune.lite.data.library.SongRef
 import com.grayguava.opentune.lite.data.NerdStats
@@ -1001,7 +1000,7 @@ class PlaybackService : MediaLibraryService() {
         val id = player.currentMediaItem?.mediaId
         val rawUri = player.currentMediaItem?.localConfiguration?.uri
         val pendingSelection = rawUri?.let(::startupToken)?.let { startupSelections[it]?.selected == null } == true
-        val db = id?.let { StreamResolver.loudnessDbFor(it) ?: Downloads.loudnessFor(it) }
+        val db = id?.let { StreamResolver.loudnessDbFor(it) }
         // A track playing from the cache never resolved, so its figure may not
         // be known yet. Look it up once, a moment in, then apply it.
         loudnessRetry?.cancel()
@@ -1519,18 +1518,16 @@ class PlaybackService : MediaLibraryService() {
     private fun updateExternalStats() {
         val item = mediaSession?.player?.currentMediaItem
         val uri = item?.localConfiguration?.uri?.let(::selectedUri)
-        val downloaded = item?.let { com.grayguava.opentune.lite.data.download.Downloads.entryNow(it.mediaId) }
-            ?.takeIf { uri?.scheme == "file" && it.path == uri.path }
         val provider = when {
             item == null -> "No track selected"
             uri?.let(::startupToken) != null -> "Loading audio…"
             LocalMusic.isLocal(item.mediaId) -> "Local file"
             Radio.isRadio(item.mediaId) -> "Internet radio"
             Subsonic.isSubsonic(item.mediaId) -> "Your music server"
-            uri?.scheme == "file" -> downloaded?.source?.let { "$it · downloaded" } ?: "Downloaded file"
+            uri?.scheme == "file" -> "Downloaded file"
             else -> StreamResolver.engineFor(item.mediaId, uri?.let(::isUpgradedUri) == true)?.let { "YouTube · $it" } ?: "YouTube · cached stream or resolving"
         }
-        NerdStats.onPlaybackSource(NerdStats.Source(provider, downloaded?.bits, downloaded?.sampleRate,
+        NerdStats.onPlaybackSource(NerdStats.Source(provider, null, null,
             if (item != null && uri?.let(::videoIdOf) != null) StreamResolver.bitrateFor(item.mediaId, isUpgradedUri(uri)) else null,
             mediaId = item?.mediaId))
     }
@@ -1952,45 +1949,9 @@ class PlaybackService : MediaLibraryService() {
         val item = player.currentMediaItem ?: return
         val mediaId = item.mediaId
         val uri = item.localConfiguration?.uri?.let(::selectedUri)
-        if (uri?.scheme == "file" && error.errorCode == PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND &&
-            com.grayguava.opentune.lite.data.isYouTubeId(mediaId) && com.grayguava.opentune.lite.data.download.Downloads.entryNow(mediaId) == null) {
-            // The user removed an offline copy after it was queued. Stream it
-            // without recreating the download they deliberately removed.
-            val index = player.currentMediaItemIndex
-            val position = player.currentPosition
-            player.replaceMediaItem(index, item.buildUpon().setUri(streamUri(mediaId, upgraded = false)).setMimeType(null).build())
-            player.seekTo(index, position)
-            player.prepare()
-            return
-        }
-        if (uri?.scheme == "file" &&
-            error.errorCode in setOf(PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED, PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED) &&
-            com.grayguava.opentune.lite.data.download.Downloads.entryNow(mediaId)?.path == uri.path) {
-            // Old versions could mark a bad ranged response as complete. Repair it
-            // and let playback use the network instead of retrying the same file.
-            com.grayguava.opentune.lite.data.download.Downloads.markBroken(mediaId)
-            com.grayguava.opentune.lite.data.download.Downloads.enqueue(this, item.toSong())
-            val index = player.currentMediaItemIndex
-            val position = player.currentPosition
-            player.replaceMediaItem(index, item.buildUpon().setUri(streamUri(mediaId, upgraded = false)).setMimeType(null).build())
-            player.seekTo(index, position)
-            player.prepare()
-            return
-        }
-        // A downloaded song that couldn't stream (no internet, or the connection dropped)
-        // plays on from its file.
-        val file = if (uri?.scheme != "file") com.grayguava.opentune.lite.data.download.Downloads.fileFor(mediaId) else null
-        if (file != null && (error.errorCode in IO_ERRORS || !AppSettings.isOnline())) {
-            Log.w(TAG, "Stream for $mediaId failed (${error.errorCodeName}); playing its download")
-            val index = player.currentMediaItemIndex
-            val position = player.currentPosition
-            player.replaceMediaItem(index, item.buildUpon().setUri(android.net.Uri.fromFile(file)).setMimeType(null).build())
-            updateExternalStats()
-            applyLoudness()
-            player.seekTo(index, position)
-            player.prepare()
-            return
-        }
+
+
+
         // Loss of connectivity is not evidence that this recording or source is bad.
         // Keep the queue, source and position; resume only if the listener still wants play.
         if (!AppSettings.isOnline() && error.errorCode in IO_ERRORS) {

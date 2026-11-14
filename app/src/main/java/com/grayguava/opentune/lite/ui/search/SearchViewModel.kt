@@ -118,8 +118,7 @@ class SearchViewModel(application: android.app.Application) : androidx.lifecycle
         }.getOrDefault(emptyList()).also { localSongs = it }
         val store = com.grayguava.opentune.lite.data.library.LibraryStore
         val all = store.liked.value.map { it.toSong() } +
-            store.playlists.value.flatMap { p -> p.songs.map { it.toSong() } } +
-            com.grayguava.opentune.lite.data.download.Downloads.doneNow().map { it.song.toSong() } + local
+            store.playlists.value.flatMap { p -> p.songs.map { it.toSong() } } + local
         val words = q.lowercase().split(Regex("\\s+")).filter { it.isNotEmpty() }
         val title = q.lowercase()
         all.distinctBy { it.videoId }

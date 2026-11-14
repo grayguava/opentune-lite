@@ -9,9 +9,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.assertIsEnabled
-import com.grayguava.opentune.lite.data.download.Downloads
-import com.grayguava.opentune.lite.data.download.DownloadEntry
-import com.grayguava.opentune.lite.data.download.DownloadState
 import com.grayguava.opentune.lite.data.library.SongRef
 import org.junit.Assert.assertEquals
 import androidx.test.core.app.ApplicationProvider
@@ -58,28 +55,6 @@ class PlaylistToolsScreenshotTest {
     @Test fun page() = shoot("playlist/page") { LocalPlaylistScreen(id, PaddingValues(), SongActions(null, false, { _, _, _, _ -> }, {}, {}), onBack = {}) }
 
     @Test fun addSheet() = shoot("playlist/add") { AddSongsSheet(id, onDismiss = {}) }
-
-    @Test fun completedPlaylistCanOpenRemovalAndKeepItsDownloads() {
-        Downloads.init(ApplicationProvider.getApplicationContext())
-        songs.forEach { song -> Downloads.put(song.videoId) { DownloadEntry(SongRef.of(song), DownloadState.DONE) } }
-        shoot("playlist/download-management") { DownloadAllButton(songs) }
-        compose.onNodeWithText("Downloaded · Manage").assertIsEnabled().performClick()
-        compose.onNodeWithText("Remove all downloads").performClick()
-        compose.onNodeWithText("Remove playlist downloads?").assertExists()
-        compose.onNodeWithText("Keep downloads").performClick()
-        assertEquals(3, songs.count { Downloads.entryNow(it.videoId)?.state == DownloadState.DONE })
-    }
-
-    @Test fun inProgressPlaylistOffersCancelAndRemoveSeparately() {
-        Downloads.init(ApplicationProvider.getApplicationContext())
-        Downloads.put(songs[0].videoId) { DownloadEntry(SongRef.of(songs[0]), DownloadState.DONE) }
-        Downloads.put(songs[1].videoId) { DownloadEntry(SongRef.of(songs[1]), DownloadState.DOWNLOADING) }
-        shoot("playlist/download-progress") { DownloadAllButton(songs) }
-        compose.onNodeWithText("Downloading · 1/3").performClick()
-        compose.onNodeWithText("Cancel downloads").assertExists()
-        compose.onNodeWithText("Remove all downloads").assertExists()
-        compose.onNodeWithText("Download remaining songs").assertExists()
-    }
 
     private fun shoot(name: String, content: @androidx.compose.runtime.Composable () -> Unit) {
         compose.setContent { OpenTuneTheme() { Surface(color = MaterialTheme.colorScheme.background) { content() } } }

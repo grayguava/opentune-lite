@@ -233,8 +233,6 @@ data class PlaybackSettings(
     val stopOnTaskRemoved: Boolean = true,
     /** Buffer the next track and resolve its neighbours early, for instant skips. */
     val preloadUpcoming: Boolean = true,
-    /** A downloaded song streams in its best quality while there's internet; its file plays offline. */
-    val streamDownloadsOnline: Boolean = true,
     /** Swap to a clearly better stream mid-song when one turns up. */
     val qualityUpgrade: Boolean = true,
     /** Overlap the end of a song with the start of the next; 0 is off. */
@@ -319,12 +317,7 @@ enum class WelcomeState {
 data class LibrarySettings(
     /** A MediaStore relative path ("Music/"), or null for every folder. */
     val localFolder: String? = null,
-    val filterNonMusic: Boolean = true,
     val songCacheMb: Int = 512,
-    val downloadQuality: AudioQuality = AudioQuality.MAX,
-    val downloadWifiOnly: Boolean = true,
-    /** Also copy each download into the phone's Music folder, in a format other apps play; see [com.grayguava.opentune.lite.data.download.DownloadExport]. */
-    val exportDownloads: Boolean = false,
     /** Leave out songs and albums marked explicit; see [com.grayguava.opentune.lite.data.ContentFilter]. */
     val hideExplicit: Boolean = false,
 )

@@ -68,8 +68,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.grayguava.opentune.lite.data.Ringtones
-import com.grayguava.opentune.lite.data.download.DownloadState
-import com.grayguava.opentune.lite.data.download.Downloads
 import com.grayguava.opentune.lite.data.isYouTubeId
 import com.grayguava.opentune.lite.data.library.HiddenList
 import com.grayguava.opentune.lite.data.library.LibraryStore
@@ -127,7 +125,6 @@ fun SongMenuSheet(
     val actions = LocalSongMenu.current
     val context = LocalContext.current
     val liked by LibraryStore.liked.collectAsState()
-    val downloads by Downloads.entries.collectAsState()
     val isLiked = liked.any { it.videoId == song.videoId }
     val hidden by LibraryStore.hidden.collectAsState()
     val playlists by LibraryStore.playlists.collectAsState()
@@ -136,7 +133,6 @@ fun SongMenuSheet(
     val keepIn = origin?.playlistId?.takeIf { song.smartShuffle }
         ?.let { id -> playlists.firstOrNull { it.id == id } }
         ?.takeIf { p -> p.songs.none { it.videoId == song.videoId } }
-    val download = downloads[song.videoId]
     // Files on this phone and songs on your server: no YouTube actions.
     val local = !isYouTubeId(song.videoId)
     var pickPlaylist by remember { mutableStateOf(false) }
@@ -166,27 +162,6 @@ fun SongMenuSheet(
                 QuickAction(if (isLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, if (isLiked) "Liked" else "Like", active = isLiked) {
                     LibraryStore.setLiked(song, !isLiked)
                 }
-                if (!local) {
-                    val (icon, label) = when (download?.state) {
-                        DownloadState.DONE -> Icons.Rounded.DeleteOutline to "Remove"
-                        DownloadState.QUEUED -> Icons.Rounded.Close to if (Downloads.waitingForWifi(context)) "Needs Wi-Fi" else "Waiting"
-                        DownloadState.DOWNLOADING -> Icons.Rounded.Close to "${(download.progress * 100).toInt()}%"
-                        DownloadState.FAILED -> Icons.Rounded.Download to "Retry"
-                        null -> Icons.Rounded.Download to "Download"
-                    }
-                    val ring = when (download?.state) {
-                        DownloadState.DOWNLOADING -> download.progress
-                        DownloadState.QUEUED -> -1f
-                        else -> null
-                    }
-                    QuickAction(icon, label, active = download?.state == DownloadState.DONE, progress = ring) {
-                        when (download?.state) {
-                            DownloadState.DONE, DownloadState.QUEUED, DownloadState.DOWNLOADING -> Downloads.remove(context, song.videoId)
-                            DownloadState.FAILED -> Downloads.retry(context, song.videoId)
-                            null -> Downloads.enqueue(context, song)
-                        }
-                    }
-                }
                 QuickAction(Icons.AutoMirrored.Rounded.PlaylistAdd, "Playlist", active = false) { pickPlaylist = true }
                 if (!local) {
                     QuickAction(Icons.Rounded.Share, "Share", active = false) {
@@ -204,14 +179,6 @@ fun SongMenuSheet(
         val card = LocalFloatingCard.current
         val close: () -> Unit = { card?.close() ?: onDismiss() }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-            if (!local && download != null) {
-                val downloading = download.state == DownloadState.QUEUED || download.state == DownloadState.DOWNLOADING
-                MenuRow(if (downloading) Icons.Rounded.Close else Icons.Rounded.DeleteOutline,
-                    if (downloading) "Cancel download" else "Remove download") {
-                    Downloads.remove(context, song.videoId)
-                    close()
-                }
-            }
             if (actions != null) {
                 MenuRow(Icons.AutoMirrored.Rounded.PlaylistPlay, "Play next") { actions.playNext(song); close() }
                 MenuRow(Icons.AutoMirrored.Rounded.QueueMusic, "Add to queue") { actions.addToQueue(song); close() }
@@ -231,7 +198,7 @@ fun SongMenuSheet(
                 top?.invoke(this, close)
                 tools?.invoke(this, close)
             }
-            if (download?.state == DownloadState.DONE || (local && Ringtones.canUse(song))) {
+            if (local && Ringtones.canUse(song)) {
                 MenuRow(Icons.Rounded.NotificationsActive, "Set as ringtone") { ringtone = true }
             }
             if (actions != null) MenuRow(Icons.Rounded.ThumbDownOffAlt, "Not for me (dislike)") { close(); actions.dislike(song) }

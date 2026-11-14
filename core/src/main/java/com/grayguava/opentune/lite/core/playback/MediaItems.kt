@@ -6,7 +6,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.C
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
-import com.grayguava.opentune.lite.data.download.Downloads
 import com.grayguava.opentune.lite.data.innertube.UpgradedTracks
 import com.grayguava.opentune.lite.data.local.LocalMusic
 import com.grayguava.opentune.lite.data.model.QueueTier
@@ -32,8 +31,7 @@ private const val EXTRA_SMART_SHUFFLE = "smartShuffle"
 private const val EXTRA_TIER = "tier"
 
 /**
- * Local files play straight from MediaStore and downloads from their file;
- * everything else resolves on open.
+ * Local files play straight from MediaStore; everything else resolves on open.
  */
 fun trackUri(videoId: String): Uri = when {
     LocalMusic.isLocal(videoId) -> LocalMusic.contentUri(videoId)
@@ -42,12 +40,7 @@ fun trackUri(videoId: String): Uri = when {
     Subsonic.isSubsonic(videoId) -> Subsonic.streamUrl(videoId)?.let(Uri::parse) ?: Uri.EMPTY
     // A station streams from its own server.
     Radio.isRadio(videoId) -> Radio.streamUrl(videoId)?.let(Uri::parse) ?: Uri.EMPTY
-    // A download is played from its file offline; with internet it streams, so it starts
-    // in the best quality found (the file is YouTube's audio as saved), unless that's off.
-    else -> Downloads.fileFor(videoId)
-        ?.takeUnless { com.grayguava.opentune.lite.data.settings.AppSettings.playback.value.streamDownloadsOnline && com.grayguava.opentune.lite.data.settings.AppSettings.isOnline() }
-        ?.let(Uri::fromFile)
-        ?: streamUri(videoId, upgraded = UpgradedTracks.contains(videoId))
+    else -> streamUri(videoId, upgraded = UpgradedTracks.contains(videoId))
 }
 
 /** A YouTube track's queue URI; [upgraded] asks for the better stream found mid-play. */
@@ -79,8 +72,8 @@ fun Song.toMediaItem(): MediaItem =
             MediaMetadata.Builder()
                 .setTitle(title)
                 .setArtist(artist)
-                // A downloaded cover keeps the notification and lock screen right offline.
-                .setArtworkUri(Downloads.artFor(videoId)?.let(Uri::fromFile) ?: Subsonic.resolveCover(thumbnailUrl)?.let(Uri::parse))
+                // A server's cover carries no credentials.
+                .setArtworkUri(Subsonic.resolveCover(thumbnailUrl)?.let(Uri::parse))
                 .setAlbumTitle(albumName)
                 .setExtras(
                     Bundle().apply {

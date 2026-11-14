@@ -70,9 +70,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             }.distinctUntilChanged().collectLatest { songs ->
                 kotlinx.coroutines.coroutineScope {
                     songs.forEach { song -> launch {
-                        val saved = com.grayguava.opentune.lite.data.download.Downloads.artFor(song.videoId)?.toURI()?.toString()
                         val cached = if (AppSettings.ui.value.albumCovers) com.grayguava.opentune.lite.data.covers.AlbumCovers.cached(song) else null
-                        warmArtwork(saved ?: cached ?: song.thumbnailUrl)
+                        warmArtwork(cached ?: song.thumbnailUrl)
                     } }
                 }
             }

@@ -93,7 +93,6 @@ import com.grayguava.opentune.lite.ui.components.LocalBackdrop
 import com.grayguava.opentune.lite.ui.components.LocalHazeState
 import com.grayguava.opentune.lite.ui.components.LocalSongMenu
 import com.grayguava.opentune.lite.ui.components.SongMenuActions
-import com.grayguava.opentune.lite.ui.library.DownloadsScreen
 import com.grayguava.opentune.lite.ui.library.LibraryNav
 import com.grayguava.opentune.lite.ui.library.LikedScreen
 import com.grayguava.opentune.lite.ui.library.LocalPlaylistScreen
@@ -263,7 +262,6 @@ fun AppRoot(vm: PlayerViewModel) {
             // Last first, so the list plays next in its own order.
             playNext = { id -> withSongs(id) { songs -> songs.asReversed().forEach(vm::playNext); com.grayguava.opentune.lite.data.Pills.done("${songs.size} songs play next") } },
             addToQueue = { id -> withSongs(id) { songs -> songs.forEach(vm::addToQueue); com.grayguava.opentune.lite.data.Pills.done("${songs.size} songs added to the queue") } },
-            downloadAll = { id -> withSongs(id) { songs -> songs.forEach { com.grayguava.opentune.lite.data.download.Downloads.enqueue(appContext.applicationContext, it) }; com.grayguava.opentune.lite.data.Pills.done("Downloading ${songs.size} songs") } },
             open = { id, type -> fromPlayer { nav.openBrowse(id, type) } },
         )
     }
@@ -329,8 +327,6 @@ fun AppRoot(vm: PlayerViewModel) {
         },
     ) }
     val libraryNav = remember(nav) { LibraryNav(
-        downloads = { nav.navigate("downloads") },
-        downloaded = { id -> nav.navigate("downloaded/${Uri.encode(id)}") },
         local = { nav.navigate("local") },
         replay = { nav.navigate("replay") },
         settings = { nav.navigate("settings") },
@@ -624,16 +620,11 @@ fun AppRoot(vm: PlayerViewModel) {
                             onOpenReplay = { nav.navigate("replay") },
                             onOpenWrapped = { nav.navigate("wrapped") },
                             onSignIn = { nav.navigate("login") },
-                            onOpenDownloads = { nav.navigate("downloads") },
                         )
                     }
                     page("login") { entry ->
                         // Only while it's still the page in front: a late second call mustn't close the one under it.
                         LoginScreen(onDone = { if (nav.currentBackStackEntry == entry) nav.popBackStack() })
-                    }
-                    page("downloads") { DownloadsScreen(content, actions, onBack = { nav.popBackStack() }, onOpenList = { id -> nav.navigate("downloaded/${Uri.encode(id)}") }) }
-                    page("downloaded/{id}", listOf(navArgument("id") { type = NavType.StringType })) { e ->
-                        com.grayguava.opentune.lite.ui.library.DownloadedListScreen(e.arguments?.getString("id").orEmpty(), content, actions, onBack = { nav.popBackStack() })
                     }
                     page("playlists") { com.grayguava.opentune.lite.ui.library.AllPlaylistsScreen(content, libraryNav, onBack = { nav.popBackStack() }) }
                     page("liked") {

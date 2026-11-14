@@ -86,8 +86,6 @@ import com.grayguava.opentune.lite.data.model.BrowseType
 import com.grayguava.opentune.lite.data.model.CARD_ART_PX
 import com.grayguava.opentune.lite.data.model.ROW_ART_PX
 import com.grayguava.opentune.lite.data.model.Song
-import com.grayguava.opentune.lite.data.download.DownloadState
-import com.grayguava.opentune.lite.data.download.Downloads
 import com.grayguava.opentune.lite.data.model.artworkAt
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
@@ -285,8 +283,6 @@ fun SongListItem(
     val anchor = remember { MenuAnchor() }
     val view = androidx.compose.ui.platform.LocalView.current
     val hasMenu = onPlayNext != null || onAddToQueue != null || LocalSongMenu.current != null
-    val download by remember(song.videoId) { Downloads.entry(song.videoId) }
-        .collectAsState(Downloads.entryNow(song.videoId))
     if (menuOpen) SongMenuSheet(song, onDismiss = { menuOpen = false })
     val at = anchor.rect
     if (contextOpen && at != null) SongContextMenu(song, at, onDismiss = { contextOpen = false }, onRemoveFromPlaylist = onRemoveFromPlaylist) { SongPreview(song) }
@@ -333,7 +329,6 @@ fun SongListItem(
             )
         }
         trailing()
-        download?.let { DownloadBadge(it.state, it.progress) }
         if (hasMenu) {
             IconButton(onClick = { menuOpen = true }) {
                 Icon(Icons.Filled.MoreVert, contentDescription = "More options")
@@ -366,21 +361,6 @@ sealed interface CardMenu {
 }
 
 /** A small mark on a row: a ring while downloading, a tick once saved. */
-@Composable
-fun DownloadBadge(state: DownloadState, progress: Float) {
-    Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) {
-        when (state) {
-            DownloadState.DONE -> Icon(Icons.Filled.DownloadDone, "Downloaded", Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-            DownloadState.FAILED -> Icon(Icons.Filled.ErrorOutline, "Download failed", Modifier.size(18.dp), tint = MaterialTheme.colorScheme.error)
-            else -> CircularProgressIndicator(
-                progress = { progress },
-                modifier = Modifier.size(16.dp),
-                strokeWidth = 2.dp,
-            )
-        }
-    }
-}
-
 /** A card as it shows lifted out over its long-press menu. */
 @Composable
 internal fun CardPreview(title: String, subtitle: String, thumbnailUrl: String?, round: Boolean) {
