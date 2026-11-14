@@ -54,12 +54,10 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.LibraryMusic
-import androidx.compose.material.icons.rounded.Podcasts
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.LibraryMusic
-import androidx.compose.material.icons.outlined.Podcasts
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -680,7 +678,6 @@ private fun Label(text: String) {
 private val previewTabs = listOf(
     ChromeTab("Home", Icons.Outlined.Home, Icons.Rounded.Home),
     ChromeTab("Explore", Icons.Outlined.Explore, Icons.Rounded.Explore),
-    ChromeTab("Podcasts", Icons.Outlined.Podcasts, Icons.Rounded.Podcasts),
     ChromeTab("Library", Icons.Outlined.LibraryMusic, Icons.Rounded.LibraryMusic),
 )
 

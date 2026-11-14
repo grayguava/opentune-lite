@@ -30,8 +30,6 @@ import com.grayguava.opentune.lite.data.lyrics.Lyrics
 import com.grayguava.opentune.lite.data.model.MoodGenre
 import com.grayguava.opentune.lite.data.model.ShelfItem
 import com.grayguava.opentune.lite.data.model.Song
-import com.grayguava.opentune.lite.data.podcasts.PodcastEpisode
-import com.grayguava.opentune.lite.data.podcasts.PodcastShow
 import com.grayguava.opentune.lite.data.radio.Radio
 import com.grayguava.opentune.lite.data.settings.AppSettings
 import com.grayguava.opentune.lite.data.settings.SoundSettings
@@ -41,8 +39,6 @@ import com.grayguava.opentune.lite.ui.explore.ExploreBoard
 import com.grayguava.opentune.lite.ui.player.PlayerActions
 import com.grayguava.opentune.lite.ui.player.PlayerLayout
 import com.grayguava.opentune.lite.ui.player.PlayerUiState
-import com.grayguava.opentune.lite.ui.podcasts.EpisodeRow
-import com.grayguava.opentune.lite.ui.podcasts.ShowRow
 import com.grayguava.opentune.lite.ui.radio.StationRow
 import com.grayguava.opentune.lite.ui.theme.OpenTuneTheme
 import java.io.File
@@ -186,24 +182,6 @@ class ReadmeScreenshotTest {
                 com.grayguava.opentune.lite.ui.components.PageHeader("Radio", onBack = {})
                 SectionHeader("Live near you", subtitle = "${found.size} stations within 36 km")
                 found.take(7).forEach { StationRow(it.station, false, {}, details = it.station.nearbyDetails(it.distanceKm)) }
-            }
-        }
-    }
-
-    @Test fun podcasts() {
-        val actions = SongActions(null, false, { _, _, _, _ -> }, {}, {})
-        val show = PodcastShow("MPSPexploder", "Song Exploder", "Hrishikesh Hirway", cover("exploder"))
-        val episodes = listOf(
-            "Olivia Rodrigo - The Cure" to "26 min", "Natalie Merchant - Sister Tilly" to "25 min", "Paula Cole - I Don't Want to Wait" to "29 min",
-            "Charli XCX - Camera" to "23 min", "Mitski - Your Best American Girl" to "15 min",
-        ).mapIndexed { i, (t, d) -> PodcastEpisode("ep$i", t, "Song Exploder", "MPSPexploder", cover("exploder"), published = listOf("Sep 23", "Sep 16", "Sep 9", "Aug 19", "Aug 5")[i], durationText = d) }
-        shoot("podcasts") {
-            Column {
-                com.grayguava.opentune.lite.ui.components.PageHeader("Podcasts", onBack = {})
-                SectionHeader("Your shows")
-                ShowRow(show) {}
-                SectionHeader("Latest episodes")
-                episodes.forEach { EpisodeRow(it, actions, showShow = true, onOpenShow = {}) {} }
             }
         }
     }

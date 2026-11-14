@@ -3,9 +3,7 @@ package com.grayguava.opentune.lite.ui
 
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Explore
-import androidx.compose.material.icons.outlined.Podcasts
 import androidx.compose.material.icons.outlined.LibraryMusic
-import androidx.compose.material.icons.rounded.Podcasts
 import com.grayguava.opentune.lite.ui.server.ServerAlbumScreen
 import com.grayguava.opentune.lite.ui.server.ServerArtistScreen
 import com.grayguava.opentune.lite.ui.server.ServerArtistsScreen
@@ -123,7 +121,6 @@ object TabEvents {
 private enum class Tab(val route: String, val label: String, val icon: ImageVector, val selectedIcon: ImageVector) {
     HOME("home", "Home", Icons.Outlined.Home, Icons.Rounded.Home),
     EXPLORE("explore", "Explore", Icons.Outlined.Explore, Icons.Rounded.Explore),
-    PODCASTS("podcasts", "Podcasts", Icons.Outlined.Podcasts, Icons.Rounded.Podcasts),
     LIBRARY("library", "Library", Icons.Outlined.LibraryMusic, Icons.Rounded.LibraryMusic),
 }
 
@@ -555,18 +552,6 @@ fun AppRoot(vm: PlayerViewModel) {
                     page(Tab.EXPLORE.route) {
                         ExploreScreen(content, onMoodClick = openMood, onItemClick = openItem, onOpenSettings = { nav.navigate("settings") })
                     }
-                    page(Tab.PODCASTS.route) {
-                        com.grayguava.opentune.lite.ui.podcasts.PodcastsScreen(content, actions, onOpenShow = { id -> nav.navigate("podcast/${Uri.encode(id)}") }, onOpenSettings = { nav.navigate("settings") })
-                    }
-                    page("podcast/{id}", listOf(navArgument("id") { type = NavType.StringType })) { e ->
-                        com.grayguava.opentune.lite.ui.podcasts.PodcastShowScreen(
-                            e.arguments?.getString("id").orEmpty(),
-                            content,
-                            actions,
-                            onBack = { nav.popBackStack() },
-                            onOpenShow = { id -> nav.navigate("podcast/${Uri.encode(id)}") },
-                        )
-                    }
                     page(Tab.LIBRARY.route) {
                         LibraryScreen(contentPadding = content, actions = actions, nav = libraryNav)
                     }
@@ -835,8 +820,6 @@ private fun NavHostController.stackIds(): List<String> = currentBackStack.value.
 
 private fun NavHostController.openBrowse(browseId: String, type: BrowseType = MusicRepository.typeOf(browseId)) {
     val route = when {
-        // A podcast show has its own page.
-        browseId.startsWith("MPSP") -> "podcast/{id}"
         type == BrowseType.ARTIST -> "artist/{id}"
         else -> "collection/{id}"
     }

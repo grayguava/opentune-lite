@@ -30,7 +30,6 @@ import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.session.MediaSession
 import androidx.media3.session.LibraryResult
 import com.grayguava.opentune.lite.data.radio.Radio
-import com.grayguava.opentune.lite.data.podcasts.Podcasts
 import com.grayguava.opentune.lite.data.sponsorblock.SponsorBlock
 import android.os.Bundle
 import androidx.media3.session.SessionResult
@@ -144,8 +143,7 @@ class PlaybackService : MediaLibraryService() {
                 if (videoIdOf(input) == null) return sources.createMediaSource(mediaItem)
                 val uri = withoutStartup(input)
                 val id = videoIdOf(uri) ?: return sources.createMediaSource(mediaItem)
-                if (!isYouTubeId(id) || Podcasts.isEpisode(id) ||
-                    uri.getQueryParameter("fallback") == "youtube") return sources.createMediaSource(mediaItem)
+                if (!isYouTubeId(id) || uri.getQueryParameter("fallback") == "youtube") return sources.createMediaSource(mediaItem)
                 val token = java.util.UUID.randomUUID().toString()
                 val tagged = uri.buildUpon().appendQueryParameter("startup", token).build()
                 val selection = StartupSelection(mediaItem.toSong(), uri)
@@ -758,7 +756,7 @@ class PlaybackService : MediaLibraryService() {
             }
             watchSegments(mediaItem)
             // A podcast episode, or anything else much longer than a song, picks up where it was left.
-            mediaItem?.mediaId?.let { Podcasts.resumeAt(it) ?: com.grayguava.opentune.lite.data.library.ResumePoints.resumeAt(it) }?.let { at ->
+            mediaItem?.mediaId?.let { com.grayguava.opentune.lite.data.library.ResumePoints.resumeAt(it) }?.let { at ->
                 mediaSession?.player?.takeIf { it.currentPosition < RESUME_SLACK_MS }?.seekTo(at)
             }
             // The same song on a better stream is not a new listen.
@@ -909,8 +907,7 @@ class PlaybackService : MediaLibraryService() {
     private fun saveEpisodePosition(player: Player) {
         val id = player.currentMediaItem?.mediaId ?: return
         val duration = player.duration.takeIf { it > 0 } ?: 0L
-        if (Podcasts.isEpisode(id)) Podcasts.savePosition(id, player.currentPosition, duration)
-        else com.grayguava.opentune.lite.data.library.ResumePoints.save(id, player.currentPosition, duration)
+        com.grayguava.opentune.lite.data.library.ResumePoints.save(id, player.currentPosition, duration)
     }
 
     /** A track counts as played after 30 seconds, or half its length if shorter. */
@@ -1158,7 +1155,7 @@ class PlaybackService : MediaLibraryService() {
             val now = SystemClock.elapsedRealtime()
             if (id != song) { song = id; tries = 0; lastAt = now - GUARD_GAP_MS }
             if (!player.isPlaying || upgradeJob?.isActive == true || swappingTo != null || swapRamping || crossfade?.blending == true) continue
-            if (!isYouTubeId(id) || Podcasts.isEpisode(id)) continue
+            if (!isYouTubeId(id)) continue
             val raw = item.localConfiguration?.uri ?: continue
             if (raw.scheme == "file") continue
             if (startupToken(raw) != null && startupToken(raw)?.let { startupSelections[it]?.selected } == null) continue
@@ -1796,7 +1793,7 @@ class PlaybackService : MediaLibraryService() {
             val engine = AppSettings.playback.value.recommender
             val queue = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).toSong() }
             val others = if (Subsonic.isSubsonic(seed)) emptyList() else Autoplay.seeds(queue) { s ->
-                isYouTubeId(s.videoId) && !Podcasts.isEpisode(s.videoId)
+                isYouTubeId(s.videoId)
             }.drop(1)
             val queuedAtStart = queue.mapTo(HashSet()) { it.videoId }
             fun usable(song: Song): Boolean = song.videoId !in queuedAtStart &&

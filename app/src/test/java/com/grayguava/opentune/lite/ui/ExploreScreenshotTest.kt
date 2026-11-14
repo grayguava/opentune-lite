@@ -14,12 +14,8 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.grayguava.opentune.lite.data.ExploreFeed
 import com.grayguava.opentune.lite.data.model.MoodGenre
 import com.grayguava.opentune.lite.data.model.ShelfItem
-import com.grayguava.opentune.lite.data.podcasts.PodcastEpisode
-import com.grayguava.opentune.lite.data.podcasts.PodcastShow
 import com.grayguava.opentune.lite.ui.browse.SongActions
 import com.grayguava.opentune.lite.ui.explore.ExploreBoard
-import com.grayguava.opentune.lite.ui.podcasts.EpisodeRow
-import com.grayguava.opentune.lite.ui.podcasts.ShowRow
 import java.io.File
 import org.junit.Rule
 import org.junit.Test
@@ -56,23 +52,6 @@ class ExploreScreenshotTest {
             }
         }
         save("explore")
-    }
-
-    @Test fun podcastRows() {
-        val actions = SongActions(null, false, { _, _, _, _ -> }, {}, {})
-        compose.setContent {
-            MaterialTheme(darkColorScheme(primary = Color(0xFFFF8A65))) { androidx.compose.material3.Surface(color = Color(0xFF0B0B0E)) {
-                Column(Modifier.fillMaxSize().background(Color(0xFF0B0B0E))) {
-                    ShowRow(PodcastShow("MPSP1", "The Joe Rogan Experience", "PowerfulJRE")) {}
-                    listOf(
-                        PodcastEpisode("a1", "Unc, Ocho & Iso react to Lions-Panthers, Cowboys beat Texans", "Nightcap", "MPSP2", published = "11h ago", durationText = "3 hr 8 min", description = "Shannon Sharpe, Chad Johnson and Iso Joe Johnson react to Week 4 of the NFL season."),
-                        PodcastEpisode("a2", "Using Your Nervous System to Enhance Your Immune System", "Huberman Lab", "MPSP3", published = "Sep 25, 2025", durationText = "38 min"),
-                    ).forEach { EpisodeRow(it, actions, showShow = true, onOpenShow = {}) {} }
-                }
-            }
-            }
-        }
-        save("podcast-rows")
     }
 
     private fun save(name: String) {

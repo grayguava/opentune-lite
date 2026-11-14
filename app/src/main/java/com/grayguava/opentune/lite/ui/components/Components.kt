@@ -242,14 +242,7 @@ fun ArtistLinks(
 @Composable
 fun ListenedBar(videoId: String, modifier: Modifier = Modifier) {
     val long by com.grayguava.opentune.lite.data.library.ResumePoints.points.collectAsState()
-    val episodes by com.grayguava.opentune.lite.data.podcasts.Podcasts.progress.collectAsState()
-    val fraction = remember(videoId, long, episodes) {
-        val episode = episodes[videoId]
-        when {
-            episode != null -> if (episode.finished || com.grayguava.opentune.lite.data.podcasts.Podcasts.resumeAt(videoId) == null) 0f else episode.fraction
-            else -> long[videoId]?.fraction ?: 0f
-        }
-    }
+    val fraction = remember(videoId, long) { long[videoId]?.fraction ?: 0f }
     if (fraction <= 0.01f) return
     Box(
         modifier

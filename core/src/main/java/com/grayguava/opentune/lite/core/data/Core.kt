@@ -48,7 +48,6 @@ object Core {
         app.deleteSharedPreferences("spotify")
         // The waveform seek bar is gone; drop the waveforms an earlier version saved.
         java.io.File(app.filesDir, "waveforms").takeIf { it.exists() }?.let { dir -> Thread { dir.deleteRecursively() }.start() }
-        com.grayguava.opentune.lite.data.podcasts.Podcasts.init(app)
         com.grayguava.opentune.lite.data.library.ResumePoints.init(app)
         AlbumCovers.init(app)
         AutoEq.init(app)

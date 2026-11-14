@@ -47,7 +47,6 @@ class DockScreenshotTest {
     private val tabs = listOf(
         ChromeTab("Home", Icons.Outlined.Home, Icons.Rounded.Home),
         ChromeTab("Explore", Icons.Outlined.Explore, Icons.Rounded.Explore),
-        ChromeTab("Podcasts", Icons.Outlined.Podcasts, Icons.Rounded.Podcasts),
         ChromeTab("Library", Icons.Outlined.LibraryMusic, Icons.Rounded.LibraryMusic),
     )
 
