@@ -33,7 +33,7 @@ class HomePicksTest {
         compose.setContent {
             MaterialTheme(darkColorScheme()) {
                 Surface {
-                    HomeScreen(PaddingValues(), SongActions(null, false, { _, _, _, _ -> }, {}, {}), {}, {}, {})
+                    HomeScreen(PaddingValues(), SongActions(null, false, { _, _, _, _ -> }, {}, {}), {}, {})
                 }
             }
         }
@@ -42,11 +42,9 @@ class HomePicksTest {
         compose.waitForIdle()
         val heading = compose.onNodeWithText("Quick picks").fetchSemanticsNode().boundsInRoot
         val history = compose.onNodeWithContentDescription("Recently played").fetchSemanticsNode().boundsInRoot
-        val recognize = compose.onNodeWithContentDescription("Name a song playing nearby").fetchSemanticsNode().boundsInRoot
         val account = compose.onNodeWithContentDescription("Account and settings").fetchSemanticsNode().boundsInRoot
         assertTrue("History must align with Quick picks", kotlin.math.abs(heading.center.y - history.center.y) < 2f)
-        assertTrue("Top actions must be separated", recognize.right < account.left)
-        assertTrue("History must be below the top actions", history.top > recognize.bottom)
+        assertTrue("History must be below the top actions", history.top > account.bottom)
         val view = compose.activity.window.decorView
         val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
         view.draw(android.graphics.Canvas(bitmap))

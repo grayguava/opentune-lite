@@ -348,7 +348,6 @@ fun AppRoot(vm: PlayerViewModel) {
                     else -> com.grayguava.opentune.lite.data.Pills.error("Couldn't read that link")
                 }
             }
-            is LinkTarget.Recognize -> { playerOpen = false; nav.navigate("recognize?listen=true") { launchSingleTop = true } }
             is LinkTarget.Player -> playerOpen = true
             is LinkTarget.PlaySearch -> {
                 vm.player.connected.first { it }
@@ -541,7 +540,6 @@ fun AppRoot(vm: PlayerViewModel) {
                             actions = actions,
                             onItemClick = openItem,
                             onOpenSettings = { nav.navigate("settings") },
-                            onRecognize = { nav.navigate("recognize") },
                             covered = playerCovers,
                             onOpenSpeedDial = { nav.navigate("speed-dial") },
                         )
@@ -564,7 +562,6 @@ fun AppRoot(vm: PlayerViewModel) {
                             onPlayNext = vm::playNext,
                             onAddToQueue = vm::addToQueue,
                             onBrowse = { item: BrowseItem -> nav.openBrowse(item.browseId, item.type) },
-                            onRecognize = { nav.navigate("recognize") },
                             onOpenList = { list ->
                                 list.playlistId?.let { nav.navigate("playlist/${Uri.encode(it)}") } ?: list.browseId?.let { nav.openBrowse(it) }
                             },
@@ -599,12 +596,6 @@ fun AppRoot(vm: PlayerViewModel) {
                     page("history") { com.grayguava.opentune.lite.ui.library.ListeningHistoryScreen(content, actions, onBack = { nav.popBackStack() }) }
                     page("replay") { ReplayScreen(content, actions, onBack = { nav.popBackStack() }, onOpenWrapped = { nav.navigate("wrapped") }) }
                     page("wrapped") { WrappedScreen(actions, onBack = { nav.popBackStack() }, player = vm.player) }
-                    page("recognize?listen={listen}", listOf(navArgument("listen") { type = NavType.BoolType; defaultValue = false })) { e ->
-                        com.grayguava.opentune.lite.ui.recognize.RecognizeScreen(
-                            content, onPlay = { vm.play(it, "Found by listening") }, onBack = { nav.popBackStack() },
-                            listenAtOnce = e.arguments?.getBoolean("listen") == true,
-                        )
-                    }
                     page("radio") { com.grayguava.opentune.lite.ui.radio.RadioScreen(content, actions, onBack = { nav.popBackStack() }) }
                     page("server") { ServerScreen(content, actions, serverNav, onBack = { nav.popBackStack() }) }
                     page("server/artists") { ServerArtistsScreen(content, serverNav, onBack = { nav.popBackStack() }) }

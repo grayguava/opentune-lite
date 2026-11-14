@@ -109,8 +109,6 @@ fun SearchScreen(
     onPlayNext: (Song) -> Unit,
     onAddToQueue: (Song) -> Unit,
     onBrowse: (BrowseItem) -> Unit,
-    /** Opens the page that names a song from what the microphone hears. */
-    onRecognize: (() -> Unit)? = null,
     /** Opens a playlist or saved album the library search found. */
     onOpenList: (LibraryList) -> Unit = {},
     /**
@@ -176,8 +174,6 @@ fun SearchScreen(
             trailingIcon = {
                 if (query.isNotEmpty()) {
                     IconButton(onClick = { vm.onQueryChange("") }) { Icon(Icons.Filled.Close, "Clear") }
-                } else if (onRecognize != null) {
-                    IconButton(onClick = onRecognize) { Icon(Icons.Filled.GraphicEq, "Name a song playing nearby") }
                 }
             },
             colors = TextFieldDefaults.colors(

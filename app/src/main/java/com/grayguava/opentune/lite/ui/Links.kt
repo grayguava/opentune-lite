@@ -16,8 +16,6 @@ sealed interface LinkTarget {
     data class PlaySearch(val query: String) : LinkTarget
     /** A song on another service (Apple Music, Deezer, Tidal…), to find and play here. */
     data class Elsewhere(val url: String) : LinkTarget
-    /** From the widget or Quick Settings tile: start listening for a song nearby. */
-    data object Recognize : LinkTarget
     /** Open the app with the player up. */
     data object Player : LinkTarget
 }
@@ -65,10 +63,6 @@ object Links {
 
     fun receive(intent: Intent?) {
         intent ?: return
-        if (intent.action == com.grayguava.opentune.lite.widget.RecognizeLaunch.ACTION) {
-            _incoming.value = LinkTarget.Recognize
-            return
-        }
         if (intent.action == ACTION_OPEN_PLAYER) {
             _incoming.value = LinkTarget.Player
             return

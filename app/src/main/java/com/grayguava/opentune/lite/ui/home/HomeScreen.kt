@@ -96,8 +96,6 @@ fun HomeScreen(
     actions: SongActions,
     onItemClick: (ShelfItem) -> Unit,
     onOpenSettings: () -> Unit,
-    /** Opens the page that names a song from what the microphone hears. */
-    onRecognize: (() -> Unit)? = null,
     /** The full player is open over the page, so nothing on it needs to move. */
     covered: Boolean = false,
     /** Opens every Speed dial pick on a page of its own. */
@@ -260,9 +258,6 @@ fun HomeScreen(
                             } else {
                                 Text(greeting, style = MaterialTheme.typography.displaySmall, maxLines = 2)
                             }
-                        }
-                        if (onRecognize != null) {
-                            GlassIconButton(Icons.Rounded.GraphicEq, "Name a song playing nearby", onRecognize, size = 48.dp)
                         }
                         GlassIconButton(Icons.Rounded.Person, "Account and settings", onOpenSettings, size = 48.dp) {
                             val photo = account?.thumbnailUrl
