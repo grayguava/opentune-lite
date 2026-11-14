@@ -162,15 +162,9 @@ fun HomeScreen(
     }
     val speedDial = com.grayguava.opentune.lite.data.history.SpeedDial.personalized(localDial, feed.speedDial?.items.orEmpty())
     androidx.compose.runtime.SideEffect { SpeedDialItems.items = speedDial }
-    // With little history, mixes from the followed artists fill in (see HomeSeed);
-    // what the user hid stays out of both.
-    val seedsAll by MusicRepository.seeds.collectAsState()
-    val seeds = remember(seedsAll, hidden) {
-        seedsAll.filterNot { hidden.hidesArtist(it.name, it.browseId) }
-            .map { it.copy(top = hidden.songs(it.top), radio = hidden.songs(it.radio)) }
-    }
-    val mixes = remember(records, seeds, hidden) {
-        com.grayguava.opentune.lite.data.reco.HomeSeed.mixes(com.grayguava.opentune.lite.data.history.DailyMixes.build(records, hidden = hidden), seeds, records.size)
+    // What the user hid is taken off every song shelf and out of the mixes.
+    val mixes = remember(records, hidden) {
+        com.grayguava.opentune.lite.data.reco.HomeSeed.mixes(com.grayguava.opentune.lite.data.history.DailyMixes.build(records, hidden = hidden), emptyList(), records.size)
     }
     val ui by AppSettings.ui.collectAsState()
     val signedIn by AccountStore.signedIn.collectAsState()
@@ -299,9 +293,7 @@ fun HomeScreen(
                     else SectionHeader(title, action = historyAction)
                 }
                 "mixes" -> if (mixes.isNotEmpty()) item(key = "mixes") {
-                    val seededOnly = mixes.all { it.id.startsWith("seed:") }
-                    MixesShelf(mixes, actions, if (seededOnly) "From the artists you follow, until you've played more" else MIXES_LINE,
-                        title = "Made for you today")
+                    MixesShelf(mixes, actions, MIXES_LINE, title = "Made for you today")
                 }
                 "recommendations" -> {
                     when (val s = state) {
@@ -368,9 +360,6 @@ private fun Recents(songs: List<Song>, asGrid: Boolean, actions: SongActions, on
                                 isPlaying = actions.isPlaying,
                                 onPlayNext = { actions.playNext(song) },
                                 onAddToQueue = { actions.addToQueue(song) },
-                                // A sideways drag changes pages; Play next and
-                                // Add to queue stay in the long-press menu.
-                                swipeToQueue = false,
                             )
                         }
                     }
@@ -461,7 +450,6 @@ private fun QuickPicks(shelf: HomeShelf, onItemClick: (ShelfItem) -> Unit, actio
                             song = song,
                             onClick = { onItemClick(item) },
                             modifier = Modifier.fillMaxWidth().height(64.dp),
-                            swipeToQueue = false,
                         )
                     } else {
                         Row(

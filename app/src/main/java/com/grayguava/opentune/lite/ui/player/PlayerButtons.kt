@@ -78,12 +78,9 @@ fun PlayerControls(
 ) {
     var nextRolls by remember { mutableIntStateOf(0) }
     var previousRolls by remember { mutableIntStateOf(0) }
-    // Deep, strong feels for the transport, each its own (see Haptics.Pattern).
-    val haptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
-    val back = { haptics.pattern(com.grayguava.opentune.lite.ui.components.Haptics.Pattern.PREVIOUS); previousRolls++; onPrevious() }
-    val ahead = { haptics.pattern(com.grayguava.opentune.lite.ui.components.Haptics.Pattern.NEXT); nextRolls++; onNext() }
+    val back = {  previousRolls++; onPrevious() }
+    val ahead = {  nextRolls++; onNext() }
     val playPause = {
-        haptics.pattern(if (isPlaying) com.grayguava.opentune.lite.ui.components.Haptics.Pattern.PAUSE else com.grayguava.opentune.lite.ui.components.Haptics.Pattern.PLAY)
         onTogglePlay()
     }
     Row(

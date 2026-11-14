@@ -229,8 +229,6 @@ fun AppRoot(vm: PlayerViewModel) {
         chromeScroll.expand()
     }
     LaunchedEffect(playbackError) { playbackError?.let { com.grayguava.opentune.lite.data.Pills.error(it) } }
-    // A newer pill cuts the one showing short, so a run of swipes doesn't queue up notes.
-    LaunchedEffect(Unit) { com.grayguava.opentune.lite.ui.components.QueueNotices.messages.collect { com.grayguava.opentune.lite.data.Pills.done(it) } }
     LaunchedEffect(Unit) { com.grayguava.opentune.lite.playback.SmartShuffle.notices.collect { com.grayguava.opentune.lite.data.Pills.info(it) } }
 
     // Kept across recompositions (opening the player, play/pause): a new

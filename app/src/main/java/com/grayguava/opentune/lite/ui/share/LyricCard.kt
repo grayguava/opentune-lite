@@ -62,7 +62,6 @@ import com.grayguava.opentune.lite.data.model.Song
 import com.grayguava.opentune.lite.ui.components.FloatingCard
 import com.grayguava.opentune.lite.ui.components.SheetButton
 import com.grayguava.opentune.lite.ui.components.SheetTone
-import com.grayguava.opentune.lite.ui.components.rememberHaptics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -181,7 +180,6 @@ object LyricCard {
 @Composable
 fun LyricCardSheet(song: Song, lines: List<String>, startAt: Int, onDismiss: () -> Unit, pickable: Boolean = true) {
     val context = LocalContext.current
-    val haptics = rememberHaptics()
     val scope = rememberCoroutineScope()
     val picked = remember {
         mutableStateListOf<Int>().apply {
@@ -227,7 +225,6 @@ fun LyricCardSheet(song: Song, lines: List<String>, startAt: Int, onDismiss: () 
                 modifier = Modifier.weight(1f),
                 onClick = {
                     val card = preview ?: return@SheetButton
-                    haptics.press()
                     scope.launch {
                         val saved = runCatching { ShareCard.saveImage(context, card, fileName) }.isSuccess
                         if (saved) com.grayguava.opentune.lite.data.Pills.done("Saved to Pictures/OpenTune", context) else com.grayguava.opentune.lite.data.Pills.error("Couldn't save the card", context)
@@ -242,7 +239,6 @@ fun LyricCardSheet(song: Song, lines: List<String>, startAt: Int, onDismiss: () 
                 modifier = Modifier.weight(1f),
                 onClick = {
                     val card = preview ?: return@SheetButton
-                    haptics.press()
                     // The picture alone: apps that take text as well would paste the lines under it.
                     scope.launch { ShareCard.sendImage(context, card, fileName, text = null, label = song.title) }
                 },
@@ -266,7 +262,7 @@ fun LyricCardSheet(song: Song, lines: List<String>, startAt: Int, onDismiss: () 
             if (story) "Make it a card" else "Make it a story",
             icon = if (story) Icons.AutoMirrored.Rounded.Article else Icons.Rounded.Smartphone,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp),
-            onClick = { haptics.tick(); story = !story },
+            onClick = {  story = !story },
         )
         if (pickable) {
             LazyColumn(Modifier.weight(1f, fill = false).padding(top = 4.dp), state = list) {
@@ -281,7 +277,6 @@ fun LyricCardSheet(song: Song, lines: List<String>, startAt: Int, onDismiss: () 
                             .clip(RoundedCornerShape(14.dp))
                             .background(bg)
                             .clickable(enabled = !full) {
-                                haptics.tick()
                                 if (on) picked.remove(i) else picked.add(i)
                             }
                             .padding(horizontal = 12.dp, vertical = 10.dp),

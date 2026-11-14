@@ -86,13 +86,12 @@ fun PrivacySheet(current: PlaylistPrivacy?, onSelect: (PlaylistPrivacy) -> Unit,
 /** A playlist's privacy as a pill in its tools row; tapping it changes it. */
 @Composable
 fun PrivacyButton(privacy: PlaylistPrivacy?, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val haptics = rememberHaptics()
     Row(
         modifier
             .height(44.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-            .clickable { haptics.tick(); onClick() }
+            .clickable {  onClick() }
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

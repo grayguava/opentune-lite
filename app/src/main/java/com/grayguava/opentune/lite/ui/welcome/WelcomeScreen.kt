@@ -108,7 +108,6 @@ import com.grayguava.opentune.lite.data.model.SearchFilter
 import com.grayguava.opentune.lite.data.model.SearchResult
 import com.grayguava.opentune.lite.data.model.Song
 import com.grayguava.opentune.lite.data.model.artworkAt
-import com.grayguava.opentune.lite.data.releases.NewReleases
 import com.grayguava.opentune.lite.data.settings.AppSettings
 import com.grayguava.opentune.lite.ui.BottomChrome
 import com.grayguava.opentune.lite.ui.ChromeTab
@@ -122,7 +121,6 @@ import com.grayguava.opentune.lite.ui.components.GlassPage
 import com.grayguava.opentune.lite.ui.components.glass
 import com.grayguava.opentune.lite.ui.components.liquidGlassSupported
 import com.grayguava.opentune.lite.ui.components.pressable
-import com.grayguava.opentune.lite.ui.components.rememberHaptics
 import com.grayguava.opentune.lite.ui.player.MiniPlayer
 import java.util.Locale
 import kotlinx.coroutines.delay
@@ -163,10 +161,7 @@ fun WelcomeScreen(
     // Which pick brought each artist in, by id, for the "Like …" line under them.
     val broughtBy = remember { androidx.compose.runtime.mutableStateMapOf<String, String>() }
     val scope = rememberCoroutineScope()
-    // Artists this welcome followed, so unpicking one after going back unfollows it again.
-    val followedHere = rememberSaveable(saver = idSetSaver) { mutableStateListOf() }
     var signingIn by rememberSaveable { mutableStateOf(false) }
-    val askNotify = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     // The suggestions start from the charts where the listener is, so approximate location is
     // asked for first; whatever the answer, the artists load after it (from the network's country
     // when it's declined). A device without location (a TV) isn't asked.
@@ -199,20 +194,7 @@ fun WelcomeScreen(
     }
 
     fun follow() {
-        val ids = picks.map { it.browseId }
-        followedHere.filter { it !in ids }.forEach { NewReleases.unfollow(context, it) }
-        followedHere.retainAll(ids)
-        // The last followed is the newest, and Home seeds from the newest first:
-        // followed in reverse, the first picked leads.
-        picks.asReversed().forEach { a ->
-            if (!NewReleases.isFollowed(a.browseId)) {
-                NewReleases.follow(context, a.browseId, a.name, a.thumbnailUrl)
-                followedHere += a.browseId
-            }
-        }
-        if (picks.isNotEmpty() && AppSettings.library.value.releaseAlerts && !NewReleases.canNotify(context)) {
-            askNotify.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-        }
+        // The welcome's picks are its own; nothing follows or alerts from them now.
     }
 
     BackHandler(enabled = signingIn || step != WelcomeStep.ARTISTS) {
@@ -447,7 +429,6 @@ private fun ArtistsStep(
                 .map { ExploreFeed.Artist(it.browseId, it.title, it.thumbnailUrl) }
         }.getOrDefault(emptyList())
     }
-    val haptics = rememberHaptics()
     val searching = query.isNotBlank()
     val shown: List<ExploreFeed.Artist>? = when {
         searching -> results
@@ -457,7 +438,6 @@ private fun ArtistsStep(
     val gridState = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
 
     fun toggle(artist: ExploreFeed.Artist) {
-        haptics.tick()
         if (picks.any { it.browseId == artist.browseId }) {
             picks.removeAll { it.browseId == artist.browseId }
             return

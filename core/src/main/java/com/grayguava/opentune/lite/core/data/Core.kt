@@ -45,7 +45,6 @@ object Core {
         QueueStore.init(app)
         Subsonic.init(app)
         com.grayguava.opentune.lite.data.radio.Radio.init(app)
-        com.grayguava.opentune.lite.data.releases.NewReleases.init(app)
         // Spotify sign-in is gone; drop any tokens an earlier version kept.
         app.deleteSharedPreferences("spotify")
         // The waveform seek bar is gone; drop the waveforms an earlier version saved.

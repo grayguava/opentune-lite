@@ -95,7 +95,6 @@ import com.grayguava.opentune.lite.data.model.artworkAt
 import com.grayguava.opentune.lite.data.settings.AppSettings
 import com.grayguava.opentune.lite.playback.ShuffleMode
 import com.grayguava.opentune.lite.playback.next
-import com.grayguava.opentune.lite.ui.components.Haptics
 import com.grayguava.opentune.lite.playback.SleepTimer
 import com.grayguava.opentune.lite.ui.LyricsState
 import com.grayguava.opentune.lite.ui.components.Artwork
@@ -130,7 +129,6 @@ fun QueuePane(
     appleWords: Boolean = false,
 ) {
     val autoplay = AppSettings.playback.collectAsState().value.autoplay
-    val haptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
     val rowPx = with(LocalDensity.current) { QUEUE_ROW.toPx() }
     // A local copy of the upcoming order, so a drag can move rows before the player hears of it.
     val order = remember { mutableStateListOf<Int>() }
@@ -194,7 +192,6 @@ fun QueuePane(
                         if (!canDrag) Modifier else Modifier.pointerInput(index) {
                             detectDragGesturesAfterLongPress(
                                 onDragStart = {
-                                    haptics.press()
                                     dragging = index
                                     dragStartPos = order.indexOf(index)
                                     dragOffset = 0f
@@ -220,7 +217,6 @@ fun QueuePane(
                                 if (target != at) {
                                     order.add(target, order.removeAt(at))
                                     dragOffset -= (target - at) * rowPx
-                                    haptics.tick()
                                 }
                             }
                         },
@@ -487,7 +483,7 @@ internal fun morphShown(p: Float): Float = ((p - 0.42f) / 0.53f).coerceIn(0f, 1f
 
 /**
  * Shuffle, repeat and autoplay in one glass pill, split by hairlines. Each
- * has a feel of its own under the finger (see [Haptics.Pattern]) and a small
+ * has a feel of its own under the finger and a small
  * motion of its own as it changes.
  */
 @Composable
@@ -503,7 +499,6 @@ fun ModesPill(
     enabled: Boolean = true,
 ) {
     val autoplay = AppSettings.playback.collectAsState().value.autoplay
-    val haptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
     val context = LocalContext.current
     val shape = RoundedCornerShape(30.dp)
     Row(
@@ -525,7 +520,6 @@ fun ModesPill(
             enabled = enabled,
         ) {
             val next = shuffle.next(smartShuffleAvailable)
-            haptics.pattern(if (next == ShuffleMode.OFF) Haptics.Pattern.OFF else Haptics.Pattern.SHUFFLE)
             // The new mode in a word, so the third state is clear.
             when {
                 next == ShuffleMode.SMART -> "Smart shuffle: similar songs mixed in"
@@ -549,18 +543,10 @@ fun ModesPill(
             enabled = enabled,
         ) {
             // Off, then all, then one, then off again.
-            haptics.pattern(
-                when (repeatMode) {
-                    Player.REPEAT_MODE_OFF -> Haptics.Pattern.REPEAT_ALL
-                    Player.REPEAT_MODE_ALL -> Haptics.Pattern.REPEAT_ONE
-                    else -> Haptics.Pattern.OFF
-                },
-            )
             onRepeat()
         }
         VerticalDivider(Modifier.height(30.dp), color = Color.White.copy(alpha = 0.18f))
         PillSegment(Icons.Rounded.AllInclusive, "AutoPlay", autoplay, SegmentMotion.PULSE, enabled = enabled) {
-            haptics.pattern(if (autoplay) Haptics.Pattern.OFF else Haptics.Pattern.AUTOPLAY)
             AppSettings.setAutoplay(!autoplay)
         }
     }

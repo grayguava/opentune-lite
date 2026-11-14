@@ -94,7 +94,6 @@ fun <T> ChoiceSheet(
 ) {
     val ui by AppSettings.ui.collectAsState()
     val still = ui.reduceAnimation
-    val haptics = rememberHaptics()
     val scope = rememberCoroutineScope()
     var picked by remember { mutableStateOf(selected) }
     var done by remember { mutableStateOf(false) }
@@ -104,7 +103,6 @@ fun <T> ChoiceSheet(
             if (done) return@Options
             done = true
             if (o != picked) {
-                haptics.tick()
                 picked = o
                 onSelect(o)
             }

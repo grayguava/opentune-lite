@@ -49,9 +49,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.offset
-import com.grayguava.opentune.lite.ui.components.Haptics
 import com.grayguava.opentune.lite.ui.components.glass
-import com.grayguava.opentune.lite.ui.components.rememberHaptics
 
 /** How wide the rail's glass is. */
 private val RAIL_WIDTH = 72.dp
@@ -91,7 +89,6 @@ fun NavRail(
     modifier: Modifier = Modifier,
     reduceMotion: Boolean = false,
 ) {
-    val haptics = rememberHaptics()
     val ink = dockInk()
     BoxWithConstraints(
         modifier
@@ -107,7 +104,6 @@ fun NavRail(
         val named = slot >= RAIL_SLOT_NAMED
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(RAIL_GAP)) {
             SearchOrb(searchSelected) {
-                if (!searchSelected) haptics.tick()
                 onSearch()
             }
             Box(
@@ -148,7 +144,6 @@ fun NavRail(
                     tabs.forEachIndexed { i, tab ->
                         // Unnamed, the icon drops to the middle the way it does as the dock minimizes.
                         DockItem(tab, i == shown, Modifier.fillMaxWidth().height(slot), collapse = { if (named) 0f else 1f }) {
-                            if (i != shown) haptics.tick()
                             onSelect(i)
                         }
                     }
@@ -194,7 +189,6 @@ internal fun NowPlayingStrip(
     modifier: Modifier = Modifier,
     cover: @Composable (Modifier) -> Unit,
 ) {
-    val haptics = rememberHaptics()
     val ink = dockInk()
     val shape = RoundedCornerShape(36.dp)
     Box(
@@ -217,11 +211,9 @@ internal fun NowPlayingStrip(
             StripButton(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Show player", ink.search, onClick = onExpand)
             cover(Modifier.size(56.dp))
             StripButton(if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, if (isPlaying) "Pause" else "Play", ink.search) {
-                haptics.pattern(if (isPlaying) Haptics.Pattern.PAUSE else Haptics.Pattern.PLAY)
                 onTogglePlay()
             }
             StripButton(Icons.Rounded.SkipNext, "Next", ink.search.copy(alpha = if (hasNext) 1f else 0.4f), enabled = hasNext) {
-                haptics.pattern(Haptics.Pattern.NEXT)
                 onNext()
             }
         }

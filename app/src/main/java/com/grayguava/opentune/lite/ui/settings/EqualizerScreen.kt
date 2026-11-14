@@ -81,7 +81,6 @@ import com.grayguava.opentune.lite.ui.components.NavRow
 import com.grayguava.opentune.lite.ui.components.PageHeader
 import com.grayguava.opentune.lite.ui.components.SettingRow
 import com.grayguava.opentune.lite.ui.components.ToggleRow
-import com.grayguava.opentune.lite.ui.components.rememberHaptics
 import kotlin.math.abs
 import kotlin.math.log10
 import kotlin.math.pow
@@ -256,7 +255,6 @@ private fun ResponseGraph(eq: EqualizerSettings, shown: List<Float>, onBand: (In
     val stages = remember(shown, eq.bassDb, eq.trebleDb, eq.headphone) {
         DspParams(equalizer = eq.copy(enabled = true, bands = shown, balance = 0f)).stages(48_000).map { it() }
     }
-    val haptics = rememberHaptics()
     val change by rememberUpdatedState(onBand)
     var held by remember { mutableIntStateOf(-1) }
     val range = MAX_DB * 1.25f
@@ -269,13 +267,13 @@ private fun ResponseGraph(eq: EqualizerSettings, shown: List<Float>, onBand: (In
             }
             .pointerInput(eq.enabled) {
                 detectDragGestures(
-                    onDragStart = { p -> held = bandAt(p.x, size.width.toFloat()); haptics.tick() },
+                    onDragStart = { p -> held = bandAt(p.x, size.width.toFloat()) },
                     onDragEnd = { held = -1 },
                     onDragCancel = { held = -1 },
                 ) { c, _ ->
                     c.consume()
                     val band = bandAt(c.position.x, size.width.toFloat())
-                    if (band != held) { held = band; haptics.tick() }
+                    if (band != held) { held = band }
                     change(band, dbAt(c.position.y, size.height.toFloat()))
                 }
             },
@@ -325,14 +323,13 @@ private fun DrawScope.band(held: Boolean, at: Offset, colour: Color, hole: Color
 @Composable
 private fun PresetCard(p: EqPreset, selected: Boolean, onClick: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
-    val haptics = rememberHaptics()
     val glow by animateFloatAsState(if (selected) 1f else 0f, tween(260), label = "presetSelected")
     val stages = remember(p) { DspParams(equalizer = EqualizerSettings(enabled = true, bands = p.bands)).stages(48_000).map { it() } }
     Column(
         Modifier.width(150.dp).clip(RoundedCornerShape(20.dp))
             .background(scheme.surfaceContainerHigh)
             .border(BorderStroke((1 + glow).dp, scheme.primary.copy(alpha = 0.15f + 0.75f * glow)), RoundedCornerShape(20.dp))
-            .clickable { haptics.tick(); onClick() }
+            .clickable {  onClick() }
             .padding(12.dp),
     ) {
         Canvas(Modifier.fillMaxWidth().height(46.dp)) {
@@ -363,7 +360,6 @@ private fun Fader(value: Float, enabled: Boolean, onChange: (Float) -> Unit, mod
     val track = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
     val fill = MaterialTheme.colorScheme.primary.copy(alpha = if (enabled) 1f else 0.4f)
     val thumb = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.4f)
-    val haptics = rememberHaptics()
     val current by rememberUpdatedState(onChange)
     val now by rememberUpdatedState(value)
     fun valueAt(y: Float, height: Float): Float {
@@ -382,7 +378,6 @@ private fun Fader(value: Float, enabled: Boolean, onChange: (Float) -> Unit, mod
                 detectVerticalDragGestures { change, _ ->
                     change.consume()
                     val v = valueAt(change.position.y, size.height.toFloat())
-                    if (v == 0f && now != 0f) haptics.tick()
                     current(v)
                 }
             },

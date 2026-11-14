@@ -65,7 +65,6 @@ import com.grayguava.opentune.lite.data.settings.AppSettings
 import com.grayguava.opentune.lite.ui.components.FloatingCard
 import com.grayguava.opentune.lite.ui.components.SheetButton
 import com.grayguava.opentune.lite.ui.components.SheetTone
-import com.grayguava.opentune.lite.ui.components.rememberHaptics
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -464,7 +463,6 @@ object ReplayCard {
 @Composable
 fun ReplayShareSheet(summary: ReplaySummary, period: String, onDismiss: () -> Unit) {
     val context = LocalContext.current
-    val haptics = rememberHaptics()
     val scope = rememberCoroutineScope()
     val ui by AppSettings.ui.collectAsState()
     val signedIn by AccountStore.signedIn.collectAsState()
@@ -526,7 +524,6 @@ fun ReplayShareSheet(summary: ReplaySummary, period: String, onDismiss: () -> Un
                 modifier = Modifier.weight(1f),
                 onClick = {
                     val b = card ?: return@SheetButton
-                    haptics.press()
                     scope.launch {
                         ShareCard.sendImage(context, b, "OpenTune-Replay.png", "My ${content.title} on OpenTune · ${content.period}", "Replay")
                     }

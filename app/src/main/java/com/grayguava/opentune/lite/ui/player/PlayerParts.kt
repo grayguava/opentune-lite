@@ -465,7 +465,6 @@ fun SeekBar(
     val inactive = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.18f)
     val bufferedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
 
-    val seekHaptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
     fun fraction(): Float = dragFraction
         ?: if (durationMs > 0) (position().toFloat() / durationMs).coerceIn(0f, 1f) else 0f
     // Until the song's length is known there's nothing to seek: a band of light runs along the
@@ -528,8 +527,6 @@ fun SeekBar(
                         val f = ((dragFraction ?: 0f) + delta / size.width * speed).coerceIn(0f, 1f)
                         // A soft tick each time the drag crosses a tenth of the song, and a firmer one at either end.
                         val before = dragFraction
-                        if (before != null && (before * 10).toInt() != (f * 10).toInt()) seekHaptics.tick()
-                        if (before != null && before > 0f && before < 1f && (f == 0f || f == 1f)) seekHaptics.press()
                         dragFraction = f
                     }
                 },

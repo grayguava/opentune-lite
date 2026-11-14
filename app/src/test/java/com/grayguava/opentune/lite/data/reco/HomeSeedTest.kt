@@ -6,7 +6,6 @@ import com.grayguava.opentune.lite.data.innertube.InnertubeParser
 import com.grayguava.opentune.lite.data.model.HomeShelf
 import com.grayguava.opentune.lite.data.model.ShelfItem
 import com.grayguava.opentune.lite.data.model.Song
-import com.grayguava.opentune.lite.data.releases.NewReleases
 import com.grayguava.opentune.lite.ui.home.arrangeHomeShelves
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -22,14 +21,6 @@ class HomeSeedTest {
         top = (1..top).map { song("$id-t$it", name) },
         radio = (1..radio).map { song("$id-r$it", "Someone like $name") },
     )
-
-    @Test fun seedsFromTheNewestFollowsOnlyWhileHistoryIsShort() {
-        val followed = (1..6).map { NewReleases.Followed("UC$it", "Artist $it", followedAt = it * 1000L) }
-        val seeds = HomeSeed.artists(followed, plays = 3)
-        assertEquals(listOf("UC6", "UC5", "UC4", "UC3"), seeds.map { it.browseId })
-        assertTrue(HomeSeed.artists(followed, plays = HomeSeed.SHORT_HISTORY).isEmpty())
-        assertTrue(HomeSeed.artists(emptyList(), plays = 0).isEmpty())
-    }
 
     @Test fun quickPicksTakeEachArtistInTurn() {
         val seeds = listOf(artist("a", "Arijit Singh", 5, 10), artist("b", "Anuv Jain", 5, 10), artist("c", "Shreya Ghoshal", 5, 10))

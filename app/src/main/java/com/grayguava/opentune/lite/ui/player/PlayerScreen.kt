@@ -1366,7 +1366,6 @@ private fun TitleFlight(
 /** Apple Music's favourite: a star in a soft round button that fills in red. */
 @Composable
 private fun StarButton(liked: Boolean, onClick: () -> Unit) {
-    val haptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
     val still = AppSettings.ui.collectAsState().value.reduceAnimation
     val pop = remember { androidx.compose.animation.core.Animatable(1f) }
     var pops by remember { mutableStateOf(0) }
@@ -1378,7 +1377,6 @@ private fun StarButton(liked: Boolean, onClick: () -> Unit) {
     Box(
         Modifier.size(46.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.14f))
             .clickable(indication = com.grayguava.opentune.lite.ui.components.FocusRing(CircleShape), interactionSource = null) {
-                haptics.pattern(if (liked) com.grayguava.opentune.lite.ui.components.Haptics.Pattern.OFF else com.grayguava.opentune.lite.ui.components.Haptics.Pattern.LIKE)
                 if (!liked) pops++
                 onClick()
             },
@@ -1396,7 +1394,6 @@ private const val PLAYER_BUTTON_TINT = 0.14f
 /** The heart pops when tapped on. */
 @Composable
 private fun HeartButton(liked: Boolean, onClick: () -> Unit) {
-    val haptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
     val still = AppSettings.ui.collectAsState().value.reduceAnimation
     val interactions = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
     val pressed by interactions.collectIsPressedAsState()
@@ -1421,7 +1418,6 @@ private fun HeartButton(liked: Boolean, onClick: () -> Unit) {
                 // A wash of the player's own ink, so the song's colour shows through rather than a grey disc.
                 .clip(CircleShape).background(LocalContentColor.current.copy(alpha = PLAYER_BUTTON_TINT))
                 .clickable(interactionSource = interactions, indication = com.grayguava.opentune.lite.ui.components.FocusRing(CircleShape)) {
-                    haptics.pattern(if (liked) com.grayguava.opentune.lite.ui.components.Haptics.Pattern.OFF else com.grayguava.opentune.lite.ui.components.Haptics.Pattern.LIKE)
                     if (!liked && !still) bursts++
                     onClick()
                 },
@@ -1520,7 +1516,6 @@ fun MiniPlayerBar(vm: PlayerViewModel, onExpand: () -> Unit, modifier: Modifier 
     val hasNext by vm.hasNext.collectAsState()
     val duration by vm.durationMs.collectAsState()
     val position = rememberPlaybackPosition(vm)
-    val haptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
     val s = song ?: return
     MiniPlayer(
         song = s,
@@ -1529,11 +1524,10 @@ fun MiniPlayerBar(vm: PlayerViewModel, onExpand: () -> Unit, modifier: Modifier 
         hasNext = hasNext,
         progress = { if (duration > 0) position().toFloat() / duration else 0f },
         onTogglePlay = {
-            haptics.pattern(if (isPlaying) com.grayguava.opentune.lite.ui.components.Haptics.Pattern.PAUSE else com.grayguava.opentune.lite.ui.components.Haptics.Pattern.PLAY)
             vm.togglePlayPause()
         },
-        onNext = { haptics.pattern(com.grayguava.opentune.lite.ui.components.Haptics.Pattern.NEXT); vm.skipNext() },
-        onPrevious = { haptics.pattern(com.grayguava.opentune.lite.ui.components.Haptics.Pattern.PREVIOUS); vm.skipPrevious() },
+        onNext = {  vm.skipNext() },
+        onPrevious = {  vm.skipPrevious() },
         onClick = onExpand,
         modifier = modifier,
         inline = inline,

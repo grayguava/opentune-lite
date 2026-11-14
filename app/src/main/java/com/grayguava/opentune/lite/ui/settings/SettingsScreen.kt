@@ -105,7 +105,6 @@ import androidx.compose.material.icons.rounded.UnfoldMore
 import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.material.icons.rounded.Usb
 import androidx.compose.material.icons.rounded.VerticalSplit
-import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material.icons.rounded.Waves
@@ -151,7 +150,6 @@ import com.grayguava.opentune.lite.data.download.Downloads
 import com.grayguava.opentune.lite.data.history.History
 import com.grayguava.opentune.lite.data.library.LibraryStore
 import com.grayguava.opentune.lite.data.local.LocalMusic
-import com.grayguava.opentune.lite.data.releases.NewReleases
 import com.grayguava.opentune.lite.data.settings.AppSettings
 import com.grayguava.opentune.lite.data.settings.AudioQuality
 import com.grayguava.opentune.lite.data.settings.DockMotion
@@ -374,10 +372,8 @@ private fun settingsSections(
     var supportDialog by remember { mutableStateOf(false) }
     var recommenderDialog by remember { mutableStateOf(false) }
     var historyTargetDialog by remember { mutableStateOf(false) }
-    var followedDialog by remember { mutableStateOf(false) }
     var hiddenDialog by remember { mutableStateOf(false) }
     val hidden by LibraryStore.hidden.collectAsState()
-    val followedArtists by NewReleases.followed.collectAsState()
     val musicServer by Subsonic.server.collectAsState()
     var dockMotionDialog by remember { mutableStateOf(false) }
     val lyricsSettings by AppSettings.lyrics.collectAsState()
@@ -445,7 +441,6 @@ private fun settingsSections(
         BuildConfig.VERSION_NAME, onDismiss = { showWhatsNew = false },
     )
     if (supportDialog) com.grayguava.opentune.lite.ui.components.SupportDialog(onDismiss = { supportDialog = false })
-    if (followedDialog) FollowedArtistsDialog(onDismiss = { followedDialog = false })
     if (hiddenDialog) HiddenDialog(onDismiss = { hiddenDialog = false })
     if (historyTargetDialog) {
         ChoiceSheet(
@@ -800,25 +795,6 @@ private fun settingsSections(
                 Entry("Reduce dynamic blur", "glass frosted performance") {
                     ToggleRow("Reduce dynamic blur", ui.reduceBlur, { v -> AppSettings.updateUi { it.copy(reduceBlur = v) } }, summary = "Swaps frosted glass for solid fills across the app", icon = Icons.Rounded.BlurOff)
                 },
-                Entry("Haptic feedback", "vibration haptics strength tap buzz intensity") {
-                    val haptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
-                    SettingRow(
-                        "Haptic feedback",
-                        summary = com.grayguava.opentune.lite.ui.components.Haptics.label(ui.hapticStrength) +
-                            if (ui.hapticStrength > 0f) " · ${(ui.hapticStrength * 100).roundToInt()}%" else " · No taps or buzzes",
-                        icon = Icons.Rounded.Vibration,
-                        below = {
-                            Slider(
-                                value = ui.hapticStrength,
-                                onValueChange = { v -> AppSettings.updateUi { it.copy(hapticStrength = (v * 10).roundToInt() / 10f) } },
-                                // Let go and feel the new strength.
-                                onValueChangeFinished = { haptics.press() },
-                                valueRange = 0f..1f,
-                                steps = 9,
-                            )
-                        },
-                    )
-                },
             ),
         ),
         Section(
@@ -840,26 +816,6 @@ private fun settingsSections(
                         summary = lyricsSettings.ordered.filter { it.enabled }.joinToString(", then ") { it.source.label }.ifEmpty { "None: lyrics are off" },
                         icon = Icons.Rounded.TextFields,
                     )
-                },
-            ),
-        ),
-        Section(
-            "New releases",
-            listOf(
-                Entry("New-release alerts", "new release album single notify follow artists notification") {
-                    ToggleRow(
-                        "New-release alerts",
-                        lib.releaseAlerts,
-                        { v ->
-                            AppSettings.updateLibrary { it.copy(releaseAlerts = v) }
-                            NewReleases.schedule(context)
-                        },
-                        summary = "A notification when an artist you follow puts out an album or single. Checked twice a day.",
-                        icon = Icons.Rounded.NotificationsActive,
-                    )
-                },
-                Entry("Followed artists", "follow artists unfollow") {
-                    NavRow("Followed artists", { followedDialog = true }, summary = if (followedArtists.isEmpty()) "Follow from an artist's page" else "${followedArtists.size} artists", icon = Icons.Rounded.Person)
                 },
             ),
         ),
@@ -1017,14 +973,6 @@ private fun settingsSections(
         Section(
             "Miscellaneous",
             listOf(
-                Entry("Playlists in Library", "playlists library tiles list grid view rows layout show all view all") {
-                    SettingRow("Playlists in Library", summary = "Tiles in a sideways row, or a list down the page by where they're from, each with View all", icon = Icons.AutoMirrored.Rounded.QueueMusic, below = {
-                        PillSegmented(listOf(false, true), ui.playlistList, { if (it) "List" else "Tiles" }, { v -> AppSettings.updateUi { it.copy(playlistList = v) } })
-                    })
-                },
-                Entry("Swipe songs to queue them", "gesture swipe queue play next add to queue") {
-                    ToggleRow("Swipe songs to queue them", pb.swipeToQueue, { v -> AppSettings.updatePlayback { it.copy(swipeToQueue = v) } }, summary = "Swipe a song right to play it next, or left to add it to the end of the queue", icon = Icons.AutoMirrored.Rounded.PlaylistPlay)
-                },
                 Entry("Hide volume bar", "player slider") {
                     ToggleRow("Hide volume bar", ui.hideVolumeBar, { v -> AppSettings.updateUi { it.copy(hideVolumeBar = v) } }, summary = "Removes the volume slider from the player", icon = Icons.AutoMirrored.Rounded.VolumeOff)
                 },

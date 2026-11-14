@@ -38,7 +38,7 @@ class SongRowScrollTest {
     }
 
     /** Swipes left across the first row; returns the grid's state afterwards and how many songs were queued. */
-    private fun swipe(swipeToQueue: Boolean): Pair<LazyGridState, Int> {
+    private fun swipe(): Pair<LazyGridState, Int> {
         lateinit var state: LazyGridState
         var queued = 0
         compose.setContent {
@@ -51,7 +51,6 @@ class SongRowScrollTest {
                         modifier = Modifier.width(340.dp),
                         onPlayNext = { queued++ },
                         onAddToQueue = { queued++ },
-                        swipeToQueue = swipeToQueue,
                     )
                 }
             }
@@ -62,15 +61,8 @@ class SongRowScrollTest {
     }
 
     @Test fun gridScrollsWhenRowsDontSwipe() {
-        val (state, queued) = swipe(swipeToQueue = false)
+        val (state, queued) = swipe()
         assertTrue(state.firstVisibleItemIndex > 0 || state.firstVisibleItemScrollOffset > 0)
         assertEquals(0, queued)
-    }
-
-    @Test fun swipeableRowsHoldTheGridStill() {
-        // Why Recents turns the swipe off: with it on, the row takes the drag.
-        val (state, _) = swipe(swipeToQueue = true)
-        assertEquals(0, state.firstVisibleItemIndex)
-        assertEquals(0, state.firstVisibleItemScrollOffset)
     }
 }

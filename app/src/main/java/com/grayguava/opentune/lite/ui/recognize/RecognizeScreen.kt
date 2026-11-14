@@ -89,10 +89,8 @@ import com.grayguava.opentune.lite.data.model.Song
 import com.grayguava.opentune.lite.data.recognize.Recognized
 import com.grayguava.opentune.lite.data.recognize.Recognizer
 import com.grayguava.opentune.lite.ui.components.Artwork
-import com.grayguava.opentune.lite.ui.components.Haptics
 import com.grayguava.opentune.lite.ui.components.MARK_VIEWPORT
 import com.grayguava.opentune.lite.ui.components.markPath
-import com.grayguava.opentune.lite.ui.components.rememberHaptics
 import com.grayguava.opentune.lite.ui.theme.songAccents
 import kotlin.math.PI
 import kotlin.math.cos
@@ -108,7 +106,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun RecognizeScreen(contentPadding: PaddingValues, onPlay: (Song) -> Unit, onBack: () -> Unit, listenAtOnce: Boolean = false) {
     val context = LocalContext.current
-    val haptics = rememberHaptics()
     val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) { Recognizer.init(context) }
     val state by Recognizer.state.collectAsState()
@@ -119,14 +116,12 @@ fun RecognizeScreen(contentPadding: PaddingValues, onPlay: (Song) -> Unit, onBac
         if (ok) Recognizer.start(context)
     }
     fun listen() {
-        haptics.press()
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
             Recognizer.start(context)
         } else {
             ask.launch(Manifest.permission.RECORD_AUDIO)
         }
     }
-    LaunchedEffect(state) { if (state is Recognizer.State.Found) haptics.pattern(Haptics.Pattern.DONE) }
     // Opened from the widget or the Quick Settings tile: listening starts straight away.
     LaunchedEffect(listenAtOnce) { if (listenAtOnce) listen() }
     DisposableEffect(Unit) { onDispose { Recognizer.cancel() } }
@@ -214,7 +209,7 @@ fun RecognizeScreen(contentPadding: PaddingValues, onPlay: (Song) -> Unit, onBac
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .clickable { haptics.tick(); play(song) }
+                        .clickable {  play(song) }
                         .padding(horizontal = 20.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {

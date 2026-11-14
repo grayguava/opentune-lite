@@ -482,7 +482,6 @@ fun SheetButton(
     icon: ImageVector? = null,
     loading: Boolean = false,
 ) {
-    val haptics = rememberHaptics()
     val card = LocalFloatingCard.current
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -505,7 +504,6 @@ fun SheetButton(
             .clip(CircleShape)
             .background(fill)
             .clickable(interactionSource = interaction, indication = FocusRing(CircleShape), enabled = enabled, role = Role.Button) {
-                haptics.tick()
                 if (closes && card != null) card.close(onClick) else onClick()
             }
             .padding(horizontal = 18.dp, vertical = 12.dp),

@@ -82,19 +82,16 @@ internal val SETTINGS_CATEGORIES = listOf(
         ),
     ),
     SettingsCategory(
-        "motion", "Motion and feel", "Animations, haptics and smoothness", Icons.Rounded.Animation,
+        "motion", "Motion and feel", "Animations and smoothness", Icons.Rounded.Animation,
         listOf(
             "Dock" to listOf("Dock animation"),
-            "Feel" to listOf("Haptic feedback"),
             "Smoothness" to listOf("High performance mode", "High refresh rate", "Reduce animation"),
         ),
     ),
     SettingsCategory(
-        "library", "Home and Library", "Tabs, playlists, artist pages and what's hidden", Icons.Rounded.LibraryMusic,
+        "library", "Home and Library", "Tabs, artist pages and what's hidden", Icons.Rounded.LibraryMusic,
         listOf(
             "Home and tabs" to listOf("Separate Explore tab", "Speed dial", "Wide-screen layout"),
-            "Playlists and songs" to listOf("Playlists in Library", "Import a playlist", "Swipe songs to queue them"),
-            "New releases" to listOf("New-release alerts", "Followed artists"),
             "What's hidden" to listOf("Hide explicit content", "Hidden songs and artists"),
         ),
     ),

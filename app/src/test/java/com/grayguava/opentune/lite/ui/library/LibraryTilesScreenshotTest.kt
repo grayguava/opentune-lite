@@ -59,46 +59,6 @@ class LibraryTilesScreenshotTest {
         shoot("library-all-playlists") { AllPlaylistsScreen(PaddingValues(), nav, onBack = {}) }
     }
 
-    /** The list view chosen in Settings: new and import, then each source's playlists, five until Show more. */
-    @Test fun libraryList() {
-        playlists()
-        com.grayguava.opentune.lite.data.settings.AppSettings.init(ApplicationProvider.getApplicationContext())
-        com.grayguava.opentune.lite.data.settings.AppSettings.updateUi { it.copy(playlistList = true) }
-        try {
-            compose.setContent {
-                OpenTuneTheme() {
-                    Surface(color = MaterialTheme.colorScheme.background) {
-                        LibraryScreen(PaddingValues(), SongActions(null, false, { _, _, _, _ -> }, {}, {}), nav)
-                    }
-                }
-            }
-            compose.waitForIdle()
-            compose.onNode(androidx.compose.ui.test.hasScrollToNodeAction() and androidx.compose.ui.test.SemanticsMatcher.keyIsDefined(androidx.compose.ui.semantics.SemanticsProperties.VerticalScrollAxisRange)).performScrollToNode(androidx.compose.ui.test.hasText("Show more (1)"))
-            compose.onNodeWithText("View all").assertExists()
-            org.junit.Assert.assertTrue(compose.onAllNodes(androidx.compose.ui.test.hasText("On this phone")).fetchSemanticsNodes().isNotEmpty())
-            val names = listOf("Lub", "Old Hindi Romantic Songs", "Throwback Workout", "Late night drive", "Punjabi hits", "Ghazals")
-            fun shown() = names.count { compose.onAllNodes(androidx.compose.ui.test.hasText(it)).fetchSemanticsNodes().isNotEmpty() }
-            org.junit.Assert.assertEquals("five before Show more", 5, shown())
-            compose.onNodeWithText("Show more (1)").performClick()
-            compose.waitForIdle()
-            org.junit.Assert.assertEquals("all six after", 6, shown())
-            save("library-list", topWindow() ?: compose.activity.window.decorView)
-        } finally {
-            com.grayguava.opentune.lite.data.settings.AppSettings.updateUi { it.copy(playlistList = false) }
-        }
-    }
-
-    @Test fun allPlaylistsAsAList() {
-        playlists()
-        com.grayguava.opentune.lite.data.settings.AppSettings.init(ApplicationProvider.getApplicationContext())
-        com.grayguava.opentune.lite.data.settings.AppSettings.updateUi { it.copy(playlistList = true) }
-        try {
-            shoot("library-all-playlists-list") { AllPlaylistsScreen(PaddingValues(), nav, onBack = {}) }
-        } finally {
-            com.grayguava.opentune.lite.data.settings.AppSettings.updateUi { it.copy(playlistList = false) }
-        }
-    }
-
     private fun topWindow(): View? = runCatching {
         val global = Class.forName("android.view.WindowManagerGlobal")
         val views = global.getDeclaredField("mViews").apply { isAccessible = true }.get(global.getMethod("getInstance").invoke(null)) as List<*>

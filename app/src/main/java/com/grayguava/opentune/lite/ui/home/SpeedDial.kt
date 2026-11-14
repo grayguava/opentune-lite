@@ -64,7 +64,6 @@ import com.grayguava.opentune.lite.ui.components.MenuAnchor
 import com.grayguava.opentune.lite.ui.components.PageHeader
 import com.grayguava.opentune.lite.ui.components.SongContextMenu
 import com.grayguava.opentune.lite.ui.components.menuAnchor
-import com.grayguava.opentune.lite.ui.components.rememberHaptics
 import com.grayguava.opentune.lite.ui.type
 
 /** What Home's Speed dial shows, for its full page: Home sets it as it lays out. */
@@ -155,7 +154,6 @@ private fun SpeedDialTile(item: ShelfItem, onClick: () -> Unit, modifier: Modifi
     val menu = item.cardMenu()
     val anchor = remember { MenuAnchor() }
     val view = LocalView.current
-    val haptics = rememberHaptics()
     var menuOpen by remember { mutableStateOf(false) }
     val at = anchor.rect
     if (menuOpen && at != null && menu != null) {
@@ -172,7 +170,7 @@ private fun SpeedDialTile(item: ShelfItem, onClick: () -> Unit, modifier: Modifi
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .then(
                 if (menu == null) Modifier.clickable(onClick = onClick)
-                else Modifier.menuClickable(onClick = onClick, onLongClick = { haptics.press(); menuOpen = true }),
+                else Modifier.menuClickable(onClick = onClick, onLongClick = {  menuOpen = true }),
             ),
     ) {
         if (round) {

@@ -17,7 +17,6 @@ import kotlinx.coroutines.CoroutineScope
 import com.grayguava.opentune.lite.data.history.History
 import com.grayguava.opentune.lite.data.reco.HomeSeed
 import com.grayguava.opentune.lite.data.reco.Recommendations
-import com.grayguava.opentune.lite.data.releases.NewReleases
 import com.grayguava.opentune.lite.data.settings.AppSettings
 import com.grayguava.opentune.lite.data.settings.Recommender
 import kotlinx.coroutines.cancelAndJoin
@@ -84,13 +83,6 @@ object MusicRepository {
      * arrive here, page by page, while the first is already on screen.
      */
     val homeMore: StateFlow<List<HomeShelf>> = _homeMore.asStateFlow()
-    private val _seeds = MutableStateFlow<List<HomeSeed.Artist>>(emptyList())
-
-    /**
-     * The followed artists' songs Home seeds itself from while history is
-     * short (see [HomeSeed]); Home makes mixes of them. Empty otherwise.
-     */
-    val seeds: StateFlow<List<HomeSeed.Artist>> = _seeds.asStateFlow()
     private var homeMoreJob: Job? = null
     private var libraryWarmJob: Job? = null
 
@@ -148,7 +140,6 @@ object MusicRepository {
             // Join before invalidating, so an older load cannot repopulate stale caches.
             homeMoreJob?.cancelAndJoin()
             extrasCache.clear()
-            seedCache = null
         }
         // Resolve personal picks alongside the feed so the page publishes one set of picks,
         // rather than briefly restoring the old radio shelf before replacing it later.
@@ -223,7 +214,7 @@ object MusicRepository {
     }
 
     /** Where Home's extra shelves come from, in the order they're shown. */
-    private enum class HomeSource { SEED, RADIO, ARTISTS, NEW_RELEASES, CHARTS, EXPLORE, MOODS }
+    private enum class HomeSource { RADIO, ARTISTS, CHARTS, EXPLORE, MOODS }
 
     private class Fetched(val shelves: List<HomeShelf>, val at: Long, val engine: Recommender = AppSettings.playback.value.recommender)
     private val extrasCache = java.util.concurrent.ConcurrentHashMap<HomeSource, Fetched>()
@@ -236,21 +227,18 @@ object MusicRepository {
         // Signed-in Home already supplies the account's interests. Do not bury them
         // under generic charts and rotating moods from the guest feed.
         if (com.grayguava.opentune.lite.data.account.AccountStore.signedIn.value &&
-            source in setOf(HomeSource.CHARTS, HomeSource.EXPLORE, HomeSource.MOODS, HomeSource.NEW_RELEASES)) return emptyList()
+            source in setOf(HomeSource.CHARTS, HomeSource.EXPLORE, HomeSource.MOODS)) return emptyList()
         if (History.records.value.isNotEmpty() && source in setOf(HomeSource.CHARTS, HomeSource.EXPLORE)) return emptyList()
         val now = System.currentTimeMillis()
         val engine = AppSettings.playback.value.recommender
         val cached = extrasCache[source]?.takeIf {
             source != HomeSource.RADIO || it.engine == engine
         }
-        // The seed follows whoever is followed now, so it keeps its own cache.
-        if (source != HomeSource.SEED) cached?.takeIf { now - it.at < EXTRAS_FRESH_MS }?.let { return it.shelves }
+        if (cached != null) cached?.takeIf { now - it.at < EXTRAS_FRESH_MS }?.let { return it.shelves }
         val shelves = try {
             when (source) {
-                HomeSource.SEED -> seedShelves()
                 HomeSource.RADIO -> radioShelf(engine)
                 HomeSource.ARTISTS -> artistShelves()
-                HomeSource.NEW_RELEASES -> shelvesOf("FEmusic_new_releases")
                 HomeSource.CHARTS -> shelvesOf("FEmusic_charts")
                 HomeSource.EXPLORE -> shelvesOf("FEmusic_explore")
                 HomeSource.MOODS -> moodShelves()
@@ -269,41 +257,6 @@ object MusicRepository {
         val response = Innertube.browse(browseId)
         return InnertubeParser.parseHome(response).ifEmpty { InnertubeParser.parseHomeContinuation(response) }
             .filter { it.items.isNotEmpty() }
-    }
-
-    private var seedCache: Pair<List<String>, Fetched>? = null
-
-    /**
-     * "Because you like …": while history is short, the top songs of the
-     * artists followed most recently and YouTube Music's radio off each,
-     * so a new install's Home starts from the artists picked in the
-     * welcome. The same songs make Home's seeded mixes ([seeds]).
-     */
-    private suspend fun seedShelves(): List<HomeShelf> = coroutineScope {
-        val artists = HomeSeed.artists(NewReleases.followed.value, History.records.value.size)
-        val ids = artists.map { it.browseId }
-        val now = System.currentTimeMillis()
-        val cached = seedCache?.takeIf { it.first == ids && now - it.second.at < EXTRAS_FRESH_MS }
-        if (cached != null) return@coroutineScope cached.second.shelves
-        val seeds = artists.map { a ->
-            async {
-                try {
-                    val page = InnertubeParser.parseArtistPage(Innertube.browse(a.browseId))
-                    val top = ContentFilter.songs(page.songs)
-                    val radio = top.firstOrNull()?.let { runCatching { Recommendations.youtube(it.videoId) }.getOrNull() }.orEmpty()
-                    HomeSeed.Artist(a.browseId, page.name ?: a.name, top, radio)
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    DebugLog.w("MusicRepository", "Couldn't seed Home from ${a.name}", e)
-                    null
-                }
-            }
-        }.awaitAll().filterNotNull()
-        _seeds.value = seeds
-        val shelves = listOfNotNull(HomeSeed.quickPicks(seeds, launchShuffle + homeRefreshes.get()))
-        seedCache = ids to Fetched(shelves, now)
-        shelves
     }
 
     /**

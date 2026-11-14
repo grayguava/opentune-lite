@@ -459,7 +459,6 @@ private fun BrowseRow(item: BrowseItem, onClick: () -> Unit) {
         com.grayguava.opentune.lite.ui.components.MenuList(item.browseId, item.title, item.subtitle, item.thumbnailUrl, item.type) else null
     val anchor = remember { com.grayguava.opentune.lite.ui.components.MenuAnchor() }
     val view = androidx.compose.ui.platform.LocalView.current
-    val haptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
     var menuOpen by remember { androidx.compose.runtime.mutableStateOf(false) }
     val at = anchor.rect
     val round = item.type == BrowseType.ARTIST
@@ -478,7 +477,7 @@ private fun BrowseRow(item: BrowseItem, onClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth()
             .then(if (list != null) Modifier.menuAnchor(anchor, view) else Modifier)
-            .then(Modifier.menuClickable(onClick = onClick, onLongClick = list?.let { { haptics.press(); menuOpen = true } }))
+            .then(Modifier.menuClickable(onClick = onClick, onLongClick = list?.let { {  menuOpen = true } }))
             .padding(horizontal = 16.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -25,7 +25,6 @@ object Welcome {
         val plays: Int,
         /** Liked songs, local playlists and saved albums and playlists. */
         val libraryItems: Int,
-        val followedArtists: Int,
         val downloads: Int,
         val signedIn: Boolean,
         /** The app was installed as an older version and updated since. */
@@ -33,7 +32,7 @@ object Welcome {
     )
 
     internal fun alreadyInUse(s: Signals): Boolean =
-        s.plays > 0 || s.libraryItems > 0 || s.followedArtists > 0 || s.downloads > 0 || s.signedIn || s.updated
+        s.plays > 0 || s.libraryItems > 0 || s.downloads > 0 || s.signedIn || s.updated
 
     /** What [state] becomes at start, given what's on the phone. */
     internal fun decide(state: WelcomeState, signals: Signals): WelcomeState = when (state) {
@@ -48,7 +47,6 @@ object Welcome {
         val signals = Signals(
             plays = History.records.value.size,
             libraryItems = LibraryStore.liked.value.size + LibraryStore.playlists.value.size + LibraryStore.savedLists.value.size,
-            followedArtists = com.grayguava.opentune.lite.data.releases.NewReleases.followed.value.size,
             downloads = Downloads.entries.value.size,
             signedIn = AccountStore.signedIn.value,
             updated = updatedSinceInstall(context),

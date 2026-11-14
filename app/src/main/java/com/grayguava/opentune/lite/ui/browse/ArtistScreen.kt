@@ -92,13 +92,11 @@ import com.grayguava.opentune.lite.data.model.HomeShelf
 import com.grayguava.opentune.lite.data.model.ShelfItem
 import com.grayguava.opentune.lite.data.model.UiState
 import com.grayguava.opentune.lite.data.model.artworkAt
-import com.grayguava.opentune.lite.data.releases.NewReleases
 import com.grayguava.opentune.lite.data.settings.AppSettings
 import com.grayguava.opentune.lite.ui.components.Artwork
 import com.grayguava.opentune.lite.ui.components.ErrorState
 import com.grayguava.opentune.lite.ui.components.GlassIconButton
 import com.grayguava.opentune.lite.ui.components.GlassPage
-import com.grayguava.opentune.lite.ui.components.Haptics
 import com.grayguava.opentune.lite.ui.components.ItemCard
 import com.grayguava.opentune.lite.ui.components.MessageState
 import com.grayguava.opentune.lite.ui.components.PageHeader
@@ -108,7 +106,6 @@ import com.grayguava.opentune.lite.ui.components.SongListItem
 import com.grayguava.opentune.lite.ui.components.SongRowPlaceholder
 import com.grayguava.opentune.lite.ui.components.glass
 import com.grayguava.opentune.lite.ui.components.pressable
-import com.grayguava.opentune.lite.ui.components.rememberHaptics
 import com.grayguava.opentune.lite.ui.rememberLoader
 import com.grayguava.opentune.lite.ui.share.ListShare
 import com.grayguava.opentune.lite.ui.theme.animated
@@ -211,17 +208,9 @@ internal fun ArtistPageView(
             LazyColumn(state = listState, contentPadding = contentPadding, modifier = Modifier.fillMaxSize(), overscrollEffect = band) {
                 item(key = "hero", contentType = "hero") { ArtistHero(browseId, page, photo, listState, actions, band) }
                 if (page == null) {
-                    item(key = "latest-placeholder") {
-                        Placeholder(Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth().height(LATEST_CARD_HEIGHT), MaterialTheme.shapes.large)
-                    }
                     item(key = "top-placeholder") { SectionHeader("Top songs") }
                     items(4, key = { "song-placeholder:$it" }) { SongRowPlaceholder() }
                     return@LazyColumn
-                }
-                latestRelease(page.sections)?.let { release ->
-                    item(key = "latest", contentType = "latest") {
-                        LatestReleaseCard(release, onOpen = { onItemClick(release.item) }, Modifier.padding(top = 8.dp))
-                    }
                 }
                 if (page.songs.isNotEmpty()) {
                     item(key = "top", contentType = "top") {
@@ -382,13 +371,12 @@ private fun ArtistHero(browseId: String, page: ArtistPage?, photo: String?, list
     }
 }
 
-/** Shuffle, a big Play, and Follow for new releases. */
+/** Shuffle, a big Play. */
 @Composable
 private fun HeroButtons(browseId: String, page: ArtistPage?, actions: SongActions, modifier: Modifier = Modifier) {
     val songs = page?.songs.orEmpty()
     val enabled = songs.isNotEmpty()
     val name = page?.name
-    val haptics = rememberHaptics()
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(22.dp), verticalAlignment = Alignment.CenterVertically) {
         ShuffleButton(
             onShuffle = { actions.playAll(songs, 0, true, name) },
@@ -407,7 +395,6 @@ private fun HeroButtons(browseId: String, page: ArtistPage?, actions: SongAction
                 .then(
                     if (enabled) {
                         Modifier.pressable({
-                            haptics.pattern(Haptics.Pattern.PLAY)
                             actions.playAll(songs, 0, false, name)
                         })
                     } else {
@@ -417,96 +404,6 @@ private fun HeroButtons(browseId: String, page: ArtistPage?, actions: SongAction
             contentAlignment = Alignment.Center,
         ) {
             Icon(Icons.Rounded.PlayArrow, "Play", Modifier.size(40.dp), tint = colors.background)
-        }
-        FollowButton(browseId, page, Modifier.size(SIDE_BUTTON))
-    }
-}
-
-/**
- * Follow for new-release alerts, as a star: kept on the phone, no account
- * needed. Asks for notification permission on Android 13+ the first time.
- */
-@Composable
-private fun FollowButton(browseId: String, page: ArtistPage?, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    val followed by NewReleases.followed.collectAsState()
-    val following = followed.any { it.browseId == browseId }
-    val haptics = rememberHaptics()
-    val ask = androidx.activity.compose.rememberLauncherForActivityResult(
-        androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
-    ) { }
-    val label = if (following) "Following. Tap to stop new release alerts" else "Follow for new releases"
-    Box(
-        modifier
-            .glass(CircleShape)
-            .clip(CircleShape)
-            .clickable(enabled = page != null, onClickLabel = label) {
-                if (page == null) return@clickable
-                if (following) {
-                    haptics.pattern(Haptics.Pattern.OFF)
-                    NewReleases.unfollow(context, browseId)
-                } else {
-                    haptics.pattern(Haptics.Pattern.LIKE)
-                    NewReleases.follow(context, browseId, page)
-                    if (!NewReleases.canNotify(context)) ask.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                }
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            if (following) Icons.Rounded.Star else Icons.Rounded.StarBorder,
-            label,
-            Modifier.size(24.dp),
-            tint = if (following) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-        )
-    }
-}
-
-/** The newest release on a glass card, with a round button that saves it to the library. */
-@Composable
-private fun LatestReleaseCard(release: LatestRelease, onOpen: () -> Unit, modifier: Modifier = Modifier) {
-    val item = release.item
-    val id = item.browseId ?: return
-    val savedLists by LibraryStore.savedLists.collectAsState()
-    val saved = savedLists.any { it.browseId == id }
-    val haptics = rememberHaptics()
-    val shape = MaterialTheme.shapes.large
-    Row(
-        modifier
-            .padding(horizontal = 16.dp)
-            .fillMaxWidth()
-            .height(LATEST_CARD_HEIGHT)
-            .glass(shape)
-            .clip(shape)
-            .clickable(onClick = onOpen)
-            .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Artwork(item.thumbnailUrl.artworkAt(CARD_ART_PX), Modifier.size(96.dp), MaterialTheme.shapes.medium, placeholder = Icons.Filled.Album)
-        Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
-            if (release.line.isNotEmpty()) {
-                Text(release.line, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-            }
-            Text(item.title, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Text("Latest release", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-        }
-        Box(
-            Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f), CircleShape)
-                .clickable {
-                    haptics.pattern(if (saved) Haptics.Pattern.OFF else Haptics.Pattern.LIKE)
-                    LibraryStore.setSaved(SavedList(id, item.title, item.subtitle, item.thumbnailUrl), !saved)
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                if (saved) Icons.Rounded.Check else Icons.Rounded.Add,
-                if (saved) "Remove from library" else "Save to library",
-                Modifier.size(24.dp),
-                tint = if (saved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-            )
         }
     }
 }
@@ -538,8 +435,6 @@ private fun TopSongs(page: ArtistPage, actions: SongActions, onShowAll: (() -> U
                             isPlaying = actions.isPlaying,
                             onPlayNext = { actions.playNext(song) },
                             onAddToQueue = { actions.addToQueue(song) },
-                            // A sideways drag moves the columns; the menu still has both.
-                            swipeToQueue = false,
                         )
                     }
                 }

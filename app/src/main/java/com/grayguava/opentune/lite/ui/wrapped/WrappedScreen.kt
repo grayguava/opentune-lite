@@ -94,7 +94,6 @@ import com.grayguava.opentune.lite.data.settings.AppSettings
 import com.grayguava.opentune.lite.playback.PlayerConnection
 import com.grayguava.opentune.lite.ui.browse.SongActions
 import com.grayguava.opentune.lite.ui.components.Artwork
-import com.grayguava.opentune.lite.ui.components.rememberHaptics
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -154,7 +153,6 @@ fun WrappedScreen(actions: SongActions, onBack: () -> Unit, nowMs: Long = System
     val records by History.records.collectAsState()
     val ui by AppSettings.ui.collectAsState()
     val still = ui.reduceAnimation
-    val haptics = rememberHaptics()
     var period by rememberSaveable { mutableStateOf(WrappedPeriod.YEAR) }
     val year = remember(nowMs) { Calendar.getInstance().apply { timeInMillis = nowMs }.get(Calendar.YEAR) }
     val since = remember(period, nowMs) {
@@ -204,7 +202,6 @@ fun WrappedScreen(actions: SongActions, onBack: () -> Unit, nowMs: Long = System
     fun go(to: Int, at: Offset = Offset.Unspecified) {
         val next = to.coerceIn(0, slides.lastIndex)
         if (next == index) return
-        haptics.tick()
         origin = at
         index = next
     }

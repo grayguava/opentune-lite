@@ -170,7 +170,6 @@ fun LyricsView(
         }
         val found = (state as? LyricsState.Found)?.lyrics
         if (found != null) {
-            val haptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
             AnimatedVisibility(
                 visible = controlsVisible,
                 enter = fadeIn(tween(220)),
@@ -184,7 +183,6 @@ fun LyricsView(
                     if (found is Lyrics.Synced && Romanizer.available) {
                         val romanizeOn = AppSettings.lyrics.collectAsState().value.romanize
                         LyricActionButton(Icons.Rounded.Translate, if (romanizeOn) "Turn off romanization" else "Show romanized lyrics", active = romanizeOn) {
-                            haptics.tick()
                             AppSettings.updateLyrics { it.copy(romanize = !it.romanize) }
                         }
                     }
@@ -199,7 +197,6 @@ fun LyricsView(
                         }
                         val lines = remember(timed) { timed.map { it.first } }
                         LyricActionButton(Icons.Rounded.FormatQuote, "Share lyrics") {
-                            haptics.tick()
                             val now = position()
                             if (found is Lyrics.Synced && synced) {
                                 // Start picking on the page itself, from the line being sung.
@@ -333,7 +330,6 @@ private fun SyncedLyrics(
     val style = if (reduced) LyricsStyle.MINIMAL else LyricsStyle.FLUID
     val listState = rememberLazyListState()
     val selecting = selection?.isNotEmpty() == true
-    val haptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
     androidx.activity.compose.BackHandler(enabled = selecting) { selection?.clear() }
     val romanize = AppSettings.lyrics.collectAsState().value.romanize
     val romanized by androidx.compose.runtime.produceState<List<String?>>(emptyList(), lines, romanize) {
@@ -465,9 +461,8 @@ private fun SyncedLyrics(
                                     when {
                                         i in selection -> selection.remove(i)
                                         selection.size < com.grayguava.opentune.lite.ui.share.LyricCard.MAX_LINES -> selection.add(i)
-                                        else -> { haptics.pattern(com.grayguava.opentune.lite.ui.components.Haptics.Pattern.OFF); return@LyricLineView }
+                                        else -> {  return@LyricLineView }
                                     }
-                                    haptics.tick()
                                 } else {
                                     onSeek(line.startMs)
                                     following = true
@@ -476,7 +471,7 @@ private fun SyncedLyrics(
                             // A long press starts picking lines to share; without a song to
                             // share, it lines the lyrics up with this line as before.
                             onLongClick = when {
-                                selection != null -> { { if (!selecting) { haptics.press(); selection.add(i) } } }
+                                selection != null -> { { if (!selecting) {  selection.add(i) } } }
                                 onSyncLine != null -> { { onSyncLine(line.startMs); following = true } }
                                 else -> null
                             },
@@ -513,8 +508,8 @@ private fun SyncedLyrics(
         ) {
             SelectionBar(
                 count = selection?.size ?: 0,
-                onCancel = { haptics.tick(); selection?.clear(); following = true },
-                onShare = { haptics.press(); onShareSelection?.invoke(); following = true },
+                onCancel = {  selection?.clear(); following = true },
+                onShare = {  onShareSelection?.invoke(); following = true },
             )
         }
     }

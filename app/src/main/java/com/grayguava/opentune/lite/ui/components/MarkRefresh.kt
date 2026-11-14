@@ -66,12 +66,10 @@ fun MarkRefreshBox(
 ) {
     val state = rememberPullToRefreshState()
     val still = AppSettings.ui.collectAsState().value.reduceAnimation
-    val haptics = rememberHaptics()
     val loading by androidx.compose.runtime.rememberUpdatedState(isRefreshing)
     // A tick as the pull passes the line (not as the indicator settles while loading).
     LaunchedEffect(state) {
         snapshotFlow { state.distanceFraction >= 1f }.distinctUntilChanged().collect { past ->
-            if (past && !loading) haptics.tick()
         }
     }
     // Scrolling the page while it loads tucks the mark away and lets the page
@@ -89,7 +87,7 @@ fun MarkRefreshBox(
     }
     PullToRefreshBox(
         isRefreshing = isRefreshing,
-        onRefresh = { haptics.press(); onRefresh() },
+        onRefresh = {  onRefresh() },
         state = state,
         modifier = modifier,
         indicator = { MarkIndicator(state, isRefreshing, still, Modifier.align(Alignment.TopCenter).graphicsLayer { alpha = 1f - tuck }) },

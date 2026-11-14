@@ -7,7 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class WelcomeTest {
-    private val fresh = Welcome.Signals(plays = 0, libraryItems = 0, followedArtists = 0, downloads = 0, signedIn = false, updated = false)
+    private val fresh = Welcome.Signals(plays = 0, libraryItems = 0, downloads = 0, signedIn = false, updated = false)
 
     @Test fun aFreshInstallGetsTheWelcome() {
         assertEquals(WelcomeState.DUE, Welcome.decide(WelcomeState.UNDECIDED, fresh))
@@ -17,7 +17,6 @@ class WelcomeTest {
         listOf(
             fresh.copy(plays = 1),
             fresh.copy(libraryItems = 2),
-            fresh.copy(followedArtists = 1),
             fresh.copy(downloads = 3),
             fresh.copy(signedIn = true),
             // Updated from an older version, even one never played from.
@@ -27,7 +26,7 @@ class WelcomeTest {
 
     @Test fun theDecisionIsMadeOnce() {
         // A welcome left halfway has already followed artists; it still comes back.
-        assertEquals(WelcomeState.DUE, Welcome.decide(WelcomeState.DUE, fresh.copy(followedArtists = 3, signedIn = true)))
+        assertEquals(WelcomeState.DUE, Welcome.decide(WelcomeState.DUE, fresh.copy(signedIn = true)))
         // Shown again from Settings by someone with years of history.
         assertEquals(WelcomeState.DUE, Welcome.decide(WelcomeState.DUE, fresh.copy(plays = 5000, updated = true)))
         assertEquals(WelcomeState.SEEN, Welcome.decide(WelcomeState.SEEN, fresh))

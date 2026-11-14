@@ -275,19 +275,8 @@ fun SongListItem(
     leading: (@Composable () -> Unit)? = null,
     onPlayNext: (() -> Unit)? = null,
     onAddToQueue: (() -> Unit)? = null,
-    /**
-     * Swiping the row plays it next or queues it (see [SwipeToQueueRow]), when
-     * Settings allow. Off for rows inside a sideways-scrolling list, whose
-     * scroll the swipe would otherwise take.
-     */
-    swipeToQueue: Boolean = true,
     /** Inside one of your own playlists: the long-press menu can take the song out of it. */
     onRemoveFromPlaylist: (() -> Unit)? = null,
-    /**
-     * Inside one of your own playlists: swiping toward the start of the line
-     * takes the song out, and toward the end adds it to the queue.
-     */
-    onSwipeRemove: (() -> Unit)? = null,
     trailing: @Composable RowScope.() -> Unit = {},
 ) {
     var menuOpen by remember { mutableStateOf(false) }
@@ -295,74 +284,59 @@ fun SongListItem(
     var contextOpen by remember { mutableStateOf(false) }
     val anchor = remember { MenuAnchor() }
     val view = androidx.compose.ui.platform.LocalView.current
-    val haptics = rememberHaptics()
     val hasMenu = onPlayNext != null || onAddToQueue != null || LocalSongMenu.current != null
     val download by remember(song.videoId) { Downloads.entry(song.videoId) }
         .collectAsState(Downloads.entryNow(song.videoId))
     if (menuOpen) SongMenuSheet(song, onDismiss = { menuOpen = false })
     val at = anchor.rect
     if (contextOpen && at != null) SongContextMenu(song, at, onDismiss = { contextOpen = false }, onRemoveFromPlaylist = onRemoveFromPlaylist) { SongPreview(song) }
-    val playback by AppSettings.playback.collectAsState()
-    // Toward the end of the line plays next, toward the start adds to the queue.
-    val swipes = swipeToQueue && playback.swipeToQueue
-    SwipeToQueueRow(
-        title = song.title,
-        onPlayNext = onPlayNext.takeIf { swipes },
-        onAddToQueue = onAddToQueue.takeIf { swipes || onSwipeRemove != null },
-        modifier = modifier.fillMaxWidth(),
-        onRemove = onSwipeRemove,
-    ) { swipeActions ->
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(swipeActions)
-                .menuAnchor(anchor, view)
-                .menuClickable(onClick = onClick, onLongClick = {
-                    if (hasMenu) {
-                        haptics.press()
-                        if (anchor.rect != null) contextOpen = true else menuOpen = true
-                    }
-                })
-                .padding(start = 16.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            if (leading != null) {
-                leading()
-            } else {
-                Box(Modifier.size(52.dp)) {
-                    Artwork(song.thumbnailUrl.artworkAt(ROW_ART_PX), Modifier.fillMaxSize())
-                    ListenedBar(song.videoId, Modifier.align(Alignment.BottomCenter))
-                    if (isCurrent) {
-                        Box(
-                            Modifier.fillMaxSize().clip(MaterialTheme.shapes.small).background(Color.Black.copy(alpha = 0.45f)),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            NowPlayingBars(playing = isPlaying, color = Color.White)
-                        }
+    Row(
+        modifier = modifier.fillMaxWidth()
+            .menuAnchor(anchor, view)
+            .menuClickable(onClick = onClick, onLongClick = {
+                if (hasMenu) {
+                    if (anchor.rect != null) contextOpen = true else menuOpen = true
+                }
+            })
+            .padding(start = 16.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        if (leading != null) {
+            leading()
+        } else {
+            Box(Modifier.size(52.dp)) {
+                Artwork(song.thumbnailUrl.artworkAt(ROW_ART_PX), Modifier.fillMaxSize())
+                ListenedBar(song.videoId, Modifier.align(Alignment.BottomCenter))
+                if (isCurrent) {
+                    Box(
+                        Modifier.fillMaxSize().clip(MaterialTheme.shapes.small).background(Color.Black.copy(alpha = 0.45f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        NowPlayingBars(playing = isPlaying, color = Color.White)
                     }
                 }
             }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    song.title,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = if (isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                )
-                SubtitleLine(
-                    listOfNotNull(song.artist.takeIf { it.isNotBlank() }, song.durationText).joinToString(" • "),
-                    explicit = song.isExplicit == true,
-                )
-            }
-            trailing()
-            download?.let { DownloadBadge(it.state, it.progress) }
-            if (hasMenu) {
-                IconButton(onClick = { menuOpen = true }) {
-                    Icon(Icons.Filled.MoreVert, contentDescription = "More options")
-                }
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                song.title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = if (isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            )
+            SubtitleLine(
+                listOfNotNull(song.artist.takeIf { it.isNotBlank() }, song.durationText).joinToString(" • "),
+                explicit = song.isExplicit == true,
+            )
+        }
+        trailing()
+        download?.let { DownloadBadge(it.state, it.progress) }
+        if (hasMenu) {
+            IconButton(onClick = { menuOpen = true }) {
+                Icon(Icons.Filled.MoreVert, contentDescription = "More options")
             }
         }
     }
@@ -439,7 +413,6 @@ fun ItemCard(
     val round = type == BrowseType.ARTIST
     val anchor = remember { MenuAnchor() }
     val view = androidx.compose.ui.platform.LocalView.current
-    val haptics = rememberHaptics()
     var contextOpen by remember { mutableStateOf(false) }
     val at = anchor.rect
     if (contextOpen && at != null && menu != null) {
@@ -456,7 +429,7 @@ fun ItemCard(
             .clip(MaterialTheme.shapes.medium)
             .then(
                 if (menu == null) Modifier.clickable(onClick = onClick)
-                else Modifier.menuClickable(onClick = onClick, onLongClick = { haptics.press(); contextOpen = true }),
+                else Modifier.menuClickable(onClick = onClick, onLongClick = {  contextOpen = true }),
             )
             .padding(6.dp),
     ) {

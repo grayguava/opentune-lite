@@ -74,8 +74,6 @@ import com.grayguava.opentune.lite.ui.components.FloatingDialog
 import com.grayguava.opentune.lite.ui.components.MenuRow
 import com.grayguava.opentune.lite.ui.components.SheetButton
 import com.grayguava.opentune.lite.data.download.downloadSelection
-import com.grayguava.opentune.lite.ui.components.Haptics
-import com.grayguava.opentune.lite.ui.components.rememberHaptics
 import kotlinx.coroutines.delay
 
 /**
@@ -90,7 +88,6 @@ data class DownloadedListInfo(val id: String, val title: String, val subtitle: S
 @Composable
 fun DownloadAllButton(songs: List<Song>, modifier: Modifier = Modifier, list: DownloadedListInfo? = null) {
     val context = LocalContext.current
-    val haptics = rememberHaptics()
     val entries by Downloads.entries.collectAsState()
     val selection = remember(songs, entries) { downloadSelection(songs, entries) }
     val wanted = selection.wanted
@@ -100,7 +97,6 @@ fun DownloadAllButton(songs: List<Song>, modifier: Modifier = Modifier, list: Do
     var confirmRemove by remember { mutableStateOf(false) }
     val all = wanted.isNotEmpty() && done == wanted.size
     var started by remember { mutableStateOf(false) }
-    LaunchedEffect(all) { if (all && started) haptics.pattern(Haptics.Pattern.DONE) }
     // A list downloaded in full before lists were kept: keep it now, so it shows in the library too.
     LaunchedEffect(list?.id, selection.stored.size, wanted.size) {
         if (list != null && wanted.isNotEmpty() && selection.stored.size == wanted.size && com.grayguava.opentune.lite.data.download.DownloadedLists.get(list.id) == null) {
@@ -149,7 +145,6 @@ fun DownloadAllButton(songs: List<Song>, modifier: Modifier = Modifier, list: Do
             .clip(CircleShape)
             .background(scheme.surfaceContainerHighest)
             .clickable(enabled = wanted.isNotEmpty()) {
-                haptics.press()
                 if (selection.stored.isNotEmpty()) options = true else downloadRemaining()
             }
             .padding(horizontal = 16.dp),
@@ -178,13 +173,12 @@ fun DownloadAllButton(songs: List<Song>, modifier: Modifier = Modifier, list: Do
 /** Opens [AddSongsSheet]; for a playlist made in the app. */
 @Composable
 fun AddSongsButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val haptics = rememberHaptics()
     Row(
         modifier
             .height(44.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-            .clickable { haptics.tick(); onClick() }
+            .clickable {  onClick() }
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -275,13 +269,12 @@ fun AddSongsSheet(playlistId: String, onDismiss: () -> Unit) {
 
 @Composable
 internal fun AddRow(song: Song, added: Boolean, onAdd: () -> Unit) {
-    val haptics = rememberHaptics()
     val pop by animateFloatAsState(if (added) 1f else 0f, tween(260), label = "added")
     Row(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .clickable(enabled = !added) { haptics.press(); onAdd() }
+            .clickable(enabled = !added) {  onAdd() }
             .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -317,10 +310,9 @@ internal fun AddRow(song: Song, added: Boolean, onAdd: () -> Unit) {
 /** A round button the height of the others in the row. */
 @Composable
 private fun RoundToolButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit) {
-    val haptics = rememberHaptics()
     Box(
         Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHighest)
-            .clickable { haptics.tick(); onClick() },
+            .clickable {  onClick() },
         contentAlignment = Alignment.Center,
     ) { Icon(icon, label, Modifier.size(20.dp)) }
 }
@@ -328,7 +320,6 @@ private fun RoundToolButton(icon: androidx.compose.ui.graphics.vector.ImageVecto
 /** Saves the album or playlist to the library, or takes it out; a little pop when it goes in. */
 @Composable
 private fun ListHeart(saved: Boolean, onClick: () -> Unit) {
-    val haptics = rememberHaptics()
     val pop = remember { androidx.compose.animation.core.Animatable(1f) }
     var bursts by remember { mutableStateOf(0) }
     LaunchedEffect(bursts) {
@@ -339,7 +330,6 @@ private fun ListHeart(saved: Boolean, onClick: () -> Unit) {
     Box(
         Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHighest)
             .clickable {
-                haptics.pattern(if (saved) Haptics.Pattern.OFF else Haptics.Pattern.LIKE)
                 if (!saved) bursts++
                 onClick()
             },

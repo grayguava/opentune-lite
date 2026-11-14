@@ -60,7 +60,6 @@ import com.grayguava.opentune.lite.ui.components.FloatingCard
 import com.grayguava.opentune.lite.ui.components.LocalFloatingCard
 import com.grayguava.opentune.lite.ui.components.SheetButton
 import com.grayguava.opentune.lite.ui.components.SheetTone
-import com.grayguava.opentune.lite.ui.components.rememberHaptics
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -84,13 +83,11 @@ fun SleepTimerDialog(onDismiss: () -> Unit) {
     ) {
         val ui by AppSettings.ui.collectAsState()
         val still = ui.reduceAnimation
-        val haptics = rememberHaptics()
         val card = LocalFloatingCard.current
         val scope = rememberCoroutineScope()
         var picked by remember { mutableStateOf<Any?>(null) }
         fun pick(key: Any, start: () -> Unit) {
             if (picked != null) return
-            haptics.press()
             picked = key
             start()
             scope.launch {
@@ -104,13 +101,12 @@ fun SleepTimerDialog(onDismiss: () -> Unit) {
             enter = fadeIn() + expandVertically(),
             exit = fadeOut() + shrinkVertically(),
         ) {
-            Running(state, still, onAdd = { haptics.tick(); SleepTimer.addMinutes(5) }, onOff = { haptics.tick(); SleepTimer.cancel() })
+            Running(state, still, onAdd = {  SleepTimer.addMinutes(5) }, onOff = {  SleepTimer.cancel() })
         }
 
         val playback by AppSettings.playback.collectAsState()
         Row(
             Modifier.fillMaxWidth().padding(bottom = 10.dp).clip(RoundedCornerShape(18.dp)).clickable {
-                haptics.tick()
                 AppSettings.updatePlayback { it.copy(sleepWindDown = !it.sleepWindDown) }
             }.padding(horizontal = 6.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -123,7 +119,7 @@ fun SleepTimerDialog(onDismiss: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            androidx.compose.material3.Switch(checked = playback.sleepWindDown, onCheckedChange = { v -> haptics.tick(); AppSettings.updatePlayback { it.copy(sleepWindDown = v) } })
+            androidx.compose.material3.Switch(checked = playback.sleepWindDown, onCheckedChange = { v ->  AppSettings.updatePlayback { it.copy(sleepWindDown = v) } })
         }
         val rows = MINUTES.map { m -> m as Any } + EndOfSong
         Column(Modifier.padding(top = 6.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {

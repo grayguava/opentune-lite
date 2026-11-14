@@ -231,8 +231,6 @@ data class PlaybackSettings(
      */
     val smartShuffle: Boolean = true,
     val stopOnTaskRemoved: Boolean = true,
-    /** Swiping a song row plays it next (toward the end of the line) or adds it to the queue (toward the start). */
-    val swipeToQueue: Boolean = true,
     /** Buffer the next track and resolve its neighbours early, for instant skips. */
     val preloadUpcoming: Boolean = true,
     /** A downloaded song streams in its best quality while there's internet; its file plays offline. */
@@ -259,9 +257,6 @@ val DEFAULT_SPONSORBLOCK_CATEGORIES = setOf("music_offtopic", "sponsor", "selfpr
 
 @Serializable
 data class InterfaceSettings(
-    val playlistGrid: Boolean = false,
-    /** Playlists on Library as a list down the page, grouped by where they're from, rather than a row of tiles. */
-    val playlistList: Boolean = false,
     /** Playlists pinned to the top of Library, first pinned first: a local playlist's id, or a YouTube Music browse id. */
     val pinnedPlaylists: List<String> = emptyList(),
     val reduceAnimation: Boolean = false,
@@ -288,8 +283,6 @@ data class InterfaceSettings(
     /** Sharp album covers from Apple Music, Deezer or the Cover Art Archive in the player. */
     val albumCovers: Boolean = true,
     val dockMotion: DockMotion = DockMotion.MINIMIZE,
-    /** How strong taps and buzzes are, 0 (off) to 1. */
-    val hapticStrength: Float = 0.6f,
     /** Pages blur and fade out as they scroll under the status bar. */
     val frostedTopEdge: Boolean = true,
     /** High performance mode: ask for a fast refresh rate while the app is open. */
@@ -334,8 +327,6 @@ data class LibrarySettings(
     val exportDownloads: Boolean = false,
     /** Leave out songs and albums marked explicit; see [com.grayguava.opentune.lite.data.ContentFilter]. */
     val hideExplicit: Boolean = false,
-    /** Notify about new albums and singles from followed artists. */
-    val releaseAlerts: Boolean = true,
 )
 
 /**

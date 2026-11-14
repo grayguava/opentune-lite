@@ -30,7 +30,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.grayguava.opentune.lite.ui.components.FloatingCard
-import com.grayguava.opentune.lite.ui.components.rememberHaptics
 
 /**
  * Where the sound goes, in one place: this phone or the headphones plugged
@@ -39,7 +38,6 @@ import com.grayguava.opentune.lite.ui.components.rememberHaptics
 @Composable
 fun AudioOutputSheet(onDismiss: () -> Unit) {
     val route = rememberOutputRoute()
-    val haptics = rememberHaptics()
     val deviceName = rememberOutputDeviceName().ifBlank { "This phone" }
     FloatingCard(onDismiss = onDismiss, title = "Audio output", icon = Icons.Rounded.Speaker) {
         Column(Modifier.padding(bottom = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -48,7 +46,7 @@ fun AudioOutputSheet(onDismiss: () -> Unit) {
                 title = deviceName,
                 subtitle = "Playing here",
                 selected = true,
-            ) { haptics.tick(); onDismiss() }
+            ) {  onDismiss() }
         }
     }
 }

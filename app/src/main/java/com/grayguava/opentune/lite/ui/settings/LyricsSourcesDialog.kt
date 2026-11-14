@@ -53,7 +53,6 @@ private val ROW = 68.dp
 @Composable
 fun LyricsSourcesDialog(onDismiss: () -> Unit) {
     val settings by AppSettings.lyrics.collectAsState()
-    val haptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
     val rowPx = with(LocalDensity.current) { ROW.toPx() }
     var dragged by remember { mutableStateOf<Int?>(null) }
     var offset by remember { mutableFloatStateOf(0f) }
@@ -105,7 +104,6 @@ fun LyricsSourcesDialog(onDismiss: () -> Unit) {
                                 .pointerInput(entry.source) {
                                     detectDragGestures(
                                         onDragStart = {
-                                            haptics.press()
                                             dragged = latest.indexOfFirst { it.source == entry.source }
                                             offset = 0f
                                         },
@@ -120,7 +118,6 @@ fun LyricsSourcesDialog(onDismiss: () -> Unit) {
                                             save(latest.toMutableList().apply { add(target, removeAt(at)) })
                                             offset -= (target - at) * rowPx
                                             dragged = target
-                                            haptics.tick()
                                         }
                                     }
                                 },

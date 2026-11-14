@@ -5,16 +5,15 @@ import com.grayguava.opentune.lite.data.history.DailyMixes
 import com.grayguava.opentune.lite.data.model.HomeShelf
 import com.grayguava.opentune.lite.data.model.ShelfItem
 import com.grayguava.opentune.lite.data.model.Song
-import com.grayguava.opentune.lite.data.releases.NewReleases
 
 /**
  * A start for Home before there's much listening to go on: Quick picks and
- * Daily Mixes from the artists you follow, the welcome's picks among them.
- * Once history is long enough, Home's own picks and mixes carry it and this
- * adds nothing.
+ * Daily Mixes from what you play, the welcome's picks among them. Once
+ * history is long enough, Home's own picks and mixes carry it and this adds
+ * nothing.
  */
 object HomeSeed {
-    /** Below this many plays, history is short and followed artists seed Home. */
+    /** Below this many plays, history is short and quick picks and mixes start here. */
     const val SHORT_HISTORY = 30
     /** Each seed artist costs two requests, so only the most recent few. */
     const val MAX_ARTISTS = 4
@@ -28,10 +27,6 @@ object HomeSeed {
     data class Artist(val browseId: String, val name: String, val top: List<Song>, val radio: List<Song>)
 
     fun isShort(plays: Int) = plays < SHORT_HISTORY
-
-    /** The artists to seed from, the most recently followed first; none once history is long enough. */
-    fun artists(followed: List<NewReleases.Followed>, plays: Int): List<NewReleases.Followed> =
-        if (!isShort(plays)) emptyList() else followed.sortedByDescending { it.followedAt }.take(MAX_ARTISTS)
 
     /**
      * Quick picks from the seeds: each artist's top songs in turn, so no

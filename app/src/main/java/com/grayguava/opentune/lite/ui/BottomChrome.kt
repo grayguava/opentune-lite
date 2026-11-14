@@ -285,7 +285,6 @@ private fun Modifier.placed(progress: () -> Float, x: (Float) -> Dp, bottom: (Fl
  */
 @Composable
 private fun MinimizeChrome(c: ChromeContent, inline: Boolean, progress: () -> Float, modifier: Modifier) {
-    val haptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
     BoxWithConstraints(modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
         val width = maxWidth
         val fullDock = width - CHROME_TAB_HEIGHT - SEARCH_GAP
@@ -311,7 +310,6 @@ private fun MinimizeChrome(c: ChromeContent, inline: Boolean, progress: () -> Fl
                 c.searchSelected,
                 Modifier.placed(progress, x = { t -> width - row(t) }, bottom = { 0.dp }, w = row, h = row),
             ) {
-                if (!c.searchSelected) haptics.tick()
                 c.onSearch()
             }
         }
@@ -329,7 +327,6 @@ private fun MinimizeChrome(c: ChromeContent, inline: Boolean, progress: () -> Fl
  */
 @Composable
 private fun CapsuleChrome(c: ChromeContent, inline: Boolean, progress: () -> Float, modifier: Modifier) {
-    val haptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
     // Each is only there while it can be seen, so nothing invisible takes a tap.
     val cardShown by remember { derivedStateOf { progress() < 0.85f } }
     val coverShown by remember { derivedStateOf { progress() > 0.6f } }
@@ -346,7 +343,6 @@ private fun CapsuleChrome(c: ChromeContent, inline: Boolean, progress: () -> Flo
         val mini = c.mini
         Box(Modifier.fillMaxWidth().chromeHeight(progress, openHeight, MINI_ROW)) {
             val onSearch = {
-                if (!c.searchSelected) haptics.tick()
                 c.onSearch()
             }
             if (mini != null) {
@@ -438,7 +434,6 @@ private fun CapsuleChrome(c: ChromeContent, inline: Boolean, progress: () -> Flo
  */
 @Composable
 private fun SinkChrome(c: ChromeContent, inline: Boolean, progress: () -> Float, modifier: Modifier) {
-    val haptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
     val blur = !AppSettings.ui.collectAsState().value.reduceBlur
     // Gone from the layout once it's out of sight, so it can't take a tap.
     val dockShown by remember { derivedStateOf { progress() < SINK_GONE } }
@@ -474,7 +469,6 @@ private fun SinkChrome(c: ChromeContent, inline: Boolean, progress: () -> Float,
                         DockPill(c, width - CHROME_TAB_HEIGHT - SEARCH_GAP, inline, { 0f }, anchor = MINI_ROW / 2, Modifier.weight(1f).fillMaxHeight())
                         Spacer(Modifier.width(SEARCH_GAP))
                         SearchOrb(c.searchSelected) {
-                            if (!c.searchSelected) haptics.tick()
                             c.onSearch()
                         }
                     }
@@ -515,7 +509,6 @@ private fun SinkChrome(c: ChromeContent, inline: Boolean, progress: () -> Float,
  */
 @Composable
 private fun DockPill(c: ChromeContent, full: Dp, folded: Boolean, fold: () -> Float, anchor: Dp, modifier: Modifier) {
-    val haptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
     val ink = dockInk()
     val pill = RoundedCornerShape(percent = 50)
     val slot = (full - DOCK_INSET * 2) / c.tabs.size
@@ -571,7 +564,6 @@ private fun DockPill(c: ChromeContent, full: Dp, folded: Boolean, fold: () -> Fl
                         collapse = fold,
                         roomy = c.tabs.size <= ROOMY_TABS,
                     ) {
-                        if (i != shown) haptics.tick()
                         c.onSelect(i)
                     }
                 }
