@@ -143,11 +143,6 @@ where a section says so.
 - Source: [radio-browser.info](https://www.radio-browser.info)
 - The community directory of radio stations.
 
-### Shazam
-
-- Source: [shazam.com](https://www.shazam.com)
-- The song recognition behind "name that song".
-
 ### Lyrics services
 
 - Sources: [lrc.red](https://lrc.red/),

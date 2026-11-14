@@ -140,14 +140,6 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
   measurements and their parametric correction runs ahead of your own EQ,
   so you start from a neutral sound.
 - **Sleep timer.** Stop after 15 to 90 minutes, or at the end of the song.
-- **What's this song?** From Home or the search bar, a page listens
-  through the microphone and names the song playing nearby. The phone
-  turns a few seconds of sound into an audio fingerprint (the method
-  [SongRec](https://github.com/marin-m/SongRec) worked out) and only the
-  fingerprint is sent to Shazam's lookup; the recording stays on the phone.
-  While it listens, a glowing button sends rings out and ripples with the
-  sound. What it finds can be played straight away and stays in a Found
-  lately list. The microphone is only asked for when you use it.
 - **SponsorBlock.** Music videos skip the parts viewers have marked as
   non-music (talking, skits), sponsor reads, self-promotion and like or
   subscribe reminders, using [SponsorBlock](https://sponsor.ajay.app)'s
