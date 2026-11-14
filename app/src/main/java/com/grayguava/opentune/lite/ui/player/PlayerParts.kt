@@ -74,7 +74,6 @@ import androidx.compose.ui.unit.Dp
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import androidx.compose.animation.animateColorAsState
-import com.grayguava.opentune.lite.ui.theme.rememberArtworkSeed
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.Path
@@ -748,10 +747,8 @@ fun MiniPlayer(
     val threshold = with(LocalDensity.current) { 72.dp.toPx() }
     val accent = MaterialTheme.colorScheme.primary
     val track = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.16f)
-    // The cover's own colour, faded into the glass, so each song tints the card.
-    val seed = rememberArtworkSeed(song.thumbnailUrl)
-    val colourFromCover = com.grayguava.opentune.lite.data.settings.AppSettings.ui.collectAsState().value.miniPlayerTint
-    val tint by animateColorAsState(((if (colourFromCover) seed else null) ?: MaterialTheme.colorScheme.surfaceContainerHigh).copy(alpha = 0.38f), tween(600), label = "miniTint")
+    // The mini player's glass is plain: it keeps the app's own colour.
+    val tint by animateColorAsState(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.38f), tween(600), label = "miniTint")
 
     val solid = MaterialTheme.colorScheme.surfaceContainerHigh
     val replicaFace = androidx.compose.ui.graphics.lerp(solid, tint.copy(alpha = 1f), tint.alpha)

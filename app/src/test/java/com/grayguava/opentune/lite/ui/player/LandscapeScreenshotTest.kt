@@ -20,7 +20,6 @@ import com.grayguava.opentune.lite.data.model.Song
 import com.grayguava.opentune.lite.data.settings.AppSettings
 import com.grayguava.opentune.lite.data.settings.InterfaceSettings
 import com.grayguava.opentune.lite.data.settings.SoundSettings
-import com.grayguava.opentune.lite.data.settings.ThemeSettings
 import com.grayguava.opentune.lite.ui.LyricsState
 import com.grayguava.opentune.lite.ui.theme.OpenTuneTheme
 import java.io.File
@@ -69,10 +68,10 @@ class LandscapeScreenshotTest {
         val state = PlayerUiState(
             song = song, isPlaying = true, isBuffering = false, hasNext = true, shuffle = false, repeatMode = Player.REPEAT_MODE_OFF,
             durationMs = 180_000, lyrics = lyrics, queue = listOf(song), currentIndex = 0, upNext = emptyList(),
-            sound = SoundSettings(), theme = ThemeSettings(), ui = InterfaceSettings(liquidGlass = false, reduceAnimation = true),
+            sound = SoundSettings(), ui = InterfaceSettings(liquidGlass = false, reduceAnimation = true),
         )
         compose.setContent {
-            OpenTuneTheme(ThemeSettings()) {
+            OpenTuneTheme() {
                 Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                     PlayerLayout(state, position = { 29_000 }, buffered = { 60_000 }, actions = PlayerActions({}, {}, {}, {}, {}, {}, {}, {}, {}), initialLyrics = initialLyrics)
                 }

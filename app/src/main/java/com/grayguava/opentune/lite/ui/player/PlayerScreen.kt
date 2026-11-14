@@ -126,7 +126,6 @@ import com.grayguava.opentune.lite.data.settings.AppSettings
 import com.grayguava.opentune.lite.data.settings.InterfaceSettings
 import com.grayguava.opentune.lite.data.settings.RemixPreset
 import com.grayguava.opentune.lite.data.settings.SoundSettings
-import com.grayguava.opentune.lite.data.settings.ThemeSettings
 import com.grayguava.opentune.lite.playback.AudioFormatInfo
 import com.grayguava.opentune.lite.playback.PlaybackRequests
 import com.grayguava.opentune.lite.ui.LyricsState
@@ -182,7 +181,6 @@ data class PlayerUiState(
     val currentIndex: Int,
     val upNext: List<Int>,
     val sound: SoundSettings,
-    val theme: ThemeSettings,
     val ui: InterfaceSettings = InterfaceSettings(),
     /** "Playing from" label: an album, a playlist, Search… */
     val source: String? = null,
@@ -222,7 +220,6 @@ fun PlayerScreen(
 ) {
     val song by vm.currentSong.collectAsState()
     val current = song ?: return
-    val theme by AppSettings.theme.collectAsState()
     val sound by AppSettings.sound.collectAsState()
     val isPlaying by vm.isPlaying.collectAsState()
     val isBuffering by vm.isBuffering.collectAsState()
@@ -260,7 +257,7 @@ fun PlayerScreen(
     PlayerLayout(
         PlayerUiState(
             shown, isPlaying, isBuffering, hasNext, shuffle, repeat, duration,
-            lyrics, queue, currentIndex, upNext, sound, theme, ui, source, audioFormat,
+            lyrics, queue, currentIndex, upNext, sound, ui, source, audioFormat,
             shuffleMode, smartShuffleAvailable, coverVideo, loadingMessage,
         ),
         position = rememberPlaybackPosition(vm),
@@ -300,7 +297,6 @@ fun PlayerLayout(
     docked: Boolean = false,
 ) {
     val current = state.song
-    val theme = state.theme
     val sound = state.sound
 
     var paneName by rememberSaveable { mutableStateOf(if (initialLyrics) Pane.LYRICS.name else Pane.COVER.name) }
@@ -570,7 +566,7 @@ fun PlayerLayout(
         }
     }
 
-    PlayerTheme(seed = rememberArtworkSeed(current.thumbnailUrl), settings = theme, neutral = apple) {
+    PlayerTheme(seed = rememberArtworkSeed(current.thumbnailUrl), neutral = apple) {
         Box(
             Modifier
                 .fillMaxSize()

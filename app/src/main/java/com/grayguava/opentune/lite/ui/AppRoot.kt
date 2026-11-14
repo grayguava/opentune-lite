@@ -182,28 +182,17 @@ fun AppRoot(vm: PlayerViewModel) {
         }
     }
 
-    // A newer release on GitHub, offered with an Update button. Checked each
-    // time the app comes to the front and periodically while it stays there (the
-    // check itself goes online at most every few hours), since a music app
-    // is rarely started afresh.
     val appContext = androidx.compose.ui.platform.LocalContext.current
     val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current
-    var update by remember { mutableStateOf<com.grayguava.opentune.lite.data.UpdateCheck.Release?>(null) }
     LaunchedEffect(lifecycle) {
         lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
             com.grayguava.opentune.lite.ui.components.Support.usedToday(appContext)
-            while (true) {
-                if (com.grayguava.opentune.lite.data.settings.AppSettings.ui.value.checkForUpdates && update == null) {
-                    update = com.grayguava.opentune.lite.data.UpdateCheck.checkIfDue(appContext)
-                }
-                kotlinx.coroutines.delay(5 * 60 * 1000L)
-            }
         }
     }
     // After an update, once: what's changed.
     var whatsNew by remember { mutableStateOf<List<Pair<String, List<com.grayguava.opentune.lite.ui.components.WhatsNew.Note>>>>(emptyList()) }
     LaunchedEffect(Unit) { whatsNew = com.grayguava.opentune.lite.ui.components.WhatsNew.due(appContext, com.grayguava.opentune.lite.BuildConfig.VERSION_NAME) }
-    if (whatsNew.isNotEmpty() && update == null) {
+    if (whatsNew.isNotEmpty()) {
         com.grayguava.opentune.lite.ui.components.WhatsNewSheet(whatsNew, com.grayguava.opentune.lite.BuildConfig.VERSION_NAME, onDismiss = { whatsNew = emptyList() })
     }
     // Once a month each, after some days of use, a GitHub star or Discord invitation,
@@ -218,21 +207,13 @@ fun AppRoot(vm: PlayerViewModel) {
     }
     val starCard: @Composable () -> Unit = {
         androidx.compose.animation.AnimatedVisibility(
-            visible = askStar && !playerOpen && update == null && whatsNew.isEmpty(),
+            visible = askStar && !playerOpen && whatsNew.isEmpty(),
             enter = androidx.compose.animation.slideInVertically(spring(dampingRatio = 0.8f, stiffness = 300f)) { it } + fadeIn(),
             exit = androidx.compose.animation.slideOutVertically(tween(220)) { it } + fadeOut(tween(180)),
         ) {
             invite?.let { com.grayguava.opentune.lite.ui.components.InviteCard(it, onDismiss = { askStar = false }) }
         }
     }
-    update?.let { r ->
-        com.grayguava.opentune.lite.ui.settings.UpdateDialog(
-            r,
-            onDismiss = { update = null },
-            onNotNow = { shown -> com.grayguava.opentune.lite.data.UpdateCheck.skip(appContext, shown.version); update = null },
-        )
-    }
-
     val entry by nav.currentBackStackEntryAsState()
     val route = entry?.destination?.route
     var tab by rememberSaveable { mutableStateOf(Tab.HOME) }
@@ -859,11 +840,9 @@ fun AppRoot(vm: PlayerViewModel) {
                 }
             }
             // Notes about what was just done float in over everything, the player included.
-            val notificationTheme by com.grayguava.opentune.lite.data.settings.AppSettings.theme.collectAsState()
             // Keep one host alive across player transitions, but use the visible screen's palette.
             com.grayguava.opentune.lite.ui.theme.PlayerTheme(
                 seed = com.grayguava.opentune.lite.ui.theme.rememberArtworkSeed(song?.thumbnailUrl),
-                settings = notificationTheme,
                 neutral = true,
                 active = sheetOpen && song != null,
             ) {

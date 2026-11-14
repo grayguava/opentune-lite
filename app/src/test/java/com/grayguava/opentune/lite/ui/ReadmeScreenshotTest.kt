@@ -35,7 +35,6 @@ import com.grayguava.opentune.lite.data.podcasts.PodcastShow
 import com.grayguava.opentune.lite.data.radio.Radio
 import com.grayguava.opentune.lite.data.settings.AppSettings
 import com.grayguava.opentune.lite.data.settings.SoundSettings
-import com.grayguava.opentune.lite.data.settings.ThemeSettings
 import com.grayguava.opentune.lite.ui.browse.SongActions
 import com.grayguava.opentune.lite.ui.components.SectionHeader
 import com.grayguava.opentune.lite.ui.explore.ExploreBoard
@@ -93,7 +92,7 @@ class ReadmeScreenshotTest {
 
     private fun shoot(name: String, content: @Composable () -> Unit) {
         compose.setContent {
-            OpenTuneTheme(ThemeSettings(dynamicColor = false)) {
+            OpenTuneTheme() {
                 Surface(color = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground) {
                     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(top = 28.dp)) { content() }
                 }
@@ -127,11 +126,10 @@ class ReadmeScreenshotTest {
         initialLyrics: Boolean,
         position: Long,
         playing: Boolean = true,
-        theme: ThemeSettings = ThemeSettings(),
     ) = PlayerUiState(
         song = song, isPlaying = playing, isBuffering = false, hasNext = true, shuffle = false, repeatMode = Player.REPEAT_MODE_OFF,
         durationMs = 200_000, lyrics = lyrics, queue = queue, currentIndex = 0, upNext = listOf(1, 2, 3),
-        sound = SoundSettings(), theme = theme, source = song.albumName,
+        sound = SoundSettings(), source = song.albumName,
         // Liquid Glass needs the GPU's shaders, which this software drawing can't run; the smoke glass stands in.
         // The player moves every frame while playing; a still needs that held, or the test never goes idle.
         ui = com.grayguava.opentune.lite.data.settings.InterfaceSettings(liquidGlass = false, reduceAnimation = true),

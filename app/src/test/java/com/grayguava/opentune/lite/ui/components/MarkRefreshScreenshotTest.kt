@@ -22,7 +22,6 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import com.grayguava.opentune.lite.data.settings.AppSettings
-import com.grayguava.opentune.lite.data.settings.ThemeSettings
 import com.grayguava.opentune.lite.ui.theme.OpenTuneTheme
 import java.io.File
 import org.junit.Before
@@ -45,7 +44,7 @@ class MarkRefreshScreenshotTest {
     @Test fun pull() {
         var refreshing by mutableStateOf(false)
         compose.setContent {
-            OpenTuneTheme(ThemeSettings()) {
+            OpenTuneTheme() {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     MarkRefreshBox(isRefreshing = refreshing, onRefresh = { refreshing = true }, modifier = Modifier.fillMaxSize()) {
                         LazyColumn(Modifier.fillMaxSize()) {

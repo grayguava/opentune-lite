@@ -46,9 +46,6 @@ object Core {
         Subsonic.init(app)
         com.grayguava.opentune.lite.data.radio.Radio.init(app)
         com.grayguava.opentune.lite.data.releases.NewReleases.init(app)
-        com.grayguava.opentune.lite.data.UpdateCheck.init(app)
-        com.grayguava.opentune.lite.data.UpdateLock.init(app)
-        com.grayguava.opentune.lite.data.UpdateCheck.schedule(app)
         // Spotify sign-in is gone; drop any tokens an earlier version kept.
         app.deleteSharedPreferences("spotify")
         // The waveform seek bar is gone; drop the waveforms an earlier version saved.

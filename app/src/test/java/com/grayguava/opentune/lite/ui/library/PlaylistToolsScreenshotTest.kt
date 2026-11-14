@@ -19,7 +19,6 @@ import com.grayguava.opentune.lite.data.history.History
 import com.grayguava.opentune.lite.data.library.LibraryStore
 import com.grayguava.opentune.lite.data.model.Song
 import com.grayguava.opentune.lite.data.settings.AppSettings
-import com.grayguava.opentune.lite.data.settings.ThemeSettings
 import com.grayguava.opentune.lite.ui.browse.SongActions
 import com.grayguava.opentune.lite.ui.theme.OpenTuneTheme
 import java.io.File
@@ -83,7 +82,7 @@ class PlaylistToolsScreenshotTest {
     }
 
     private fun shoot(name: String, content: @androidx.compose.runtime.Composable () -> Unit) {
-        compose.setContent { OpenTuneTheme(ThemeSettings()) { Surface(color = MaterialTheme.colorScheme.background) { content() } } }
+        compose.setContent { OpenTuneTheme() { Surface(color = MaterialTheme.colorScheme.background) { content() } } }
         compose.mainClock.advanceTimeBy(2_000)
         compose.waitForIdle()
         // The sheet is a dialog window of its own; draw the topmost window.

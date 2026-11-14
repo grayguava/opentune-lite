@@ -275,12 +275,10 @@ fun HomeScreen(
                         if (onRecognize != null) {
                             GlassIconButton(Icons.Rounded.GraphicEq, "Name a song playing nearby", onRecognize, size = 48.dp)
                         }
-                        com.grayguava.opentune.lite.ui.components.WithUpdateDot {
-                            GlassIconButton(Icons.Rounded.Person, "Account and settings", onOpenSettings, size = 48.dp) {
-                                val photo = account?.thumbnailUrl
-                                if (photo != null) Artwork(photo, Modifier.size(48.dp), CircleShape)
-                                else Icon(Icons.Rounded.Person, "Account and settings", Modifier.size(24.dp))
-                            }
+                        GlassIconButton(Icons.Rounded.Person, "Account and settings", onOpenSettings, size = 48.dp) {
+                            val photo = account?.thumbnailUrl
+                            if (photo != null) Artwork(photo, Modifier.size(48.dp), CircleShape)
+                            else Icon(Icons.Rounded.Person, "Account and settings", Modifier.size(24.dp))
                         }
                     }
                 }

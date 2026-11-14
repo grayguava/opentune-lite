@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.sp
 import com.materialkolor.PaletteStyle
 import com.materialkolor.rememberDynamicColorScheme
 import com.grayguava.opentune.lite.data.settings.SEED_COLOR
-import com.grayguava.opentune.lite.data.settings.ThemeSettings
 
 /**
  * The app theme. The scheme comes from, in order: the playing track's artwork
@@ -57,27 +56,18 @@ fun songAccents(): Pair<Color, Color> {
 
 @Composable
 fun OpenTuneTheme(
-    settings: ThemeSettings,
     artworkSeed: Color? = null,
     content: @Composable () -> Unit,
 ) {
-    val seed = artworkSeed?.takeIf { settings.colorFromArtwork }
-    val useWallpaper = seed == null && settings.dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-
-    // The app's own colours are monochrome; the playing cover keeps its own.
+    // The app's own colours are monochrome, on true black; the playing cover
+    // keeps its own, where the player and the artwork pages use it.
     val generated = rememberDynamicColorScheme(
-        seedColor = seed ?: Color(SEED_COLOR),
+        seedColor = Color(SEED_COLOR),
         isDark = true,
-        isAmoled = settings.pureBlack,
-        style = if (seed != null) PaletteStyle.TonalSpot else PaletteStyle.Monochrome,
+        isAmoled = true,
+        style = PaletteStyle.Monochrome,
     )
-    val base = if (useWallpaper) {
-        val context = LocalContext.current
-        dynamicDarkColorScheme(context)
-    } else {
-        generated
-    }
-    val scheme = if (settings.pureBlack) base.toPureBlack() else base
+    val scheme = generated.toPureBlack()
 
     MaterialTheme(
         colorScheme = scheme.animated(),
@@ -98,11 +88,11 @@ fun OpenTuneTheme(
  * a dark, immersive surface whatever the app theme is.
  */
 @Composable
-fun PlayerTheme(seed: Color?, settings: ThemeSettings, neutral: Boolean = false, active: Boolean = true, content: @Composable () -> Unit) {
+fun PlayerTheme(seed: Color?, neutral: Boolean = false, active: Boolean = true, content: @Composable () -> Unit) {
     val scheme = rememberDynamicColorScheme(
         seedColor = seed ?: Color(SEED_COLOR),
         isDark = true,
-        isAmoled = settings.pureBlack,
+        isAmoled = true,
         style = PaletteStyle.Vibrant,
     )
     // Keep artwork-derived background tones even when the layout uses white controls.

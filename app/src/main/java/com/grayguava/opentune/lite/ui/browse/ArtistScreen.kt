@@ -259,7 +259,7 @@ internal fun ArtistPageView(
 private fun ArtistTint(photoUrl: String?, content: @Composable () -> Unit) {
     val ui by AppSettings.ui.collectAsState()
     val base = MaterialTheme.colorScheme
-    val seed = rememberArtworkSeed(photoUrl?.takeIf { ui.artistPageTint })?.takeIf { ui.artistPageTint }
+    val seed = rememberArtworkSeed(photoUrl)
     val dark = base.background.luminance() < 0.5f
     // Always built, so the composition keeps its shape when the seed arrives.
     val accents = rememberDynamicColorScheme(seedColor = seed ?: base.primary, isDark = dark, isAmoled = false, style = PaletteStyle.TonalSpot)

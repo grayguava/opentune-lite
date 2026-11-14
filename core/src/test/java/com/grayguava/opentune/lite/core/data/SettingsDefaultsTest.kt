@@ -1,7 +1,6 @@
 package com.grayguava.opentune.lite.data
 
 import com.grayguava.opentune.lite.data.settings.LyricsSource
-import com.grayguava.opentune.lite.data.settings.ThemeSettings
 import com.grayguava.opentune.lite.data.settings.SettingsState
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -37,11 +36,10 @@ class SettingsDefaultsTest {
         assertEquals(com.grayguava.opentune.lite.data.settings.DockMotion.MINIMIZE, ui.dockMotion)
     }
 
-    @Test fun aPlayerBackgroundThatWasDroppedIsIgnored() {
-        // The player has one background now: an old choice of another one is ignored.
-        val settings = json.decodeFromString<SettingsState>("""{"theme":{"playerBackground":"MESH","pureBlack":false}}""")
-        assertFalse(settings.theme.pureBlack)
-        assertEquals(ThemeSettings().copy(pureBlack = false), settings.theme)
+    @Test fun aThemeThatWasDroppedIsIgnored() {
+        // The theme is fixed now: an old choice of colours is ignored.
+        val settings = json.decodeFromString<SettingsState>("""{"theme":{"pureBlack":false,"colorFromArtwork":true}}""")
+        assertEquals(SettingsState(), settings)
     }
 
     @Test fun aDroppedDockMotionReadsBackAsTheDefault() {

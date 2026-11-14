@@ -1,11 +1,5 @@
 <p align="center">
-  <img src="docs/banner.jpg" alt="OpenTune: a free, open-source music player for Android, built on YouTube Music" width="100%">
-</p>
-
-<p align="center">
   <a href="https://github.com/grayguava/opentune-lite/releases/latest"><b>Download the latest APK</b></a>
-  &nbsp;·&nbsp;
-  <a href="https://grayguava.github.io/opentune-lite/">Website</a>
   &nbsp;·&nbsp;
   <a href="https://discord.gg/6udrCVh5n">Discord</a>
   &nbsp;·&nbsp;
@@ -32,29 +26,6 @@ Built with Kotlin, Jetpack Compose and Media3. Android 8.0 and newer.
 Questions, ideas or bug reports: join the
 [Discord](https://discord.gg/6udrCVh5n).
 
-Build-owner setup and current Discord limits are
-documented in [service integrations](docs/service-integrations.md).
-
-## See it
-
-<p align="center">
-  <a href="docs/media/opentune-reel.mp4"><img src="docs/media/preview.gif" alt="OpenTune in 40 seconds" width="300" height="533"></a>
-  <br>
-  <sub><a href="docs/media/opentune-reel.mp4">Watch the 40-second video</a> (MP4, with sound)</sub>
-</p>
-
-<table>
-  <tr>
-    <td><img src="docs/screenshots/01-player.jpg" alt="Player, coloured from the cover"></td>
-    <td><img src="docs/screenshots/02-lyrics.jpg" alt="Synced lyrics"></td>
-    <td><img src="docs/screenshots/03-explore.jpg" alt="Explore as a mood board"></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/04-radio.jpg" alt="Live radio near you"></td>
-    <td><img src="docs/screenshots/06-podcasts.jpg" alt="Podcasts"></td>
-  </tr>
-</table>
-
 ## Install
 
 1. Open the [latest release](https://github.com/grayguava/opentune-lite/releases/latest)
@@ -62,8 +33,7 @@ documented in [service integrations](docs/service-integrations.md).
    from the last several years; `universal` runs on anything.
 2. Open the file and allow your browser or file manager to install apps
    when Android asks.
-3. That's it. OpenTune checks this repository for new releases once a day
-   and can update itself from Settings.
+3. That's it.
 
 Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
 
@@ -282,15 +252,6 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
   ringtone, notification sound or alarm. A downloaded song is copied to
   Ringtones/OpenTune first, since the system can't read app storage.
 - **Export and import** of settings, history, likes and playlists as JSON.
-- **Updates in the app.** OpenTune checks this repository's GitHub releases
-  every few hours: whenever the app comes to the front, hourly while it's
-  open, and twice a day in the background, with a notification when a new
-  version is out (or whenever you ask). When GitHub's API is over its
-  hourly limit, which happens often on mobile data where many phones share
-  one address, the latest release is read from the releases page instead.
-  It downloads the APK for your phone's processor, checks it against the release's SHA256SUMS and hands it to
-  Android's installer. Android only installs an update signed with the same
-  key as the installed app.
 
 ### Look and feel
 
@@ -426,14 +387,13 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
 - **Haptic feedback you can tune**, from off to strong. Taps use the phone's
   crisp haptic primitives where it has them, and follow the system's touch
   feedback switch.
-- **One dark look.** The app is dark throughout, with Material You, pure
-  black, color from artwork, and reduced motion and blur.
+- **One dark look.** The app is dark throughout, on true black, with reduced
+  motion and blur.
 
 YouTube's audio is lossy, so there's no lossless or Dolby Atmos stream
 option from YouTube. Lossless can come from your own music server, which
 serves the files as they are stored. The optional JioSaavn route remains
-lossy. Source availability varies. See the
-[source review](docs/audio-source-review.md) for current limitations.
+lossy. Source availability varies.
 
 OpenTune does not decrypt Deezer streams. Animated covers use the token
 Apple Music's web player ships in its own page.
@@ -468,9 +428,9 @@ builds signed APKs and publishes them as a GitHub release
 (`.github/workflows/release.yml`). Release signing uses the repository
 secrets `OPENTUNE_KEYSTORE_BASE64`, `OPENTUNE_KEYSTORE_PASSWORD`,
 `OPENTUNE_KEY_ALIAS` and `OPENTUNE_KEY_PASSWORD` when they're set, and the
-debug key otherwise. Set the secrets before the first release: the in-app
-updater can only install a release signed with the same key as the copy
-already on the phone, and a CI runner's debug key changes from run to run.
+debug key otherwise. Set the secrets before the first release: a release
+signed with a different key cannot replace the copy already on the phone,
+and a CI runner's debug key changes from run to run.
 
 ## Project layout
 
@@ -483,12 +443,7 @@ core/src/main/java/com/grayguava/opentune/lite/core/
                     Crossfade, DSP
 app/src/main/java/com/grayguava/opentune/lite/
   ui/               Compose screens: home, explore, search, library, player, settings
-docs/               README banner, screenshots and the 40-second video
 ```
-
-The README's screenshots are drawn from the app's own screens by
-`ReadmeScreenshotTest`, which runs when `OPENTUNE_SHOT_ART` points at a
-folder of cover images (they aren't kept in the repository).
 
 ## Disclaimer
 

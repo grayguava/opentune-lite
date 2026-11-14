@@ -15,9 +15,6 @@ keystore.properties
 /app/build
 .kotlin/
 
-# Website check output (scripts/check-website.py), uploaded by CI, not committed.
-website-reports/
-
 # Python wheels (desktop test deps belong in a venv, not the repo).
 *.whl
 

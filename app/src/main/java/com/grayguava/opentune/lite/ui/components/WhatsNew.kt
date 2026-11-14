@@ -105,7 +105,6 @@ object WhatsNew {
             Note(Icons.Rounded.Groups, "Nobody wrongly gone", "A guest whose check-ins got lost no longer shows as having left on the host's phone, and comes back on their own without knocking again."),
             Note(Icons.Rounded.Waves, "A beam for lossless", "When a song plays lossless, a glowing beam runs round the quality pill. Words in synced lyrics no longer jump twice."),
             Note(Icons.Rounded.TouchApp, "Opening and closing the player", "Tap the mini player and its cover grows into the player. Going back from Home while music plays shrinks the app up towards the notification."),
-            Note(Icons.Rounded.Download, "Updates that don't fall behind", "The update offered is always the newest, even when several came out since yours. One you put off leaves a red dot on the account button until it's installed, and Settings › Storage can delete a downloaded update."),
             Note(Icons.Rounded.AutoAwesome, "Clarity, as loud as off", "Clarity no longer makes music quieter. Settings still being worked on carry a Beta tag."),
             Note(Icons.Rounded.Favorite, "Support OpenTune", "From Settings › About you can star OpenTune on GitHub, or send a small thank-you."),
         ),

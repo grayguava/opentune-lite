@@ -56,12 +56,12 @@ class PaneTransitionTest {
             song = song, isPlaying = true, isBuffering = false, hasNext = true,
             shuffle = false, repeatMode = Player.REPEAT_MODE_OFF, durationMs = 180_000,
             lyrics = LyricsState.NotFound, queue = listOf(song), currentIndex = 0, upNext = emptyList(),
-            sound = SoundSettings(), theme = ThemeSettings(), source = null,
+            sound = SoundSettings(), source = null,
             ui = InterfaceSettings(liquidGlass = false, reduceAnimation = false),
         )
         compose.mainClock.autoAdvance = false
         compose.setContent {
-            OpenTuneTheme(ThemeSettings()) {
+            OpenTuneTheme() {
                 PlayerLayout(state, { 30_000L }, { 60_000L }, PlayerActions({}, {}, {}, {}, {}, {}, {}, {}, {}))
             }
         }

@@ -14,7 +14,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.test.core.app.ApplicationProvider
 import com.grayguava.opentune.lite.data.settings.AppSettings
-import com.grayguava.opentune.lite.data.settings.ThemeSettings
 import com.grayguava.opentune.lite.ui.theme.OpenTuneTheme
 import java.io.File
 import org.junit.Rule
@@ -34,7 +33,7 @@ class SignInPageScreenshotTest {
     private fun show() {
         AppSettings.init(ApplicationProvider.getApplicationContext<android.app.Application>())
         compose.setContent {
-            OpenTuneTheme(ThemeSettings(dynamicColor = false)) {
+            OpenTuneTheme() {
                 SignInPage(
                     service = "YouTube Music",
                     brand = YouTubeMusicRed,

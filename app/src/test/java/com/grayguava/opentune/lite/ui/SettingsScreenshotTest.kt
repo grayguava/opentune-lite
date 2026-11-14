@@ -19,7 +19,6 @@ import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.test.core.app.ApplicationProvider
 import com.grayguava.opentune.lite.data.library.LibraryStore
 import com.grayguava.opentune.lite.data.settings.AppSettings
-import com.grayguava.opentune.lite.data.settings.ThemeSettings
 import com.grayguava.opentune.lite.ui.settings.SettingsScreen
 import com.grayguava.opentune.lite.ui.theme.OpenTuneTheme
 import java.io.File
@@ -44,7 +43,7 @@ class SettingsScreenshotTest {
         AppSettings.init(context)
         LibraryStore.init(context)
         compose.setContent {
-            OpenTuneTheme(ThemeSettings(dynamicColor = false)) {
+            OpenTuneTheme() {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     SettingsScreen(PaddingValues(), onBack = {}, onOpenEqualizer = {}, onOpenReplay = {})
                 }
@@ -58,9 +57,8 @@ class SettingsScreenshotTest {
         compose.onNodeWithText("Appearance").performClick()
         compose.mainClock.advanceTimeBy(600)
         compose.waitForIdle()
-        compose.onNodeWithText("DARK").assertIsDisplayed()
-        compose.onNode(hasScrollAction()).performScrollToNode(hasText("COLOUR", ignoreCase = true))
-        compose.onNodeWithText("COLOUR", ignoreCase = true).assertExists()
+        compose.onNodeWithText("GLASS").assertIsDisplayed()
+        compose.onNodeWithText("Liquid").assertExists()
         save("settings-look")
     }
 

@@ -145,8 +145,6 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import coil3.SingletonImageLoader
 import com.grayguava.opentune.lite.BuildConfig
 import com.grayguava.opentune.lite.data.LogExport
-import com.grayguava.opentune.lite.data.UpdateCheck
-import com.grayguava.opentune.lite.data.Updater
 import com.grayguava.opentune.lite.data.account.AccountStore
 import com.grayguava.opentune.lite.data.download.DownloadState
 import com.grayguava.opentune.lite.data.download.Downloads
@@ -213,7 +211,6 @@ fun SettingsScreen(
     var openKey by rememberSaveable { mutableStateOf<String?>(null) }
     val signedIn by AccountStore.signedIn.collectAsState()
     val account by AccountStore.account.collectAsState()
-    val updatePending = com.grayguava.opentune.lite.ui.components.updatePending()
     val sections = settingsSections(onOpenEqualizer, onOpenReplay, onOpenWrapped, onSignIn, onOpenDownloads)
     val placed = remember(sections) { place(sections) }
     val open = SETTINGS_CATEGORIES.firstOrNull { it.key == openKey }
@@ -319,7 +316,6 @@ fun SettingsScreen(
                                         { openKey = c.key },
                                         summary = summary,
                                         icon = if (avatar == null) c.icon else null,
-                                        dot = c.key == "about" && updatePending,
                                         leading = avatar?.let { url -> { Artwork(url, Modifier.size(28.dp), CircleShape) } },
                                     )
                                     }
@@ -400,11 +396,8 @@ private fun settingsSections(
     var lyricsSourcesDialog by remember { mutableStateOf(false) }
     var serverDialog by remember { mutableStateOf(false) }
     var sponsorBlockDialog by remember { mutableStateOf(false) }
-    var update by remember { mutableStateOf<UpdateCheck.Release?>(null) }
     var showWhatsNew by remember { mutableStateOf(false) }
     var supportDialog by remember { mutableStateOf(false) }
-    val pendingUpdate by UpdateCheck.pending.collectAsState()
-    var updateBytes by remember { mutableStateOf(0L) }
     var recommenderDialog by remember { mutableStateOf(false) }
     var historyTargetDialog by remember { mutableStateOf(false) }
     var followedDialog by remember { mutableStateOf(false) }
@@ -417,8 +410,6 @@ private fun settingsSections(
     var confirmSignOut by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    LaunchedEffect(update) { updateBytes = withContext(Dispatchers.IO) { Updater.cachedBytes(context) } }
-    val theme by AppSettings.theme.collectAsState()
     val pb by AppSettings.playback.collectAsState()
     val ui by AppSettings.ui.collectAsState()
     val lib by AppSettings.library.collectAsState()
@@ -475,7 +466,6 @@ private fun settingsSections(
     if (lyricsSourcesDialog) LyricsSourcesDialog(onDismiss = { lyricsSourcesDialog = false })
     if (serverDialog) ServerDialog(onDismiss = { serverDialog = false })
     if (sponsorBlockDialog) SponsorBlockDialog(onDismiss = { sponsorBlockDialog = false })
-    update?.let { UpdateDialog(it, onDismiss = { update = null }) }
     if (showWhatsNew) com.grayguava.opentune.lite.ui.components.WhatsNewSheet(
         com.grayguava.opentune.lite.ui.components.WhatsNew.since(null, BuildConfig.VERSION_NAME),
         BuildConfig.VERSION_NAME, onDismiss = { showWhatsNew = false },
@@ -770,29 +760,6 @@ private fun settingsSections(
         Section(
             "Appearance",
             listOf(
-                Entry("Color from artwork", "tint album cover") {
-                    ToggleRow("Color from artwork", theme.colorFromArtwork, { v -> AppSettings.updateTheme { it.copy(colorFromArtwork = v) } }, summary = "Tint the app with the playing song's cover", icon = Icons.Rounded.AutoAwesome)
-                },
-                Entry("Mini player takes the cover's colour", "mini player pill tint colour artwork plain") {
-                    ToggleRow("Mini player takes the cover's colour", ui.miniPlayerTint, { v -> AppSettings.updateUi { it.copy(miniPlayerTint = v) } }, summary = "Off keeps the small player's glass plain, whatever is playing", icon = Icons.Rounded.AutoAwesome)
-                },
-                Entry("Artist pages take the photo's colour", "artist page tint colour photo background") {
-                    ToggleRow("Artist pages take the photo's colour", ui.artistPageTint, { v -> AppSettings.updateUi { it.copy(artistPageTint = v) } }, summary = "Off keeps artist pages in the app's own colours", icon = Icons.Rounded.AutoAwesome)
-                },
-                Entry("Material You", "wallpaper dynamic color") {
-                    val supported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-                    ToggleRow(
-                        "Material You",
-                        theme.dynamicColor,
-                        { v -> AppSettings.updateTheme { it.copy(dynamicColor = v) } },
-                        summary = if (supported) "Use your wallpaper's colors when nothing is playing" else "Needs Android 12",
-                        icon = Icons.Rounded.Wallpaper,
-                        enabled = supported,
-                    )
-                },
-                Entry("Pure black", "oled amoled") {
-                    ToggleRow("Pure black", theme.pureBlack, { v -> AppSettings.updateTheme { it.copy(pureBlack = v) } }, summary = "Black backgrounds with neutral gray cards in dark theme", icon = Icons.Rounded.Wallpaper)
-                },
                 Entry("Player beside the page", "tablet foldable large screen side pane docked player split landscape") {
                     ToggleRow(
                         "Player beside the page",
@@ -1073,15 +1040,6 @@ private fun settingsSections(
                         }
                     }, summary = "Using ${Formatter.formatShortFileSize(context, cacheBytes)}", icon = Icons.Rounded.DeleteSweep)
                 },
-                Entry("Delete downloaded updates", "apk update installer free space") {
-                    NavRow("Delete downloaded updates", {
-                        scope.launch {
-                            withContext(Dispatchers.IO) { Updater.deleteCached(context) }
-                            updateBytes = 0
-                            message = "Downloaded updates deleted."
-                        }
-                    }, summary = if (updateBytes > 0) "Using ${Formatter.formatShortFileSize(context, updateBytes)}" else "None kept", icon = Icons.Rounded.DeleteSweep)
-                },
                 Entry("Clear image cache", "artwork") {
                     NavRow("Clear image cache", {
                         val loader = SingletonImageLoader.get(context)
@@ -1164,23 +1122,6 @@ private fun settingsSections(
                 },
                 Entry("Show the welcome again", "welcome onboarding first run start intro pick artists setup") {
                     NavRow("Show the welcome again", { com.grayguava.opentune.lite.data.Welcome.showAgain() }, summary = "Pick artists, choose a look and sign in, as on the first start", icon = Icons.Rounded.WavingHand)
-                },
-                Entry("Check for updates", "new version release download github") {
-                    NavRow("Check for updates", {
-                        // A release already found opens at once; Update still looks for a newer one first.
-                        pendingUpdate?.let { update = it; return@NavRow }
-                        scope.launch {
-                            when (val r = UpdateCheck.checkNow(context)) {
-                                is UpdateCheck.Result.Newer -> update = r.release
-                                UpdateCheck.Result.UpToDate -> message = "You have the latest version (${BuildConfig.VERSION_NAME})."
-                                UpdateCheck.Result.NoReleases -> message = "No releases are published yet. Builds are on the GitHub branch for now."
-                                is UpdateCheck.Result.Failed -> message = "Couldn't check: ${r.reason}"
-                            }
-                        }
-                    }, summary = pendingUpdate?.let { "OpenTune ${it.version} is ready to install. You have ${BuildConfig.VERSION_NAME}." } ?: "Current version: ${BuildConfig.VERSION_NAME}", icon = Icons.Rounded.SystemUpdate, dot = pendingUpdate != null)
-                },
-                Entry("Check for updates automatically", "update new version release auto") {
-                    ToggleRow("Check for updates automatically", ui.checkForUpdates, { v -> AppSettings.updateUi { it.copy(checkForUpdates = v) }; com.grayguava.opentune.lite.data.UpdateCheck.schedule(context) }, summary = "Looks for a new release on GitHub every few hours, in the background too, and offers to install it", icon = Icons.Rounded.SystemUpdate)
                 },
                 Entry("OpenTune community", "github discord community addons developer") { CommunityBanner() },
                 Entry("Support OpenTune", "donate upi pay money tip support developer") {

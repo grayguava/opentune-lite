@@ -52,18 +52,12 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) receive(intent)
         setContent {
             val vm: PlayerViewModel = viewModel()
-            val theme by AppSettings.theme.collectAsState()
             val ui by AppSettings.ui.collectAsState()
             LaunchedEffect(ui.highRefreshRate, ui.refreshRateHz) { preferRefreshRate(ui.highRefreshRate, ui.refreshRateHz) }
             val song by vm.currentSong.collectAsState()
-            OpenTuneTheme(theme, artworkSeed = rememberArtworkSeed(song?.thumbnailUrl)) {
+            OpenTuneTheme(artworkSeed = rememberArtworkSeed(song?.thumbnailUrl)) {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     androidx.compose.foundation.layout.Box(Modifier) {
-                    // More than two releases behind, the app is only its update screen until it's updated.
-                    val required by com.grayguava.opentune.lite.data.UpdateLock.required.collectAsState()
-                    val behind by com.grayguava.opentune.lite.data.UpdateLock.behind.collectAsState()
-                    LaunchedEffect(required) { if (required != null && vm.isPlaying.value) vm.togglePlayPause() }
-                    if (required != null) com.grayguava.opentune.lite.ui.settings.UpdateRequiredScreen(required!!, behind) else {
                     // A fresh install's welcome comes first; Home, built after it, starts from the picks.
                     androidx.compose.animation.AnimatedContent(
                         ui.welcome == WelcomeState.DUE,
@@ -81,7 +75,6 @@ class MainActivity : ComponentActivity() {
                     ) { welcome ->
                         if (welcome) WelcomeScreen(onDone = {}) else AppRoot(vm)
                     }
-                    }
                 }
             }
         }
@@ -92,8 +85,6 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         // The process may have started in the background, offline (after an update, say).
         AccountStore.ensureProfile()
-        // Whether this version is still allowed to run (UpdateLock), at most once an hour.
-        lifecycleScope.launch { com.grayguava.opentune.lite.data.UpdateLock.refresh(this@MainActivity) }
         // Playlist changes that couldn't reach YouTube Music last time try again.
         if (com.grayguava.opentune.lite.data.library.PlaylistSync.pending.value.isNotEmpty()) com.grayguava.opentune.lite.data.library.PlaylistSync.flush()
     }

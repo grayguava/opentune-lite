@@ -146,10 +146,9 @@ fun ToggleRow(
 }
 
 @Composable
-fun NavRow(title: String, onClick: () -> Unit, summary: String? = null, icon: ImageVector? = null, value: String? = null, dot: Boolean = false, leading: (@Composable () -> Unit)? = null) {
+fun NavRow(title: String, onClick: () -> Unit, summary: String? = null, icon: ImageVector? = null, value: String? = null, leading: (@Composable () -> Unit)? = null) {
     SettingRow(title, summary = summary, icon = icon, onClick = onClick, leading = leading, trailing = {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (dot) UpdateDot(Modifier.padding(end = 6.dp))
             if (value != null) {
                 Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Normal, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }

@@ -25,16 +25,6 @@ enum class AudioQuality(val label: String, val summary: String, val maxKbps: Int
     MAX("Best", "The best YouTube gives you, AAC 256 with Premium", 256),
 }
 
-@Serializable
-data class ThemeSettings(
-    /** Material You wallpaper colors, on Android 12 and later. */
-    val dynamicColor: Boolean = false,
-    /** True black surfaces in dark mode, for OLED screens. */
-    val pureBlack: Boolean = true,
-    /** Re-seed the whole app from the playing track's artwork. */
-    val colorFromArtwork: Boolean = true,
-)
-
 /** Reverb presets map onto android.media.audiofx.PresetReverb's. */
 @Serializable
 enum class ReverbLevel(val label: String, val preset: Short) {
@@ -285,10 +275,6 @@ data class InterfaceSettings(
     val blurLyrics: Boolean = true,
     /** On the lyrics view, the controls slide away after a few seconds untouched, leaving the lyrics. */
     val lyricsFocus: Boolean = true,
-    /** The mini player's glass takes the cover's colour; off keeps it plain. */
-    val miniPlayerTint: Boolean = true,
-    /** An artist's page is washed with a deep shade of their photo's colour; off keeps the theme's own. */
-    val artistPageTint: Boolean = true,
     val statsForNerds: Boolean = false,
     val recentsAsGrid: Boolean = false,
     /** Speed dial at the top of Home: the most-played songs, albums and artists. */
@@ -328,8 +314,6 @@ data class InterfaceSettings(
     val homeMovingCovers: Boolean = true,
     /** How strong taps and buzzes are, 0 (off) to 1. */
     val hapticStrength: Float = 0.6f,
-    /** Look for a new release once a day when the app opens. */
-    val checkForUpdates: Boolean = true,
     /** Pages blur and fade out as they scroll under the status bar. */
     val frostedTopEdge: Boolean = true,
     /** High performance mode: ask for a fast refresh rate while the app is open. */
@@ -509,7 +493,6 @@ val DEFAULT_LYRICS_SOURCES = LyricsSource.entries.map(::LyricsSourceEntry)
 /** Everything persisted, as one document: what's stored, exported and imported. */
 @Serializable
 data class SettingsState(
-    val theme: ThemeSettings = ThemeSettings(),
     val sound: SoundSettings = SoundSettings(),
     val equalizer: EqualizerSettings = EqualizerSettings(),
     val playback: PlaybackSettings = PlaybackSettings(),
@@ -538,8 +521,6 @@ object AppSettings {
     private val _state = MutableStateFlow(SettingsState())
     val state: StateFlow<SettingsState> = _state.asStateFlow()
 
-    private val _theme = MutableStateFlow(ThemeSettings())
-    val theme: StateFlow<ThemeSettings> = _theme.asStateFlow()
     private val _sound = MutableStateFlow(SoundSettings())
     val sound: StateFlow<SoundSettings> = _sound.asStateFlow()
     private val _equalizer = MutableStateFlow(EqualizerSettings())
@@ -586,7 +567,6 @@ object AppSettings {
         val s = if (stored.equalizer.bands.size == EQ_BANDS_HZ.size) stored
         else stored.copy(equalizer = stored.equalizer.copy(bands = resampleBands(stored.equalizer.bands)))
         _state.value = s
-        _theme.value = s.theme
         _sound.value = s.sound
         _equalizer.value = s.equalizer
         _playback.value = s.playback
@@ -602,7 +582,6 @@ object AppSettings {
         prefs?.edit { putString(K_STATE, json.encodeToString(SettingsState.serializer(), s)) }
     }
 
-    fun updateTheme(t: (ThemeSettings) -> ThemeSettings) = update { it.copy(theme = t(it.theme)) }
     fun updateSound(t: (SoundSettings) -> SoundSettings) = update { it.copy(sound = t(it.sound)) }
     fun updateEqualizer(t: (EqualizerSettings) -> EqualizerSettings) = update { it.copy(equalizer = t(it.equalizer)) }
     fun updatePlayback(t: (PlaybackSettings) -> PlaybackSettings) = update { it.copy(playback = t(it.playback)) }
@@ -643,11 +622,6 @@ object AppSettings {
             values.firstOrNull { it.name == name } ?: default
         if (!p.contains("theme_mode")) return SettingsState()
         return SettingsState(
-            theme = ThemeSettings(
-                dynamicColor = p.getBoolean("dynamic_color", false),
-                pureBlack = p.getBoolean("pure_black", true),
-                colorFromArtwork = p.getBoolean("color_from_artwork", true),
-            ),
             sound = SoundSettings(
                 speed = p.getFloat("sound_speed", 1f),
                 pitch = p.getFloat("sound_pitch", 1f),
