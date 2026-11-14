@@ -188,31 +188,7 @@ fun AppRoot(vm: PlayerViewModel) {
             com.grayguava.opentune.lite.ui.components.Support.usedToday(appContext)
         }
     }
-    // After an update, once: what's changed.
-    var whatsNew by remember { mutableStateOf<List<Pair<String, List<com.grayguava.opentune.lite.ui.components.WhatsNew.Note>>>>(emptyList()) }
-    LaunchedEffect(Unit) { whatsNew = com.grayguava.opentune.lite.ui.components.WhatsNew.due(appContext, com.grayguava.opentune.lite.BuildConfig.VERSION_NAME) }
-    if (whatsNew.isNotEmpty()) {
-        com.grayguava.opentune.lite.ui.components.WhatsNewSheet(whatsNew, com.grayguava.opentune.lite.BuildConfig.VERSION_NAME, onDismiss = { whatsNew = emptyList() })
-    }
-    // Once a month each, after some days of use, a GitHub star or Discord invitation,
-    // sliding up above the dock; never over an update or What's new, and not
-    // straight after opening.
-    var invite by remember { mutableStateOf<com.grayguava.opentune.lite.ui.components.Support.Invite?>(null) }
-    var askStar by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(45_000)
-        invite = com.grayguava.opentune.lite.ui.components.Support.due(appContext)
-        askStar = invite != null
-    }
-    val starCard: @Composable () -> Unit = {
-        androidx.compose.animation.AnimatedVisibility(
-            visible = askStar && !playerOpen && whatsNew.isEmpty(),
-            enter = androidx.compose.animation.slideInVertically(spring(dampingRatio = 0.8f, stiffness = 300f)) { it } + fadeIn(),
-            exit = androidx.compose.animation.slideOutVertically(tween(220)) { it } + fadeOut(tween(180)),
-        ) {
-            invite?.let { com.grayguava.opentune.lite.ui.components.InviteCard(it, onDismiss = { askStar = false }) }
-        }
-    }
+
     val entry by nav.currentBackStackEntryAsState()
     val route = entry?.destination?.route
     var tab by rememberSaveable { mutableStateOf(Tab.HOME) }
@@ -724,7 +700,6 @@ fun AppRoot(vm: PlayerViewModel) {
             }
             if (layout.nav == NavChrome.DOCK) {
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().navigationBarsPadding().padding(bottom = 12.dp)) {
-                starCard()
                 BottomChrome(
                     inline = chromeScroll.inline,
                     tabs = chromeTabs,
@@ -756,7 +731,6 @@ fun AppRoot(vm: PlayerViewModel) {
                     Modifier.align(Alignment.BottomCenter).then(pageArea).fillMaxWidth()
                         .navigationBarsPadding().padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
                 ) {
-                    starCard()
                     if (layout.nowPlaying == NowPlaying.BAR) {
                         MiniPlayerBar(vm, onExpand = { openPlayer(false) }, modifier = Modifier.fillMaxWidth().height(CHROME_MINI_HEIGHT))
                     }

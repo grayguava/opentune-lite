@@ -362,8 +362,6 @@ private fun settingsSections(
     var lyricsSourcesDialog by remember { mutableStateOf(false) }
     var serverDialog by remember { mutableStateOf(false) }
     var sponsorBlockDialog by remember { mutableStateOf(false) }
-    var showWhatsNew by remember { mutableStateOf(false) }
-    var supportDialog by remember { mutableStateOf(false) }
     var recommenderDialog by remember { mutableStateOf(false) }
     var historyTargetDialog by remember { mutableStateOf(false) }
     var hiddenDialog by remember { mutableStateOf(false) }
@@ -397,11 +395,7 @@ private fun settingsSections(
     if (lyricsSourcesDialog) LyricsSourcesDialog(onDismiss = { lyricsSourcesDialog = false })
     if (serverDialog) ServerDialog(onDismiss = { serverDialog = false })
     if (sponsorBlockDialog) SponsorBlockDialog(onDismiss = { sponsorBlockDialog = false })
-    if (showWhatsNew) com.grayguava.opentune.lite.ui.components.WhatsNewSheet(
-        com.grayguava.opentune.lite.ui.components.WhatsNew.since(null, BuildConfig.VERSION_NAME),
-        BuildConfig.VERSION_NAME, onDismiss = { showWhatsNew = false },
-    )
-    if (supportDialog) com.grayguava.opentune.lite.ui.components.SupportDialog(onDismiss = { supportDialog = false })
+
     if (hiddenDialog) HiddenDialog(onDismiss = { hiddenDialog = false })
     if (historyTargetDialog) {
         ChoiceSheet(
@@ -883,15 +877,8 @@ private fun settingsSections(
         Section(
             "Advanced",
             listOf(
-                Entry("What's new", "release notes changelog version highlights") {
-                    NavRow("What's new", { showWhatsNew = true }, summary = "Highlights and improvements in ${BuildConfig.VERSION_NAME}", icon = Icons.Rounded.SystemUpdate)
-                },
                 Entry("Show the welcome again", "welcome onboarding first run start intro pick artists setup") {
                     NavRow("Show the welcome again", { com.grayguava.opentune.lite.data.Welcome.showAgain() }, summary = "Pick artists, choose a look and sign in, as on the first start", icon = Icons.Rounded.WavingHand)
-                },
-                Entry("OpenTune community", "github discord community addons developer") { CommunityBanner() },
-                Entry("Support OpenTune", "donate upi pay money tip support developer") {
-                    NavRow("Support OpenTune", { supportDialog = true }, summary = "A small thank-you helps keep OpenTune going", icon = Icons.Rounded.Favorite)
                 },
                 Entry("Star on GitHub", "star github rate like") {
                     NavRow("Star on GitHub", {
