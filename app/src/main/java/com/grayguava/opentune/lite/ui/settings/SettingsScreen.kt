@@ -286,7 +286,7 @@ fun SettingsScreen(
                     SETTINGS_HOME.forEach { (label, keys) ->
                         val cats = keys.mapNotNull { k -> SETTINGS_CATEGORIES.firstOrNull { it.key == k } }
                         item(key = "homecard:$label") {
-                            GroupCard {
+                            GroupCard(Modifier.padding(bottom = 12.dp)) {
                                 cats.forEachIndexed { i, c ->
                                     if (i > 0) RowDivider()
                                     // The account row wears the signed-in Google photo in place of the icon.
