@@ -257,7 +257,6 @@ class PlaybackService : MediaLibraryService() {
                 .apply { volume = 0f; playWhenReady = false }
         }
         player.addListener(playerListener)
-        player.addAnalyticsListener(PipelineTelemetry)
 
         val effects = SoundEffects(player)
         soundEffects = effects

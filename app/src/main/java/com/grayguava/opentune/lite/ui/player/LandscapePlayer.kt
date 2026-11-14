@@ -95,7 +95,6 @@ internal fun LandscapePlayer(
     device: String,
     onLike: () -> Unit,
     onMore: () -> Unit,
-    onSignal: () -> Unit,
     onLyrics: () -> Unit,
     onQueue: () -> Unit,
     /** Lyrics or the queue, shown in the cover's place; null shows the cover. */
@@ -167,7 +166,7 @@ internal fun LandscapePlayer(
                     RoundIcon(Icons.Rounded.KeyboardArrowDown, "Close player", actions.collapse)
                 }
                 TimeBar(position, state.durationMs, actions.seekTo)
-                if (state.ui.sourcePill) SourceQualityBadge(song.videoId, state.audioFormat, onClick = onSignal, modifier = Modifier.align(Alignment.CenterHorizontally))
+                if (state.ui.sourcePill) SourceQualityBadge(song.videoId, state.audioFormat, modifier = Modifier.align(Alignment.CenterHorizontally))
                 // The line being sung and the next, together above the controls, in the lyrics' own type.
                 val lines = if (showLines) rememberLyricLines(state.lyrics, lyricsPosition) else null
                 if (lines != null && previewFits) LyricsPeek(lines, next = roomy, animate = animate, onClick = onLyrics)
@@ -188,10 +187,7 @@ internal fun LandscapePlayer(
                         { showOutput = true },
                         tint = scheme.onSurface,
                     )
-                    if (showOutput) AudioOutputSheet(
-                        onDismiss = { showOutput = false },
-                        onPipeline = { showOutput = false; onSignal() },
-                    )
+                    if (showOutput) AudioOutputSheet(onDismiss = { showOutput = false })
                 }
                 if (roomy) {
                     Row(verticalAlignment = Alignment.CenterVertically) {

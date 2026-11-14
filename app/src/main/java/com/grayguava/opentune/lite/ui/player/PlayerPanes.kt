@@ -642,7 +642,7 @@ private fun outputName(context: Context, am: AudioManager?): String {
         ?.takeIf { it.isNotBlank() } ?: "This phone"
 }
 
-/** Which kind of output the sound is going to, for the player's output button and the pipeline page. */
+/** Which kind of output the sound is going to, for the player's output button. */
 enum class OutputRoute { PHONE, HEADPHONES, BLUETOOTH, USB }
 
 /** The icon for where the sound is going: earbuds for Bluetooth, headphones for a wire or USB. */

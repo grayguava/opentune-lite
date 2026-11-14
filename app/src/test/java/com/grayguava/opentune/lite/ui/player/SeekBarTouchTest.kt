@@ -14,8 +14,6 @@ import androidx.compose.ui.test.click
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.dp
 import com.grayguava.opentune.lite.data.settings.AppSettings
-import com.grayguava.opentune.lite.data.settings.SeekbarThickness
-import com.grayguava.opentune.lite.data.settings.SeekbarTime
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -28,7 +26,7 @@ import org.robolectric.annotation.Config
 class SeekBarTouchTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
-    @Test fun thickTrackTapsAndDragsNeverOpenQualityWithTimesShownOrHidden() {
+    @Test fun theTrackTapsAndDragsNeverOpenQuality() {
         AppSettings.init(compose.activity)
         var sought = -1L
         var qualityClicks = 0
@@ -39,11 +37,10 @@ class SeekBarTouchTest {
                 })
             }
         }
-        for (time in listOf(SeekbarTime.LEFT, SeekbarTime.HIDDEN)) {
+        run {
             compose.runOnIdle {
                 sought = -1L
                 qualityClicks = 0
-                AppSettings.updateUi { it.copy(seekbarThickness = SeekbarThickness.THICK, seekbarTime = time) }
             }
             val bar = compose.onNodeWithContentDescription("Playback position. Drag away from the bar for fine scrubbing.")
             bar.assertHeightIsAtLeast(48.dp)

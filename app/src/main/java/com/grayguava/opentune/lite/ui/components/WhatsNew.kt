@@ -146,7 +146,6 @@ object WhatsNew {
             Note(Icons.Rounded.FormatQuote, "Lyric cards", "Tap the quote button in the lyrics, pick up to five lines and share them as a picture."),
             Note(com.grayguava.opentune.lite.ui.player.PlayerIcons.Headphones, "8D audio", "In Remix: the music circles your head, slow, medium or fast. Best with headphones."),
             Note(Icons.Rounded.Bedtime, "A gentler sleep timer", "Over its last minutes the music fades out and the player dims."),
-            Note(Icons.Rounded.TouchApp, "Double-tap the cover", "Either side seeks 10 seconds. A glow under the cover follows the bass."),
             Note(Icons.Rounded.Lyrics, "Lyrics while seeking", "Drag the seek bar to see the line at that spot. Settings › Player."),
             Note(Icons.Rounded.Image, "Playlist covers", "Your playlists get a collage of their songs, or colours from their name."),
             Note(Icons.Rounded.BlurOn, "Real glass", "Page bars, floating buttons and popups blur what's behind them."),

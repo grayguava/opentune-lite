@@ -47,7 +47,7 @@ internal fun TrackDetailsDialog(song: Song, durationMs: Long, onDismiss: () -> U
         appleMessage = "Matching Apple catalog entry…"
         try {
             apple = AppleTrackMetadataRepository.lookup(song, durationMs)
-            appleMessage = if (apple == null) "No unambiguous Apple catalog match." else "Catalog metadata from Apple. Playback quality is shown in Signal path."
+            appleMessage = if (apple == null) "No unambiguous Apple catalog match." else "Catalog metadata from Apple."
         } catch (e: CancellationException) { throw e }
         catch (_: Exception) { appleFailed = true; appleMessage = "Could not reach the Apple catalog. Your track can keep playing." }
     }

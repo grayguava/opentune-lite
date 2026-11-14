@@ -11,7 +11,7 @@ import okhttp3.Request
  * The token Apple Music's web player uses for its catalogue reads, taken
  * from the player's own script (as BitChord does). Apple answers 401 unless
  * the request also says it comes from music.apple.com, so [request] sets
- * both. Shared by the Apple lyrics lookup and the animated covers.
+ * both. Used by the Apple lyrics lookup.
  */
 internal object AppleWebToken {
     const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"

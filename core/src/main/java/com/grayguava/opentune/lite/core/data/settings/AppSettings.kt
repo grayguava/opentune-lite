@@ -281,37 +281,13 @@ data class InterfaceSettings(
     val speedDial: Boolean = true,
     /** Apple's Liquid Glass on Android 13+; the app's smoke glass otherwise. */
     val liquidGlass: Boolean = false,
-    /** How thick the seek bar's track is. */
-    val seekbarThickness: SeekbarThickness = SeekbarThickness.REGULAR,
-    /** What marks the place on the seek bar. */
-    val seekbarThumb: SeekbarThumb = SeekbarThumb.DOT,
-    /** What the time on the right of the seek bar shows. */
-    val seekbarTime: SeekbarTime = SeekbarTime.LEFT,
-    /** The audio details page: cards of format, routing and source, or the live pipeline. */
-    val signalPathStyle: SignalPathStyle = SignalPathStyle.DETAILS,
-    /** Small dots on the seek bar where the song's parts (verse, chorus) begin. */
-    val seekbarMarks: Boolean = true,
-    /** A "Skip to chorus" button beside the source pill, when the lyrics mark the chorus. */
-    val skipToChorus: Boolean = false,
     /** The pill under the title naming where the audio comes from and its quality. */
     val sourcePill: Boolean = true,
-    /** Double-tapping the cover's left or right side goes back or on ten seconds. */
-    val doubleTapSeek: Boolean = true,
     /** While the seek bar is dragged, the lyric line at that point shows above the finger. */
     val lyricScrubPreview: Boolean = true,
     /** Sharp album covers from Apple Music, Deezer or the Cover Art Archive in the player. */
     val albumCovers: Boolean = true,
-    /** Apple Music's animated album covers loop, muted, in the player's cover. */
-    val animatedCovers: Boolean = true,
-    /** How sharp Apple's animated covers play; sharper uses more data. */
-    val motionQuality: MotionQuality = MotionQuality.MEDIUM,
-    /** Animated covers only load on Wi-Fi or another unmetered network. */
-    val animatedCoversWifiOnly: Boolean = true,
     val dockMotion: DockMotion = DockMotion.MINIMIZE,
-    /** The cover drifts and zooms slowly in the player while a song plays. */
-    val movingCover: Boolean = true,
-    /** One or two of Home's song and album cards drift and zoom the same way while the page sits still. */
-    val homeMovingCovers: Boolean = true,
     /** How strong taps and buzzes are, 0 (off) to 1. */
     val hapticStrength: Float = 0.6f,
     /** Pages blur and fade out as they scroll under the status bar. */
@@ -406,41 +382,6 @@ enum class DockMotion(val label: String, val summary: String) {
     MINIMIZE("Minimize", "Like iOS 26: the tabs shrink to the open one, with the song in a slim bar beside it"),
     CAPSULE("Capsule", "The tabs and the song gather into one small capsule in the middle"),
     SINK("Sink", "The tabs sink away into a blur and the song settles into their place"),
-}
-
-/** How sharp an animated cover plays: the largest picture and the most data a second it may use. */
-@Serializable
-enum class MotionQuality(val label: String, val maxPx: Int, val maxBitrate: Int) {
-    LOW("Low", 768, 1_500_000),
-    MEDIUM("Medium", 1080, 4_000_000),
-    // Apple's sharpest are 2160 px square (up to about 15 Mbps) and 2048 × 2732 tall.
-    HIGH("High", 2732, 16_000_000),
-}
-
-/** How synced lyrics move as the song plays. */
-@Serializable
-enum class SeekbarThickness(val label: String, val dp: Float) {
-    THIN("Thin", 3f),
-    REGULAR("Regular", 5f),
-    THICK("Thick", 9f),
-}
-
-enum class SeekbarThumb(val label: String) {
-    DOT("Dot"),
-    LINE("Line"),
-    NONE("None"),
-}
-
-/** How the audio details from the quality label are laid out. */
-enum class SignalPathStyle(val label: String) {
-    DETAILS("Format details"),
-    TIMELINE("Pipeline"),
-}
-
-enum class SeekbarTime(val label: String) {
-    LEFT("Time left"),
-    TOTAL("Length"),
-    HIDDEN("Hidden"),
 }
 
 /** Where lyrics can come from. */

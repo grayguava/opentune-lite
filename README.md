@@ -53,7 +53,8 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
 ### Listening
 
 - **JioSaavn renditions.** An optional 320 kbps route, with YouTube Music as the
-  fallback. Signal Path reports the source and detected audio format.
+  fallback. The quality label under the seek bar reports the source and the
+  detected audio format.
 
 - **Two stream engines that switch on their own.**
   InnerTubeX leads and
@@ -83,9 +84,7 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
   similar effects apply to OpenTune the way they do to the stock players.
 - **A clean signal path.** With the equalizer and effects off, decoded
   audio goes to the output untouched. When they're on, the app's own DSP
-  adds headroom so boosts don't clip. The player's Signal path dialog
-  shows every stage: source, engine, DSP, tempo, loudness, device effects,
-  the Android mixer's rate, volume and output.
+  adds headroom so boosts don't clip.
 - **Bit-perfect USB output** (Android 14+, optional). A USB DAC gets the
   song at its own rate with no mixing, resampling or effects, through
   Android's bit-perfect mixer. The app applies the volume, and at full
@@ -234,9 +233,6 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
   Music (up to 3000px), Deezer (1200px) or the Cover Art Archive, in place
   of YouTube's smaller cover or a video frame. A cover is only taken when
   the title, artist and length (within 3 s) match.
-- **Animated covers** (optional): when Apple Music has a moving cover for
-  the album, it loops silently in the player's cover. They can be limited
-  to Wi-Fi.
 - **New-release alerts.** Follow an artist from their page (no account
   needed) and a notification tells you when they put out an album or
   single. Checked twice a day.
@@ -262,10 +258,6 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
   artist pages get a frosted top bar once the header scrolls away, which
   fades out softly below the bar instead of ending in a line, and popup
   sheets let the phone's blur of the screen behind show through.
-- **Moving cover art.** In the player the cover drifts and zooms slowly
-  while the song plays and settles when you pause; it works on the
-  full-screen cover too. It's made from the cover itself, so it works for
-  every song. Off in Settings, or with reduced motion.
 - **Pull to refresh with the logo.** On Home and Podcasts, pulling down
   brings in the OpenTune mark and fills it with the playing song's colours
   from left to right while the page follows your finger with some give; past the line
@@ -341,8 +333,8 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
 - **One song menu everywhere:** round buttons up top for like, download,
   add to playlist and share, then play next, add to queue, start radio,
   view artist, open album, convert to the music video, and dislike (kept
-  out of autoplay); plus upgrade quality,
-  signal path, sleep timer, lyrics offset and copy log in the player.
+  out of autoplay); plus upgrade quality, track details, sleep timer, lyrics
+  offset and copy log in the player.
 - **One player layout,** the Apple Music one: the cover runs to the edges
   of the player, the surfaces stay quiet and the controls are crisp white.
 - **Quick screens.** Home opens on the last copy saved while the fresh one
@@ -366,10 +358,6 @@ Each release lists SHA-256 checksums of its APKs in `SHA256SUMS.txt`.
   Play folds into pause and the skip arrows roll a step on with each tap.
 - **Song change.** The cover dissolves from one blur into the other. It
   applies to the full-screen cover too.
-- **Double-tap the cover** on either side to go back or ahead 10 seconds;
-  taps in a row add up, with a ripple and the total on the cover.
-- **A glow under the cover** in its own colours, which swells with the
-  bass (Settings › Player › Cover art).
 - **A burst of hearts.** Liking a song in the player throws small hearts
   and sparks out in the cover's colours.
 - **Lyrics in colour.** The cover's colours drift slowly behind the
@@ -395,8 +383,8 @@ option from YouTube. Lossless can come from your own music server, which
 serves the files as they are stored. The optional JioSaavn route remains
 lossy. Source availability varies.
 
-OpenTune does not decrypt Deezer streams. Animated covers use the token
-Apple Music's web player ships in its own page.
+OpenTune does not decrypt Deezer streams. Sharper album covers come from
+Apple Music, Deezer or the Cover Art Archive.
 
 Not built yet: lyric translation. The app speaks one language, English.
 

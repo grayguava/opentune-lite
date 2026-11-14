@@ -429,7 +429,7 @@ fun ItemCard(
     modifier: Modifier = Modifier,
     width: Dp = 156.dp,
     explicit: Boolean = false,
-    /** Applied to the cover inside its frame, e.g. to move it (see livingArt). */
+    /** Applied to the cover inside its frame, e.g. to crop it. */
     imageModifier: Modifier = Modifier,
     /** Hears whether the cover has loaded (see [Artwork]). */
     onArtLoaded: ((Boolean) -> Unit)? = null,

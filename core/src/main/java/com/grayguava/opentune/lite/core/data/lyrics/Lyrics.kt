@@ -58,7 +58,7 @@ sealed interface Lyrics {
     data class Synced(
         val lines: List<LyricLine>,
         override val source: String,
-        /** The song's verse, chorus and so on, when the source marks them; see [SongParts]. */
+        /** The song's verse, chorus and so on, when the source marks them. */
         val parts: List<SongPart> = emptyList(),
         /** How long the recording the source timed these to is, in ms; 0 when it doesn't say. */
         val recordingMs: Long = 0,

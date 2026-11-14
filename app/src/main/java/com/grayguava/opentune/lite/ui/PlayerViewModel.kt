@@ -40,12 +40,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         song?.copy(thumbnailUrl = artwork.choose(song, better?.takeIf { it.first == song.videoId }?.second)) ?: run { artwork.clear(); null }
     }.stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, null)
 
-    /** Apple's animated cover found for the playing track, by its id. */
-    private val motionFound = MutableStateFlow<Pair<String, com.grayguava.opentune.lite.data.covers.AppleMotionArt.Motion>?>(null)
-    /** The animated cover to loop in the player's cover; null when none, or turned off since. */
-    val coverVideo = combine(player.currentSong, motionFound, AppSettings.ui) { song, found, ui ->
-        found?.takeIf { song != null && it.first == song.videoId && ui.animatedCovers && !ui.reduceAnimation }?.second
-    }.stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, null)
     val queue = player.queue
     val currentIndex = player.currentIndex
     val upNext = player.upNext
@@ -87,10 +81,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             player.currentSong.distinctUntilChangedBy { it?.videoId }.collectLatest { song ->
                 if (song == null || !com.grayguava.opentune.lite.data.covers.AlbumCovers.wants(song)) return@collectLatest
                 val ui = AppSettings.ui.value
-                // Clips are only fetched where they may play: motion allowed, and off mobile data when asked.
-                val moving = !ui.reduceAnimation && !(ui.animatedCoversWifiOnly && AppSettings.onMeteredNetwork())
-                val motion = moving && ui.animatedCovers
-                if (!ui.albumCovers && !motion) return@collectLatest
+                if (!ui.albumCovers) return@collectLatest
                 // A sharper cover found for this song before: straight away once it's shown to load,
                 // rather than after waiting for the song's length.
                 if (ui.albumCovers) com.grayguava.opentune.lite.data.covers.AlbumCovers.cached(song)?.let {
@@ -106,9 +97,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                             // Keep the visible cover until its replacement is decoded and cached.
                             if (warmArtwork(it)) betterCover.value = song.videoId to it
                         }
-                    }
-                    if (motion && duration > 0) launch {
-                        com.grayguava.opentune.lite.data.covers.AppleMotionArt.forSong(song, duration)?.let { motionFound.value = song.videoId to it }
                     }
                 }
             }

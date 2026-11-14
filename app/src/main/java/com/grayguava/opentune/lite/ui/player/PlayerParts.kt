@@ -8,7 +8,6 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import com.grayguava.opentune.lite.data.settings.AppSettings
-import com.grayguava.opentune.lite.ui.components.livingArt
 
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.produceState
@@ -156,15 +155,12 @@ fun PlayerBackdrop(
     fullCover: Boolean = false,
     /** Where the player's cover area ends, from the top; the full cover runs a little past it. */
     fullCoverBottom: Dp? = null,
-    /** Let the full cover drift and zoom while playing (see livingArt). */
-    movingCover: Boolean = false,
     playing: Boolean = false,
     /** Where the song sits in the queue, so a sharper copy of its cover swaps in place. */
     index: Int = 0,
     /** The playing song, so a sharper copy of its cover swaps in place rather than as a song change. */
     songId: String? = null,
     fullCoverVisible: Boolean = true,
-    artworkMotion: com.grayguava.opentune.lite.ui.components.ArtworkMotion? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
     Box(modifier.background(scheme.surface)) {
@@ -196,7 +192,6 @@ fun PlayerBackdrop(
                         url.artworkAt(com.grayguava.opentune.lite.data.model.PLAYER_ART_PX),
                         Modifier.matchParentSize(),
                         shape = RectangleShape,
-                        imageModifier = Modifier.livingArt(playing, movingCover, artworkMotion),
                     )
                     Box(Modifier.matchParentSize().background(Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.35f), 0.2f to Color.Transparent)))
                 }
@@ -376,16 +371,10 @@ fun ArtworkPane(
     onSwipeNext: () -> Unit,
     onSwipePrevious: () -> Unit,
     modifier: Modifier = Modifier,
-    moving: Boolean = false,
-    artworkMotion: com.grayguava.opentune.lite.ui.components.ArtworkMotion? = null,
     /** Whether the cover dissolves into the next one, or crossfades. */
     animate: Boolean = true,
     /** The song's place in the queue. */
     index: Int = 0,
-    /** Double-tapping the cover's left or right side jumps by this many milliseconds back or on. */
-    onSeekBy: ((Long) -> Unit)? = null,
-    /** Apple's animated cover for this song, looped over the still one. */
-    video: com.grayguava.opentune.lite.data.covers.AppleMotionArt.Motion? = null,
 ) {
     val coverShown by animateFloatAsState(1f, tween(450), label = "coverOverCanvas")
 
@@ -445,96 +434,13 @@ fun ArtworkPane(
                         alpha = if (com.grayguava.opentune.lite.ui.components.PlayerMorph.coverAway) 0f else 1f
                     },
                 shape = MaterialTheme.shapes.extraLarge,
-                imageModifier = Modifier.livingArt(isPlaying, moving, artworkMotion),
             ) {
-                // Only on the playing song's cover, not on one leaving as the song changes.
-                if (video != null && url == song.thumbnailUrl) {
-                    val quality = com.grayguava.opentune.lite.data.settings.AppSettings.ui.collectAsState().value.motionQuality
-                    // Keyed on the quality, so a new choice in Settings takes effect at once.
-                    androidx.compose.runtime.key(quality) {
-                        LoopingVideo(video.url, isPlaying, Modifier.matchParentSize(), fallbackUrl = video.fallbackUrl, maxPx = quality.maxPx, maxBitrate = quality.maxBitrate)
-                    }
-                }
             }
         }
-        }
-        if (onSeekBy != null) SeekTaps(onSeekBy, scale, Modifier.matchParentSize())
-    }
-}
-
-/**
- * Double-tap the cover's left side to go back ten seconds, its right side
- * to go on: a ripple spreads from the finger over that half and a label
- * says how far, adding up while the taps keep coming.
- */
-@Composable
-internal fun SeekTaps(
-    onSeekBy: (Long) -> Unit,
-    scale: Float,
-    modifier: Modifier,
-    /**
-     * What the taps go round. Wrapped, not covered: a layer laid over a cover took its
-     * touches, so the swipes under it (next song, up to lyrics and the queue) never saw them.
-     */
-    content: @Composable androidx.compose.foundation.layout.BoxScope.() -> Unit = {},
-) {
-    val haptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
-    val ripple = remember { Animatable(1f) }
-    var side by remember { mutableStateOf(0) }
-    var at by remember { mutableStateOf(Offset.Zero) }
-    var total by remember { mutableStateOf(0) }
-    var lastTap by remember { mutableStateOf(0L) }
-    val scope = rememberCoroutineScope()
-    Box(
-        modifier.pointerInput(Unit) {
-            detectTapGestures(onDoubleTap = { o ->
-                val s = if (o.x < size.width / 2f) -1 else 1
-                val now = android.os.SystemClock.uptimeMillis()
-                total = if (s == side && now - lastTap < 1_200) total + 10 else 10
-                side = s
-                at = o
-                lastTap = now
-                haptics.tick()
-                onSeekBy(s * 10_000L)
-                scope.launch {
-                    ripple.snapTo(0f)
-                    ripple.animateTo(1f, tween(650, easing = FastOutSlowInEasing))
-                }
-            })
-        },
-        contentAlignment = Alignment.Center,
-    ) {
-        content()
-        val p = ripple.value
-        if (p < 1f && side != 0) {
-            val shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp)
-            Canvas(Modifier.matchParentSize().graphicsLayer { scaleX = scale; scaleY = scale; clip = true; this.shape = shape }) {
-                // Only the half that was tapped.
-                val left = if (side < 0) 0f else size.width / 2f
-                clipRect(left = left, right = left + size.width / 2f) {
-                    drawRect(Color.Black.copy(alpha = 0.18f * (1f - p)))
-                    drawCircle(Color.White.copy(alpha = 0.28f * (1f - p)), size.width * 0.75f * p, at)
-                }
-            }
-            val label = if (side < 0) "« $total s" else "$total s »"
-            Text(
-                label,
-                color = Color.White.copy(alpha = (1f - p * p).coerceIn(0f, 1f)),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .align(if (side < 0) Alignment.CenterStart else Alignment.CenterEnd)
-                    .padding(horizontal = 36.dp)
-                    .graphicsLayer { translationX = side * 10.dp.toPx() * p },
-            )
         }
     }
 }
 
-/**
- * A slim seek bar that thickens while dragged. Position is read in the draw
- * phase, so the bar moves every frame without recomposing anything.
- */
 @Composable
 fun SeekBar(
     position: () -> Long,
@@ -544,29 +450,20 @@ fun SeekBar(
     modifier: Modifier = Modifier,
     /** The lyric line sung at a moment, shown above the finger while the bar is dragged. */
     lyricAt: ((Long) -> String?)? = null,
-    /** Where the song's parts (verse, chorus) begin, in ms, marked as small gaps in the track. */
-    marks: List<Long> = emptyList(),
     quality: (@Composable () -> Unit)? = null,
 ) {
     var dragFraction by remember { mutableStateOf<Float?>(null) }
     var scrubStartY by remember { mutableStateOf(0f) }
     var fineScrubbing by remember { mutableStateOf(false) }
-    val look = AppSettings.ui.collectAsState().value
-    val base = look.seekbarThickness.dp.dp
+    val base = 5.dp
     val trackHeight by animateDpAsState(if (dragFraction != null) base * 2 else base, label = "track")
-    // The dot rides the track; the line stands across it.
-    val thumbShown = when (look.seekbarThumb) {
-        com.grayguava.opentune.lite.data.settings.SeekbarThumb.DOT, com.grayguava.opentune.lite.data.settings.SeekbarThumb.LINE -> dragFraction == null
-        com.grayguava.opentune.lite.data.settings.SeekbarThumb.NONE -> false
-    }
+    // The handle stands across the track while the bar is at rest.
+    val thumbShown = dragFraction == null
     val thumbRadius by animateDpAsState(if (thumbShown) maxOf(7.dp, base * 0.9f + 3.dp) else 0.dp, label = "thumb")
-    val lineThumb = look.seekbarThumb == com.grayguava.opentune.lite.data.settings.SeekbarThumb.LINE
     val active = MaterialTheme.colorScheme.primary
     val gradientEnd = MaterialTheme.colorScheme.tertiary
-    val shownMarks = if (look.seekbarMarks) marks else emptyList()
     val inactive = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.18f)
     val bufferedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-    val markDot = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
 
     val seekHaptics = com.grayguava.opentune.lite.ui.components.rememberHaptics()
     fun fraction(): Float = dragFraction
@@ -655,27 +552,13 @@ fun SeekBar(
             }
             drawRoundRect(bufferedColor, Offset(0f, y), Size(size.width * maxOf(b, f), h), r)
             drawRoundRect(Brush.horizontalGradient(listOf(active, gradientEnd), endX = maxOf(size.width * f, 1f)), Offset(0f, y), Size(size.width * f, h), r)
-            // A small dot where each part of the song still to come begins. Ones already
-            // played aren't drawn: cut into the played line (the wave above all) they read as breaks.
-            if (durationMs > 0) {
-                val played = size.width * f
-                val clear = maxOf(thumbRadius.toPx(), h) + 2.dp.toPx()
-                shownMarks.forEach { ms ->
-                    val x = size.width * (ms.toFloat() / durationMs)
-                    if (x > played + clear && x < size.width - h) drawCircle(markDot, h * 0.32f, Offset(x, size.height / 2))
-                }
-            }
             if (thumbRadius > 0.dp) {
                 val at = Offset(size.width * f, size.height / 2)
                 val thumbColor = gradientEnd
-                if (lineThumb) {
-                    // A short upright bar across the track, rounded at the ends.
-                    val w = 3.dp.toPx()
-                    val tall = thumbRadius.toPx() * 2.6f
-                    drawRoundRect(thumbColor, Offset(at.x - w / 2f, at.y - tall / 2f), Size(w, tall), CornerRadius(w / 2f))
-                } else {
-                    drawCircle(thumbColor, thumbRadius.toPx(), at)
-                }
+                // A short upright bar across the track, rounded at the ends.
+                val w = 3.dp.toPx()
+                val tall = thumbRadius.toPx() * 2.6f
+                drawRoundRect(thumbColor, Offset(at.x - w / 2f, at.y - tall / 2f), Size(w, tall), CornerRadius(w / 2f))
             }
         }
         }
@@ -683,36 +566,30 @@ fun SeekBar(
         val elapsedSeconds by remember(durationMs) {
             derivedStateOf { ((dragFraction?.times(durationMs)?.toLong() ?: position()) / 1000) }
         }
-        if (look.seekbarTime != com.grayguava.opentune.lite.data.settings.SeekbarTime.HIDDEN) {
-            val timeStyle = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum")
-            val measurer = androidx.compose.ui.text.rememberTextMeasurer()
-            val density = LocalDensity.current
-            // Reserve identical, stable side columns using the whole track's length.
-            // Seconds changing width must never push the quality label sideways.
-            val timeWidth = remember(durationMs, timeStyle, density) {
-                val sample = if (durationMs > 0) "-" + formatTime(durationMs) else "--:--"
-                with(density) { (measurer.measure(sample, timeStyle).size.width + 8.dp.roundToPx()).toDp() }
-            }
-            Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(if (loading) "--:--" else formatTime(elapsedSeconds * 1000), modifier = Modifier.width(timeWidth),
-                    style = timeStyle, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-                // Keep this button below the seek target, including its minimum touch bounds.
-                quality?.let { Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { it() } }
-                Text(
-                    when {
-                        durationMs <= 0 -> "--:--"
-                        look.seekbarTime == com.grayguava.opentune.lite.data.settings.SeekbarTime.TOTAL -> formatTime(durationMs)
-                        else -> "-" + formatTime((durationMs - elapsedSeconds * 1000).coerceAtLeast(0))
-                    },
-                    modifier = Modifier.width(timeWidth),
-                    style = timeStyle,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.End,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                )
-            }
+        val timeStyle = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum")
+        val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+        val density = LocalDensity.current
+        // Reserve identical, stable side columns using the whole track's length.
+        // Seconds changing width must never push the quality label sideways.
+        val timeWidth = remember(durationMs, timeStyle, density) {
+            val sample = if (durationMs > 0) "-" + formatTime(durationMs) else "--:--"
+            with(density) { (measurer.measure(sample, timeStyle).size.width + 8.dp.roundToPx()).toDp() }
         }
-        if (look.seekbarTime == com.grayguava.opentune.lite.data.settings.SeekbarTime.HIDDEN) quality?.let { Box(Modifier.fillMaxWidth().padding(top = 8.dp), contentAlignment = Alignment.Center) { it() } }
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text(if (loading) "--:--" else formatTime(elapsedSeconds * 1000), modifier = Modifier.width(timeWidth),
+                style = timeStyle, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            // Keep this button below the seek target, including its minimum touch bounds.
+            quality?.let { Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { it() } }
+            Text(
+                if (durationMs <= 0) "--:--"
+                else "-" + formatTime((durationMs - elapsedSeconds * 1000).coerceAtLeast(0)),
+                modifier = Modifier.width(timeWidth),
+                style = timeStyle,
+                textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+            )
+        }
     }
 }
 

@@ -34,10 +34,10 @@ import com.grayguava.opentune.lite.ui.components.rememberHaptics
 
 /**
  * Where the sound goes, in one place: this phone or the headphones plugged
- * into it, and the audio pipeline for the full signal path.
+ * into it.
  */
 @Composable
-fun AudioOutputSheet(onDismiss: () -> Unit, onPipeline: () -> Unit) {
+fun AudioOutputSheet(onDismiss: () -> Unit) {
     val route = rememberOutputRoute()
     val haptics = rememberHaptics()
     val deviceName = rememberOutputDeviceName().ifBlank { "This phone" }
@@ -49,12 +49,6 @@ fun AudioOutputSheet(onDismiss: () -> Unit, onPipeline: () -> Unit) {
                 subtitle = "Playing here",
                 selected = true,
             ) { haptics.tick(); onDismiss() }
-            OutputRow(
-                icon = Icons.Rounded.GraphicEq,
-                title = "Audio pipeline",
-                subtitle = "Live signal path, decoder to output",
-                chevron = true,
-            ) { haptics.tick(); onPipeline() }
         }
     }
 }

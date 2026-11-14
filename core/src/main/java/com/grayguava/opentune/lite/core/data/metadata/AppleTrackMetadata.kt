@@ -27,7 +27,7 @@ data class AppleTrackMetadata(
 
 /**
  * The album a song was matched to in Apple's catalogue: enough to show its
- * sharp cover and to ask for its animated cover. Clean and explicit copies
+ * sharp cover. Clean and explicit copies
  * of one album are separate albums to Apple with the same art, so either
  * stands for both.
  */
@@ -36,7 +36,7 @@ data class AppleRelease(
     val album: String,
     /** The cover at Apple's 100px size; any size up to the 3000px master is a change of the last path part. */
     val artworkUrl: String?,
-    /** The storefront (lower case) the match came from: the animated cover is asked for there. */
+    /** The storefront (lower case) the match came from. */
     val storefront: String,
 )
 
@@ -54,7 +54,7 @@ object AppleTrackMetadataRepository {
     suspend fun lookup(song: Song, durationMs: Long, country: String = Locale.getDefault().country): AppleTrackMetadata? =
         search(song, durationMs, country)?.value
 
-    /** The album [song] is on, for its cover and animated cover; null unless the match is certain. */
+    /** The album [song] is on, for its cover; null unless the match is certain. */
     suspend fun release(song: Song, durationMs: Long, country: String = Locale.getDefault().country): AppleRelease? =
         search(song, durationMs, country)?.release
 

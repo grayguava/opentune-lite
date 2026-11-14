@@ -189,8 +189,6 @@ data class PlayerUiState(
     val shuffleMode: com.grayguava.opentune.lite.playback.ShuffleMode = if (shuffle) com.grayguava.opentune.lite.playback.ShuffleMode.ON else com.grayguava.opentune.lite.playback.ShuffleMode.OFF,
     /** The queue came from a playlist or album, so the shuffle button offers smart shuffle. */
     val smartShuffleAvailable: Boolean = false,
-    /** Apple's animated cover for the song, to loop in its cover. */
-    val coverVideo: com.grayguava.opentune.lite.data.covers.AppleMotionArt.Motion? = null,
     val loadingMessage: String? = null,
 )
 
@@ -238,7 +236,6 @@ fun PlayerScreen(
     val shown = current
     val source by vm.source.collectAsState()
     val audioFormat by vm.audioFormat.collectAsState()
-    val coverVideo by vm.coverVideo.collectAsState()
     val actions = remember(vm, onCollapse) {
         PlayerActions(
             togglePlay = vm::togglePlayPause,
@@ -258,7 +255,7 @@ fun PlayerScreen(
         PlayerUiState(
             shown, isPlaying, isBuffering, hasNext, shuffle, repeat, duration,
             lyrics, queue, currentIndex, upNext, sound, ui, source, audioFormat,
-            shuffleMode, smartShuffleAvailable, coverVideo, loadingMessage,
+            shuffleMode, smartShuffleAvailable, loadingMessage,
         ),
         position = rememberPlaybackPosition(vm),
         buffered = vm::bufferedPositionMs,
@@ -320,7 +317,6 @@ fun PlayerLayout(
     var showOffset by remember { mutableStateOf(false) }
     var showLyricsSource by remember { mutableStateOf(false) }
     var showDetails by remember { mutableStateOf(false) }
-    var showSignal by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val clipboard = remember { context.getSystemService(ClipboardManager::class.java) }
     // Lyrics run on their own clock, shifted by this song's offset, or the
@@ -345,10 +341,9 @@ fun PlayerLayout(
     var touchedAt by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var controlsAway by remember { mutableStateOf(false) }
     var seenTouch by remember { mutableLongStateOf(touchedAt) }
-    val artworkMotion = com.grayguava.opentune.lite.ui.components.rememberArtworkMotion(state.isPlaying && state.ui.movingCover && !state.ui.reduceAnimation)
     val focusable = state.ui.lyricsFocus && pane == Pane.LYRICS && state.isPlaying &&
         ((state.lyrics as? LyricsState.Found)?.lyrics is com.grayguava.opentune.lite.data.lyrics.Lyrics.Synced)
-    val sheetOpen = showMenu || showRemix || showSleep || showOffset || showLyricsSource || showDetails || showSignal
+    val sheetOpen = showMenu || showRemix || showSleep || showOffset || showLyricsSource || showDetails
     LaunchedEffect(touchedAt, focusable, sheetOpen) {
         // A sheet opening or closing leaves the controls as they are, the tap that opened
         // it included: bringing them back resized the lyrics under the sheet as it slid
@@ -697,9 +692,7 @@ fun PlayerLayout(
                     // While it flies the cover is drawn by the flight, not here as well.
                     fullCover = fullStyle,
                     fullCoverVisible = fullCover && !flight.active,
-                    artworkMotion = artworkMotion,
                     fullCoverBottom = with(LocalDensity.current) { coverBottomPx.takeIf { it > 0f }?.toDp() },
-                    movingCover = state.ui.movingCover && !state.ui.reduceAnimation,
                     playing = state.isPlaying,
                     index = state.currentIndex,
                     songId = current.videoId,
@@ -723,7 +716,6 @@ fun PlayerLayout(
                     device = sleepLabel ?: device,
                     onLike = { LibraryStore.setLiked(current, !isLiked) },
                     onMore = { showMenu = true },
-                    onSignal = { showSignal = true },
                     onLyrics = { toggle(Pane.LYRICS) },
                     onQueue = { toggle(Pane.QUEUE) },
                     showLines = state.ui.lyricsPreview && pane != Pane.LYRICS,
@@ -872,7 +864,6 @@ fun PlayerLayout(
                         if (p == Pane.COVER) {
                             val seekBy: (Long) -> Unit = { d -> actions.seekTo((position() + d).coerceIn(0L, state.durationMs.coerceAtLeast(0L))) }
                             Box(Modifier.weight(1f).fillMaxWidth().then(if (docked) Modifier.fitSquare() else Modifier), contentAlignment = Alignment.Center) {
-                                val ownTaps = !fullCover
                                 val design: @Composable () -> Unit = {
                                 when {
                                     // Keep the full-cover layout mounted while its exit animates.
@@ -890,16 +881,12 @@ fun PlayerLayout(
                                     else ->
                                         ArtworkPane(
                                             current, state.isPlaying, onSwipeNext = actions.next, onSwipePrevious = actions.previous,
-                                            moving = state.ui.movingCover && !state.ui.reduceAnimation,
-                                            artworkMotion = artworkMotion,
                                             animate = !state.ui.reduceAnimation,
                                             index = state.currentIndex,
-                                            onSeekBy = seekBy.takeIf { state.ui.doubleTapSeek },
-                                            video = state.coverVideo,
                                         )
                                 }
                                 }
-                                if (state.ui.doubleTapSeek && !ownTaps) SeekTaps(seekBy, 1f, Modifier.matchParentSize()) { design() } else design()
+                                design()
                             }
                             Spacer(Modifier.height(16.dp))
                             TitleRow(
@@ -1059,14 +1046,6 @@ fun PlayerLayout(
 
                 val synced = (state.lyrics as? LyricsState.Found)?.lyrics as? com.grayguava.opentune.lite.data.lyrics.Lyrics.Synced
                 // Lyrics are timed against the song shifted by the offset; the bar is the song's own time.
-                val choruses = remember(synced, offsetMs) { synced?.let { com.grayguava.opentune.lite.data.lyrics.SongParts.choruses(it).map { ms -> ms - offsetMs } }.orEmpty() }
-                val marks = remember(synced, offsetMs) { synced?.let { com.grayguava.opentune.lite.data.lyrics.SongParts.marks(it).map { ms -> ms - offsetMs } }.orEmpty() }
-                val nextChorus by androidx.compose.runtime.produceState<Long?>(null, choruses) {
-                    while (true) {
-                        value = com.grayguava.opentune.lite.data.lyrics.SongParts.nextChorus(choruses, position())
-                        kotlinx.coroutines.delay(500)
-                    }
-                }
                 // Lyrics with nothing in the way: a few seconds untouched while they
                 // play, and the controls slide down out of sight.
                 AnimatedVisibility(
@@ -1075,11 +1054,6 @@ fun PlayerLayout(
                     exit = shrinkVertically(tween(520, easing = FastOutSlowInEasing), shrinkTowards = Alignment.Top) + slideOutVertically(tween(520, easing = FastOutSlowInEasing)) { it / 2 } + fadeOut(tween(360)),
                 ) {
                 Column {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    AnimatedVisibility(state.ui.skipToChorus && nextChorus != null, enter = fadeIn() + expandHorizontally(), exit = fadeOut() + shrinkHorizontally()) {
-                        SkipToChorus { nextChorus?.let { actions.seekTo((it - 250).coerceAtLeast(0)) } }
-                    }
-                }
                 if (pane != Pane.LYRICS && state.ui.lyricsPreview) {
                     LyricPreview(state.lyrics, lyricsPosition, onOpen = { toggle(Pane.LYRICS) }, Modifier.padding(top = 4.dp), plain = apple)
                 }
@@ -1088,9 +1062,9 @@ fun PlayerLayout(
                 val lyricAt: ((Long) -> String?)? = if (state.ui.lyricScrubPreview && synced != null) {
                     { ms -> synced.lines.lastOrNull { it.startMs <= ms + offsetMs }?.text?.takeIf { it.isNotBlank() } }
                 } else null
-                SeekBar(position, buffered, state.durationMs, onSeek = actions.seekTo, lyricAt = lyricAt, marks = marks, quality = { if (state.ui.sourcePill) SourceQualityBadge(current.videoId, state.audioFormat, onClick = { showSignal = true }) })
+                SeekBar(position, buffered, state.durationMs, onSeek = actions.seekTo, lyricAt = lyricAt, quality = { if (state.ui.sourcePill) SourceQualityBadge(current.videoId, state.audioFormat) })
                 if (state.ui.statsForNerds) {
-                    Box(Modifier.clickable { showSignal = true }) { NerdStatsLine(state.audioFormat) }
+                    NerdStatsLine(state.audioFormat)
                 }
                 PlayerControls(
                     isPlaying = state.isPlaying,
@@ -1173,7 +1147,6 @@ fun PlayerLayout(
                         origin = origin,
                         fullBleed = fullStyle,
                         contentModifier = Modifier.testTag("pane-cover-flight"),
-                        artworkMotion = artworkMotion.takeIf { state.ui.movingCover && !state.ui.reduceAnimation },
                     )
                     // Drawn outside the player's own colours, so given them here: the title and
                     // its buttons changed colour as they flew.
@@ -1196,10 +1169,7 @@ fun PlayerLayout(
             Box(Modifier.fillMaxSize().graphicsLayer { alpha = (windDown * 0.55f).coerceIn(0f, 0.55f) }.background(Color.Black))
         }
         if (showRemix) RemixSheet(onDismiss = { showRemix = false })
-        if (showOutput) AudioOutputSheet(
-            onDismiss = { showOutput = false },
-            onPipeline = { showOutput = false; showSignal = true },
-        )
+        if (showOutput) AudioOutputSheet(onDismiss = { showOutput = false })
         if (showSleep) SleepTimerDialog(onDismiss = { showSleep = false })
         if (showMenu) {
             SongMenuSheet(
@@ -1208,7 +1178,6 @@ fun PlayerLayout(
                 top = { close -> MenuRow(Icons.Rounded.HighQuality, "Upgrade quality") { close(); PlaybackRequests.upgradeQuality() } },
                 tools = { close ->
                     MenuRow(Icons.Rounded.HighQuality, "Track details") { close(); showDetails = true }
-                    MenuRow(Icons.Rounded.GraphicEq, "Signal path") { close(); showSignal = true }
                     MenuRow(Icons.Rounded.Bedtime, sleepLabel ?: "Sleep timer") { close(); showSleep = true }
                     MenuRow(Icons.Rounded.Tune, "Lyrics offset") { close(); showOffset = true }
                     MenuRow(Icons.Rounded.Lyrics, "Lyrics source") { close(); showLyricsSource = true }
@@ -1240,7 +1209,6 @@ fun PlayerLayout(
         if (showOffset) LyricsOffsetDialog(current.videoId, autoOffsetMs, onDismiss = { showOffset = false })
         if (showLyricsSource) LyricsSourceDialog(current, state.durationMs, onDismiss = { showLyricsSource = false })
         if (showDetails) TrackDetailsDialog(current, state.durationMs, onDismiss = { showDetails = false })
-        if (showSignal) SignalPathDialog(state.audioFormat, onDismiss = { showSignal = false }, song = current)
     }
 }
 

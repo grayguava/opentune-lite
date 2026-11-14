@@ -219,7 +219,6 @@ fun SettingsScreen(
     // Kept out here, so coming back from a page finds the main list where it was left.
     val mainList = androidx.compose.foundation.lazy.rememberLazyListState()
     // Which folded subsections have been opened with "See more".
-    var unfolded by rememberSaveable { mutableStateOf(emptySet<String>()) }
 
     androidx.compose.animation.AnimatedContent(
         open,
@@ -241,17 +240,10 @@ fun SettingsScreen(
                 placed.filter { it.category == page }.groupBy { it.group }.forEach { (group, rows) ->
                     item(key = "label:$group") { GroupLabel(group) }
                     item(key = "card:$group") {
-                        val shown = FOLDED_GROUPS[group]?.takeIf { group !in unfolded && it < rows.size }
                         GroupCard(Modifier.animateContentSize(spring(dampingRatio = 1f, stiffness = Spring.StiffnessMediumLow))) {
-                            rows.take(shown ?: rows.size).forEachIndexed { i, row ->
+                            rows.forEachIndexed { i, row ->
                                 if (i > 0) RowDivider()
                                 row.entry.content()
-                            }
-                            if (FOLDED_GROUPS[group]?.let { it < rows.size } == true) {
-                                RowDivider()
-                                SeeMoreRow(open = shown == null, hidden = rows.size - (FOLDED_GROUPS[group] ?: 0)) {
-                                    unfolded = if (group in unfolded) unfolded - group else unfolded + group
-                                }
                             }
                         }
                     }
@@ -334,24 +326,6 @@ fun SettingsScreen(
                 }
             }
         }
-    }
-}
-
-/** The last row of a folded subsection: "See more" with how many are tucked away, or "See less". */
-@Composable
-private fun SeeMoreRow(open: Boolean, hidden: Int, onClick: () -> Unit) {
-    val turn by animateFloatAsState(if (open) 180f else 0f, spring(dampingRatio = 1f, stiffness = Spring.StiffnessMediumLow), label = "seeMore")
-    Row(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(start = 72.dp, end = 24.dp, top = 16.dp, bottom = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            if (open) "See less" else "See $hidden more",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.weight(1f),
-        )
-        Icon(Icons.Rounded.ExpandMore, null, Modifier.graphicsLayer { rotationZ = turn }, tint = MaterialTheme.colorScheme.primary)
     }
 }
 
@@ -773,65 +747,14 @@ private fun settingsSections(
                 Entry("Dock animation", "navigation bar dock fold hide scroll animation motion squash pop") {
                     NavRow("Dock animation", { dockMotionDialog = true }, summary = ui.dockMotion.summary, icon = Icons.Rounded.Dock, value = ui.dockMotion.label)
                 },
-                Entry("Double-tap to skip 10 seconds", "double tap cover seek forward back rewind ten seconds gesture") {
-                    ToggleRow("Double-tap to skip 10 seconds", ui.doubleTapSeek, { v -> AppSettings.updateUi { it.copy(doubleTapSeek = v) } }, summary = "Double-tap the left of the cover to go back 10 seconds, the right to go on", icon = Icons.Rounded.TouchApp)
-                },
-                Entry("Moving cover art", "motion artwork canvas animated cover drift zoom") {
-                    ToggleRow("Moving cover art", ui.movingCover, { v -> AppSettings.updateUi { it.copy(movingCover = v) } }, summary = "The cover drifts and zooms slowly in the player while a song plays", icon = Icons.Rounded.Animation)
-                },
-                Entry("Moving covers on Home", "motion artwork animated cover drift zoom home cards mixes") {
-                    ToggleRow("Moving covers on Home", ui.homeMovingCovers, { v -> AppSettings.updateUi { it.copy(homeMovingCovers = v) } }, summary = "Song and album covers on Home drift and zoom slowly, one or two at a time, while you're not scrolling. Off in battery saver", icon = Icons.Rounded.Animation)
-                },
                 Entry("Lyric preview while seeking", "scrub seek bar lyric line preview bubble drag") {
                     ToggleRow("Lyric preview while seeking", ui.lyricScrubPreview, { v -> AppSettings.updateUi { it.copy(lyricScrubPreview = v) } }, summary = "Dragging the seek bar shows the line sung at that point above your finger", icon = Icons.Rounded.Lyrics)
                 },
-                Entry("Seek bar thickness", "progress bar seek slider thin thick height") {
-                    SettingRow("Seek bar thickness", icon = Icons.Rounded.LineWeight, below = {
-                        PillSegmented(com.grayguava.opentune.lite.data.settings.SeekbarThickness.entries, ui.seekbarThickness, { it.label }, { v -> AppSettings.updateUi { it.copy(seekbarThickness = v) } })
-                    })
-                },
-                Entry("Seek bar handle", "progress bar thumb knob dot line handle") {
-                    SettingRow("Seek bar handle", icon = Icons.Rounded.RadioButtonChecked, below = {
-                        PillSegmented(com.grayguava.opentune.lite.data.settings.SeekbarThumb.entries, ui.seekbarThumb, { it.label }, { v -> AppSettings.updateUi { it.copy(seekbarThumb = v) } })
-                    })
-                },
-                Entry("Seek bar time", "progress bar remaining total length duration time left") {
-                    SettingRow("Time on the right", icon = Icons.Rounded.Schedule, below = {
-                        PillSegmented(com.grayguava.opentune.lite.data.settings.SeekbarTime.entries, ui.seekbarTime, { it.label }, { v -> AppSettings.updateUi { it.copy(seekbarTime = v) } })
-                    })
-                },
-                Entry("Audio details page", "signal path pipeline format details bit perfect output routing codec resolution") {
-                    SettingRow("Audio details page", summary = "What the quality label opens: cards of format, output and source, or the live pipeline", icon = Icons.Rounded.GraphicEq, below = {
-                        PillSegmented(com.grayguava.opentune.lite.data.settings.SignalPathStyle.entries, ui.signalPathStyle, { it.label }, { v -> AppSettings.updateUi { it.copy(signalPathStyle = v) } })
-                    })
-                },
-                Entry("Song part marks", "seek bar chorus verse dots marks parts") {
-                    ToggleRow("Song part marks", ui.seekbarMarks, { v -> AppSettings.updateUi { it.copy(seekbarMarks = v) } }, summary = "Small dots on the seek bar where the verse and chorus begin, when the lyrics mark them", icon = Icons.Rounded.MoreHoriz)
-                },
-                Entry("Skip to chorus", "chorus jump skip button song parts") {
-                    ToggleRow("Skip to chorus button", ui.skipToChorus, { v -> AppSettings.updateUi { it.copy(skipToChorus = v) } }, summary = "A button under the title that jumps to the next chorus, when the lyrics mark one", icon = Icons.Rounded.FastForward)
-                },
                 Entry("Audio quality label", "audio source quality pill badge codec bitrate jiosaavn youtube") {
-                    ToggleRow("Show the quality label", ui.sourcePill, { v -> AppSettings.updateUi { it.copy(sourcePill = v) } }, summary = "Shows quality and upgrade progress below the seek bar; tap for the full signal path", icon = Icons.Rounded.HighQuality)
+                    ToggleRow("Show the quality label", ui.sourcePill, { v -> AppSettings.updateUi { it.copy(sourcePill = v) } }, summary = "Shows quality and upgrade progress below the seek bar", icon = Icons.Rounded.HighQuality)
                 },
                 Entry("Album covers", "artwork cover musicbrainz cover art archive video thumbnail") {
                     ToggleRow("Sharper album covers", ui.albumCovers, { v -> AppSettings.updateUi { it.copy(albumCovers = v) } }, summary = "The player shows the album's cover from Apple Music, Deezer or the Cover Art Archive, sharper than YouTube's and in place of a video frame", icon = Icons.Rounded.Album)
-                },
-                Entry("Animated covers", "apple music motion artwork video moving album cover animated") {
-                    ToggleRow("Animated covers", ui.animatedCovers, { v -> AppSettings.updateUi { it.copy(animatedCovers = v) } }, summary = "When Apple Music has a moving cover for the album, it loops silently in the player's cover", icon = Icons.Rounded.Animation)
-                    if (ui.animatedCovers) {
-                        RowDivider()
-                        SettingRow("Animated cover quality", summary = when (ui.motionQuality) {
-                            com.grayguava.opentune.lite.data.settings.MotionQuality.LOW -> "Up to 768 px, about 1.5 Mbps. Lightest on data"
-                            com.grayguava.opentune.lite.data.settings.MotionQuality.MEDIUM -> "Up to 1080 px, about 4 Mbps"
-                            com.grayguava.opentune.lite.data.settings.MotionQuality.HIGH -> "Up to 2160 px square, about 15 Mbps. Sharpest, uses the most data"
-                        }, icon = Icons.Rounded.HighQuality, below = {
-                            PillSegmented(com.grayguava.opentune.lite.data.settings.MotionQuality.entries, ui.motionQuality, { it.label }, { v -> AppSettings.updateUi { it.copy(motionQuality = v) } })
-                        })
-                    }
-                },
-                Entry("Animated covers on Wi-Fi only", "mobile data metered save data wifi animated covers") {
-                    ToggleRow("Animated covers on Wi-Fi only", ui.animatedCoversWifiOnly, { v -> AppSettings.updateUi { it.copy(animatedCoversWifiOnly = v) } }, summary = "Animated covers don't load on mobile data", icon = Icons.Rounded.Wifi, enabled = ui.animatedCovers)
                 },
                 Entry("Reduce animation", "motion") {
                     ToggleRow("Reduce animation", ui.reduceAnimation, { v -> AppSettings.updateUi { it.copy(reduceAnimation = v) } }, summary = "Freezes decorative motion and simplifies player and lyric transitions", icon = Icons.Rounded.Animation)

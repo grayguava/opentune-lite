@@ -48,7 +48,7 @@ import com.grayguava.opentune.lite.playback.AudioFormatInfo
 import java.util.Locale
 
 @Composable
-internal fun SourceQualityBadge(mediaId: String, format: AudioFormatInfo?, onClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun SourceQualityBadge(mediaId: String, format: AudioFormatInfo?, modifier: Modifier = Modifier) {
     val reported by NerdStats.playbackSource.collectAsState()
     val upgrading by NerdStats.upgrading.collectAsState()
     val source = reported?.takeIf { it.mediaId == mediaId }
@@ -60,7 +60,7 @@ internal fun SourceQualityBadge(mediaId: String, format: AudioFormatInfo?, onCli
     val lossless = isHighestQuality(source, format)
     val phase = if (ui.reduceAnimation || !lossless) null else rememberInfiniteTransition(label = "quality light")
         .animateFloat(-0.15f, 1.15f, infiniteRepeatable(tween(2800, easing = LinearEasing)), label = "quality sweep")
-    TextButton(onClick = onClick, modifier = modifier.widthIn(max = 280.dp).fillMaxWidth().heightIn(min = 40.dp).semantics { contentDescription = "$label. Open signal path" },
+    TextButton(onClick = {}, modifier = modifier.widthIn(max = 280.dp).fillMaxWidth().heightIn(min = 40.dp).semantics { contentDescription = label },
         colors = ButtonDefaults.textButtonColors(contentColor = colors.onSurfaceVariant),
         contentPadding = PaddingValues(horizontal = 6.dp, vertical = 4.dp)) {
         // Lossless gets the waveform; a lossy stream the plain HQ mark (a headphone read as the output, not the quality).
@@ -219,23 +219,3 @@ internal fun sourceQualityLabel(source: NerdStats.Source?, format: AudioFormatIn
     return "$provider · ${quality.ifEmpty { "quality pending" }}"
 }
 
-/** Jumps to the next chorus; shown beside the source pill while one is still to come. */
-@Composable
-internal fun SkipToChorus(onClick: () -> Unit) {
-    val colors = MaterialTheme.colorScheme
-    TextButton(
-        onClick = onClick,
-        modifier = Modifier.heightIn(min = 40.dp),
-        shape = CircleShape,
-        colors = ButtonDefaults.textButtonColors(
-            containerColor = colors.surfaceContainerHigh.copy(alpha = 0.9f),
-            contentColor = colors.onSurface,
-        ),
-        border = BorderStroke(1.dp, colors.outlineVariant.copy(alpha = 0.6f)),
-        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
-    ) {
-        Icon(Icons.Rounded.FastForward, null, Modifier.size(16.dp))
-        Spacer(Modifier.width(6.dp))
-        Text("Skip to chorus", style = MaterialTheme.typography.labelMedium, maxLines = 1)
-    }
-}

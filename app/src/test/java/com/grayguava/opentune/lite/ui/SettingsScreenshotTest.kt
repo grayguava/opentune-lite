@@ -72,20 +72,13 @@ class SettingsScreenshotTest {
         save("settings-search")
     }
 
-    @Test fun seekBarSettingsFoldUntilSeeMore() {
+    @Test fun theSeekBarSettingsShowInFull() {
         list().performScrollToNode(hasText("Player"))
         compose.onNodeWithText("Player").performClick()
         compose.mainClock.advanceTimeBy(600)
         compose.waitForIdle()
         list().performScrollToNode(hasText("Lyric preview while seeking"))
         compose.onNodeWithText("Lyric preview while seeking").assertIsDisplayed()
-        compose.onNodeWithText("Seek bar handle").assertDoesNotExist()
-        list().performScrollToNode(hasText("See 3 more"))
-        compose.onNodeWithText("See 3 more").performClick()
-        compose.waitForIdle()
-        compose.onNodeWithText("Seek bar handle").assertExists()
-        list().performScrollToNode(hasText("See less"))
-        compose.onNodeWithText("See less").assertIsDisplayed()
         save("settings-seek-bar")
     }
 

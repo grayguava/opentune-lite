@@ -218,16 +218,6 @@ private fun CapsuleSkip(forward: Boolean, rolls: Int, enabled: Boolean, animate:
     }
 }
 
-/** How deep the Morph button's waves are, as a part of its radius, when fully wavy. */
-private const val MORPH_DEPTH = 0.075f
-private const val MORPH_WAVES = 9
-
-/**
- * Sets [path] to a circle of [radius] whose edge rises and falls in
- * [MORPH_WAVES] rounded waves, [depth] of the radius deep (0 is a plain
- * circle), turned by [degrees]. The crests touch [radius], so the shape
- * never grows past its box as the waves come in.
- */
 // ---- Shared ------------------------------------------------------------------
 
 /** Draws behind the content, with the drawing's size. */

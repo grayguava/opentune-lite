@@ -210,12 +210,7 @@ fun HomeScreen(
         }
     }
 
-    // One or two of the big cards below move their cover while the page sits still.
-    val covers = rememberMovingCovers(LocalLayoutDirection.current == LayoutDirection.Rtl, covered)
     val listState = rememberLazyListState()
-    LaunchedEffect(listState, covers) {
-        snapshotFlow { listState.isScrollInProgress }.collect { covers.pageScrolling = it }
-    }
     // Home tapped again: back up to the top, and the page refreshes with its pull mark.
     LaunchedEffect(listState) {
         com.grayguava.opentune.lite.ui.TabEvents.reselected.collect { r ->
@@ -231,7 +226,7 @@ fun HomeScreen(
         onRefresh = refreshHome,
         modifier = Modifier.fillMaxSize(),
     ) {
-        LazyColumn(state = listState, contentPadding = contentPadding, modifier = Modifier.fillMaxSize().nestedScroll(covers.scrollWatch)) {
+        LazyColumn(state = listState, contentPadding = contentPadding, modifier = Modifier.fillMaxSize()) {
             item(key = "top") {
                 // A greeting for the time of day, by name when signed in, with the
                 // account (and settings) one tap away on the right.
@@ -316,7 +311,7 @@ fun HomeScreen(
                         }
                         is UiState.Success -> {
                             itemsIndexed(feed.cards, key = { i, shelf -> "shelf:$i:${shelf.title}" }, contentType = { _, _ -> "recommendations" }) { i, shelf ->
-                                HomeShelfView(shelf, onItemClick, songRows = false, covers = covers, coverKey = "shelf:$i")
+                                HomeShelfView(shelf, onItemClick, songRows = false)
                             }
                         }
                     }
@@ -429,40 +424,16 @@ internal fun arrangeHomeShelves(shelves: List<HomeShelf>): HomeSections {
 }
 
 /**
- * A shelf of cards, or quick picks for a shelf of songs. Given Home's
- * [covers], its song and album cards can move their covers, under [coverKey].
+ * A shelf of cards, or quick picks for a shelf of songs.
  */
 @Composable
-fun HomeShelfView(shelf: HomeShelf, onItemClick: (ShelfItem) -> Unit, modifier: Modifier = Modifier, songRows: Boolean = true, covers: MovingCovers? = null, coverKey: String = "") {
+fun HomeShelfView(shelf: HomeShelf, onItemClick: (ShelfItem) -> Unit, modifier: Modifier = Modifier, songRows: Boolean = true) {
     Box(modifier) {
         if (songRows && shelf.isQuickPicks()) {
             QuickPicks(shelf, onItemClick)
         } else {
-            if (covers == null) {
-                Shelf(title = shelf.title, subtitle = shelf.subtitle, items = shelf.items) { item ->
-                    ItemCard(item.title, item.subtitle, item.thumbnailUrl, item.type(), onClick = { onItemClick(item) }, explicit = item.explicit, menu = item.cardMenu())
-                }
-            } else {
-                // By place in the shelf, since a shelf can hold the same item twice.
-                val indexed = remember(shelf.items) { shelf.items.withIndex().toList() }
-                Shelf(title = shelf.title, subtitle = shelf.subtitle, items = indexed) { (i, item) ->
-                    val type = item.type()
-                    val motion = rememberCoverMotion(
-                        covers,
-                        key = "$coverKey:$i",
-                        shelf = coverKey,
-                        hasMovingArt = MovingCoverRules.hasMovingArt(isSong = item.videoId != null && item.browseId == null, type = type),
-                    )
-                    ItemCard(
-                        item.title, item.subtitle, item.thumbnailUrl, type,
-                        onClick = { onItemClick(item) },
-                        modifier = motion.spot,
-                        explicit = item.explicit,
-                        imageModifier = motion.art,
-                        onArtLoaded = motion.onArtLoaded,
-                        menu = item.cardMenu(),
-                    )
-                }
+            Shelf(title = shelf.title, subtitle = shelf.subtitle, items = shelf.items) { item ->
+                ItemCard(item.title, item.subtitle, item.thumbnailUrl, item.type(), onClick = { onItemClick(item) }, explicit = item.explicit, menu = item.cardMenu())
             }
         }
     }

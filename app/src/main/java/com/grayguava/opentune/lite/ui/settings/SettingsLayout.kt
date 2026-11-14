@@ -25,12 +25,6 @@ internal class SettingsCategory(
 )
 
 /**
- * Subsections that show only their first few settings until "See more" is
- * tapped, by heading. Search always shows every match.
- */
-internal val FOLDED_GROUPS = mapOf("Seek bar" to 2)
-
-/**
  * Where every setting lives. Each page is named for what someone opening it is looking for,
  * and each setting is on the page they'd try first: everything about a service with that
  * service, every kind of quality with sound, everything about listening history together,
@@ -82,10 +76,9 @@ internal val SETTINGS_CATEGORIES = listOf(
         "player", "Player", "Layout, cover art, seek bar and what it shows", Icons.Rounded.Album,
         listOf(
             "Layout" to listOf("Player beside the page"),
-            "Cover art" to listOf("Moving cover art", "Album covers", "Double-tap to skip 10 seconds"),
-            "Animated covers" to listOf("Animated covers", "Animated covers on Wi-Fi only", "Moving covers on Home"),
-            "Seek bar" to listOf("Lyric preview while seeking", "Seek bar thickness", "Seek bar handle", "Seek bar time", "Song part marks"),
-            "On the player" to listOf("Lyrics preview", "Audio quality label", "Audio details page", "Skip to chorus", "Hide volume bar", "Hide song status", "Show stats for nerds"),
+            "Cover art" to listOf("Album covers"),
+            "Seek bar" to listOf("Lyric preview while seeking"),
+            "On the player" to listOf("Lyrics preview", "Audio quality label", "Hide volume bar", "Hide song status", "Show stats for nerds"),
         ),
     ),
     SettingsCategory(
